@@ -491,14 +491,16 @@ async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<vo
         `Player count regressed: ${oldCount} → ${newCount} (${Math.round((newCount / oldCount) * 100)}%).`,
       );
     }
-    // Per-player regression: minutes only. TM frequently re-categorizes goals
-    // and assists post-match (a tap-in re-credited from striker to assister,
-    // an OG flipped, etc.), so per-player G/A drops are normal. Minutes are
-    // monotonic over a season — a decrease is a scrape regression.
+    // Per-player regression: tolerate small minute drops. TM adjusts individual
+    // game minute totals 1-2' post-match (injury-time recalcs, sub-time
+    // corrections), so small drops are noise. A real scrape regression loses
+    // a whole game (90+') per player or zeros stats wholesale — both still
+    // tripped by the threshold.
+    const MINUTES_DROP_TOLERANCE = 5;
     const byId = new Map(existing.map((p) => [p.playerId, p]));
     const regressed = players.filter((p) => {
       const old = byId.get(p.playerId);
-      return !!old && p.minutes < old.minutes;
+      return !!old && old.minutes - p.minutes > MINUTES_DROP_TOLERANCE;
     });
     if (regressed.length > 0) {
       const sample = regressed
@@ -506,7 +508,7 @@ async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<vo
         .map((p) => `${p.name} (${byId.get(p.playerId)!.minutes}' → ${p.minutes}')`)
         .join(", ");
       throw new Error(
-        `${regressed.length} player(s) have decreasing minutes (e.g. ${sample}) — scrape regressed silently.`,
+        `${regressed.length} player(s) have decreasing minutes >${MINUTES_DROP_TOLERANCE}' (e.g. ${sample}) — scrape regressed silently.`,
       );
     }
   } catch (e) {
