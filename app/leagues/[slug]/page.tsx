@@ -91,10 +91,9 @@ export default async function LeaguePage({ params }: { params: Promise<{ slug: s
   const league = getLeagueBySlug(slug);
   if (!league) notFound();
 
-  // Form analysis can fail when Transfermarkt's WAF blocks all 4 form-window
-  // fetches (most often during a cold prerender). Render the page without the
-  // form section rather than failing the whole build — the cache layer will
-  // recover the next time a fetch succeeds.
+  // TM-backed fetches (form analysis, standings, injuries) can fail when TM's
+  // WAF blocks the prerender. Render whatever sections we have rather than
+  // failing the build — caches recover on the next live request.
   const emptyAnalysis: AnalysisResult = {
     success: false,
     matchedPeriod: null,
@@ -102,8 +101,9 @@ export default async function LeaguePage({ params }: { params: Promise<{ slug: s
     aggregatedTop: [],
     aggregatedBottom: [],
   };
+  const emptyTeamForm = { success: false as const, allTeams: [], leagues: [] };
   const [teamFormData, leagueAnalysis, allPlayers, injuredData] = await Promise.all([
-    getTeamFormData(),
+    getTeamFormData().catch(() => emptyTeamForm),
     getLeagueAnalysis(league.name).catch(() => emptyAnalysis),
     getMinutesValueData(),
     getInjuredPlayers().catch(() => ({ players: [] as InjuredPlayer[] })),
