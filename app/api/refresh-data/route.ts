@@ -14,7 +14,7 @@ export async function POST() {
         Authorization: `Bearer ${token}`,
         Accept: "application/vnd.github+json",
       },
-      body: JSON.stringify({ ref: "main", inputs: { stale_hours: "1" } }),
+      body: JSON.stringify({ ref: "main", inputs: { force_refresh: "true" } }),
     },
   );
 
