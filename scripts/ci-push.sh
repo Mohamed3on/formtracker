@@ -17,6 +17,19 @@ for attempt in 1 2 3; do
   git fetch origin main
   git reset --hard origin/main
   for f in "${files[@]}"; do cp "$stash/$(basename "$f")" "$f"; done
+
+  # Guard: refuse to shrink a non-trivial *.json file down to a stub (<200 bytes).
+  # Catches scripts that wrote empty results after their fetches all failed.
+  for f in "${files[@]}"; do
+    [[ "$f" == *.json ]] || continue
+    new_size=$(wc -c < "$f" | tr -d ' ')
+    old_size=$(git show "origin/main:$f" 2>/dev/null | wc -c | tr -d ' ')
+    if [ "$new_size" -lt 200 ] && [ "$old_size" -gt 1000 ]; then
+      echo "Refusing to shrink $f from $old_size to $new_size bytes — looks like an empty/stub write."
+      exit 1
+    fi
+  done
+
   git add "${files[@]}"
   if git diff --cached --quiet; then
     echo "No changes to commit."

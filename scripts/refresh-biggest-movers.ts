@@ -3,7 +3,10 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { parseMarketValue } from "@/lib/parse-market-value";
 import { BASE_URL } from "@/lib/constants";
+import { withSlot, setMaxConcurrent } from "@/lib/fetch";
 import type { MarketValueMover, MarketValueMoversResult } from "@/app/types";
+
+setMaxConcurrent(3);
 
 const AJAX_HEADERS = {
   "User-Agent":
@@ -52,29 +55,32 @@ function buildReferer(date: string, cfg: DirectionConfig): string {
 }
 
 async function fetchWithRetry(url: string, referer: string, label: string): Promise<string> {
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const response = await fetch(url, {
-      headers: {
-        ...AJAX_HEADERS,
-        Referer: referer,
-        ...(process.env.TM_COOKIE ? { Cookie: process.env.TM_COOKIE } : {}),
-      },
-    });
-    if (!response.ok) {
-      console.warn(`[${label}] HTTP ${response.status}, retry ${attempt + 1}/${MAX_RETRIES}`);
-    } else {
-      const html = await response.text();
-      if (html.length > 500) return html;
-      console.warn(
-        `[${label}] Rate limited (${html.length}b), retry ${attempt + 1}/${MAX_RETRIES}`,
-      );
+  return withSlot(async () => {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const response = await fetch(url, {
+        headers: {
+          ...AJAX_HEADERS,
+          Referer: referer,
+          ...(process.env.TM_COOKIE ? { Cookie: process.env.TM_COOKIE } : {}),
+        },
+      });
+      if (!response.ok) {
+        console.warn(`[${label}] HTTP ${response.status}, retry ${attempt + 1}/${MAX_RETRIES}`);
+      } else {
+        const html = await response.text();
+        if (html.length > 500) return html;
+        console.warn(
+          `[${label}] Rate limited (${html.length}b), retry ${attempt + 1}/${MAX_RETRIES}`,
+        );
+      }
+      if (attempt < MAX_RETRIES - 1) {
+        // Per-request jitter so retries don't burst in lockstep across periods
+        const jitter = Math.random() * BASE_DELAY * 2 ** attempt;
+        await new Promise((r) => setTimeout(r, BASE_DELAY * 2 ** attempt + jitter));
+      }
     }
-    if (attempt < MAX_RETRIES - 1) {
-      const jitter = Math.random() * 500;
-      await new Promise((r) => setTimeout(r, BASE_DELAY * 2 ** attempt + jitter));
-    }
-  }
-  throw new Error(`[${label}] Failed after ${MAX_RETRIES} retries: ${url}`);
+    throw new Error(`[${label}] Failed after ${MAX_RETRIES} retries: ${url}`);
+  });
 }
 
 function parsePeriodMovers(html: string, date: string): MarketValueMover[] {
@@ -235,6 +241,12 @@ async function processDirection(direction: Direction): Promise<void> {
   console.log(
     `[${cfg.label}] ${repeats.length} repeat(s) across ${processedPeriods.length} periods`,
   );
+  // Refuse to write a stub file — better to keep yesterday's data than push empty JSON to prod
+  if (processedPeriods.length === 0) {
+    throw new Error(
+      `[${cfg.label}] All ${allDates.length} period fetches failed — refusing to overwrite ${cfg.outFile} with empty data`,
+    );
+  }
   await writeResult({ repeatMovers: repeats, periods: processedPeriods }, cfg);
 }
 
