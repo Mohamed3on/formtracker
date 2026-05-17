@@ -14,8 +14,8 @@ import { PlayerSearch } from "./PlayerSearch";
 import { LEAGUES, getLeagueLogoUrl } from "@/lib/leagues";
 
 const PAGE_CACHE_MAP: Record<string, { tags?: string[]; workflow?: boolean }> = {
-  "/form": { tags: ["form-analysis"] },
-  "/expected-position": { tags: ["team-form"] },
+  "/form": { tags: ["form-analysis", "manager"] },
+  "/expected-position": { tags: ["team-form", "manager"] },
   "/injured": { tags: ["injured"] },
   "/players": { workflow: true },
   "/value-analysis": { workflow: true },
