@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ club
     return NextResponse.json(
       { clubId, manager },
       {
-        headers: { "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400" },
+        headers: { "Cache-Control": "no-store" },
       },
     );
   } catch (error) {
