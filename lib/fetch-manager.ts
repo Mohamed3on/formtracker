@@ -85,9 +85,14 @@ async function fetchManagerInfoUncached(clubId: string): Promise<ManagerInfo | n
     throw new Error(`No manager data found for club ${clubId}`);
   }
 
-  const firstManager = allManagers[0];
+  const now = new Date();
+  const firstManager =
+    allManagers.find((m) => {
+      const appointed = parseDate(m.appointedDate);
+      return appointed && appointed <= now;
+    }) ?? allManagers[0];
   const endDate = firstManager.endDate ? parseDate(firstManager.endDate) : null;
-  const isCurrentManager = !endDate || endDate > new Date();
+  const isCurrentManager = !endDate || endDate > now;
 
   const minMatches = firstManager.matches;
   const since1995 = allManagers.filter((m) => {
