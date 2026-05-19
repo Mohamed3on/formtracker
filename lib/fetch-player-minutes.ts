@@ -156,13 +156,17 @@ interface AggregatedStats {
 }
 
 /** CEAPI competition type IDs */
-const COMP_TYPE_INTERNATIONAL = 11;
 const COMP_TYPE_DOMESTIC_LEAGUE = 1;
 
 /** States that count as "missed" (injury, suspension, absence — but not "not in squad") */
 const MISSED_STATES = new Set(["injured", "absent", "suspended"]);
 
-function aggregateSeasonStats(games: CeapiGame[]): AggregatedStats {
+// Club aggregation only counts games played for the player's current first-team
+// club (clubId in the profile header). This drops B/U21/U18/youth-team
+// appearances and previous-club games from prior senior teams, both of which
+// otherwise inflate season G/A/minutes for youth-squad and mid-season-transfer
+// players.
+function aggregateSeasonStats(games: CeapiGame[], currentClubId: string): AggregatedStats {
   const seasonId = currentSeasonId();
   let goals = 0,
     assists = 0,
@@ -181,58 +185,61 @@ function aggregateSeasonStats(games: CeapiGame[]): AggregatedStats {
   const recentDomestic: RecentGameStats[] = [];
   for (const g of games) {
     if (g.gameInformation.seasonId !== seasonId) continue;
-    totalGames++;
     const gs = g.statistics.goalStatistics;
     const mins = g.statistics.playingTimeStatistics.playedMinutes ?? 0;
     const state = g.statistics.generalStatistics.participationState ?? "";
-    if (MISSED_STATES.has(state)) gamesMissed++;
     const posId = g.statistics.generalStatistics.positionId;
-    if (g.gameInformation.competitionTypeId === COMP_TYPE_INTERNATIONAL) {
+    if (g.gameInformation.isNationalGame) {
       intlGoals += gs.goalsScoredTotal ?? 0;
       intlAssists += gs.assists ?? 0;
       intlPenaltyGoals += gs.penaltyShooterGoalsScored ?? 0;
       intlMinutes += mins;
       if (mins > 0) intlAppearances++;
-    } else {
-      const gls = gs.goalsScoredTotal ?? 0;
-      const ast = gs.assists ?? 0;
-      const pGoals = gs.penaltyShooterGoalsScored ?? 0;
-      goals += gls;
-      assists += ast;
-      penaltyGoals += pGoals;
-      penaltyMisses += gs.penaltyShooterMisses ?? 0;
-      minutes += mins;
-      if (mins > 0) {
-        appearances++;
-        recentDomestic.push({
-          goals: gls,
-          assists: ast,
-          penaltyGoals: pGoals,
-          minutes: mins,
-          date: g.gameInformation.date?.dateTimeUTC?.slice(0, 10) ?? "",
-          gameId: g.gameInformation.gameId,
-          gameDay: g.gameInformation.gameDay,
-          competitionId: g.gameInformation.competitionId,
-          positionId: posId ?? undefined,
-          competitionName: LEAGUE_NAMES[g.gameInformation.competitionId],
-          venue: g.clubsInformation?.club?.venue,
-          teamGoals: g.clubsInformation?.club?.goalsTotal ?? undefined,
-          opponentGoals: g.clubsInformation?.club?.opponentGoalsTotal ?? undefined,
-          opponentClubId: g.clubsInformation?.opponent?.clubId,
-          matchReportUrl: g.gameInformation.gameId
-            ? `${BASE_URL}/spielbericht/index/spielbericht/${g.gameInformation.gameId}`
-            : undefined,
-        });
-      }
-      if (!league && g.gameInformation.competitionTypeId === COMP_TYPE_DOMESTIC_LEAGUE) {
-        league = LEAGUE_NAMES[g.gameInformation.competitionId] ?? "";
-      }
+      continue;
+    }
+    // Skip B-team / youth / previous-club games. Falls open (no filter) when
+    // currentClubId couldn't be parsed so we don't wipe stats on TM markup drift.
+    if (currentClubId && g.clubsInformation?.club?.clubId !== currentClubId) continue;
+    totalGames++;
+    if (MISSED_STATES.has(state)) gamesMissed++;
+    const gls = gs.goalsScoredTotal ?? 0;
+    const ast = gs.assists ?? 0;
+    const pGoals = gs.penaltyShooterGoalsScored ?? 0;
+    goals += gls;
+    assists += ast;
+    penaltyGoals += pGoals;
+    penaltyMisses += gs.penaltyShooterMisses ?? 0;
+    minutes += mins;
+    if (mins > 0) {
+      appearances++;
+      recentDomestic.push({
+        goals: gls,
+        assists: ast,
+        penaltyGoals: pGoals,
+        minutes: mins,
+        date: g.gameInformation.date?.dateTimeUTC?.slice(0, 10) ?? "",
+        gameId: g.gameInformation.gameId,
+        gameDay: g.gameInformation.gameDay,
+        competitionId: g.gameInformation.competitionId,
+        positionId: posId ?? undefined,
+        competitionName: LEAGUE_NAMES[g.gameInformation.competitionId],
+        venue: g.clubsInformation?.club?.venue,
+        teamGoals: g.clubsInformation?.club?.goalsTotal ?? undefined,
+        opponentGoals: g.clubsInformation?.club?.opponentGoalsTotal ?? undefined,
+        opponentClubId: g.clubsInformation?.opponent?.clubId,
+        matchReportUrl: g.gameInformation.gameId
+          ? `${BASE_URL}/spielbericht/index/spielbericht/${g.gameInformation.gameId}`
+          : undefined,
+      });
+    }
+    if (!league && g.gameInformation.competitionTypeId === COMP_TYPE_DOMESTIC_LEAGUE) {
+      league = LEAGUE_NAMES[g.gameInformation.competitionId] ?? "";
     }
   }
   // ceapi returns games newest-first; sort to ensure that, then keep last 10
   recentDomestic.sort((a, b) => b.date.localeCompare(a.date));
   const recentForm = recentDomestic.slice(0, 10);
-  const positionStats = derivePositionStats(games);
+  const positionStats = derivePositionStats(games, currentClubId);
   const playedPosition = positionStats[0]?.position ?? "";
   return {
     goals,
@@ -258,6 +265,7 @@ function aggregateSeasonStats(games: CeapiGame[]): AggregatedStats {
 /** Derive per-position stats from raw CEAPI games (server-only). */
 export function derivePositionStats(
   rawGames: CeapiGame[],
+  currentClubId: string,
 ): NonNullable<PlayerStatsResult["positionStats"]> {
   const season = currentSeasonId();
   const byPos: Record<
@@ -266,6 +274,8 @@ export function derivePositionStats(
   > = {};
   for (const g of rawGames) {
     if (g.gameInformation.seasonId !== season) continue;
+    if (g.gameInformation.isNationalGame) continue;
+    if (currentClubId && g.clubsInformation?.club?.clubId !== currentClubId) continue;
     const mins = g.statistics.playingTimeStatistics.playedMinutes ?? 0;
     const posId = g.statistics.generalStatistics.positionId;
     if (mins > 0 && posId) {
@@ -308,9 +318,13 @@ export async function fetchPlayerMinutesRaw(playerId: string): Promise<PlayerSta
   const $ = cheerio.load(htmlContent);
   const clubInfo = $(".data-header__club-info");
   const club = clubInfo.find(".data-header__club a").text().trim();
-  const clubLogoImg = $(".data-header__box__club-link img").first();
+  const clubAnchor = $(".data-header__box__club-link").first();
+  const clubLogoImg = clubAnchor.find("img").first();
   const clubLogoSrcset = (clubLogoImg.attr("srcset") || "").trim();
   const clubLogoUrl = clubLogoSrcset.split(/\s+/)[0] || clubLogoImg.attr("src") || "";
+  // Current first-team clubId. Used to drop B-team / youth / previous-club
+  // appearances from season aggregation in aggregateSeasonStats.
+  const currentClubId = (clubAnchor.attr("href") || "").match(/\/verein\/(\d+)/)?.[1] ?? "";
   const ribbonText = $(".data-header__ribbon span").text().trim().toLowerCase();
   const isOnLoan = ribbonText === "on loan";
   const isNewSigning = ribbonText === "new arrival" || ribbonText === "winter signing" || isOnLoan;
@@ -363,7 +377,7 @@ export async function fetchPlayerMinutesRaw(playerId: string): Promise<PlayerSta
   if (!Array.isArray(games)) {
     throw new Error(`ceapi returned no performance array for ${playerId}`);
   }
-  const stats = aggregateSeasonStats(games);
+  const stats = aggregateSeasonStats(games, currentClubId);
 
   // The alpha API is the canonical source for senior caps + whether the
   // player is in the current squad (the same data powers TM's green/yellow
