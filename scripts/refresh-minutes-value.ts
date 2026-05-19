@@ -11,6 +11,11 @@ import { fetchPlayerMinutesRaw } from "@/lib/fetch-player-minutes";
 import { extractClubIdFromLogoUrl } from "@/lib/format";
 import { fetchPage, setMaxConcurrent } from "@/lib/fetch";
 import { BASE_URL } from "@/lib/constants";
+import {
+  analyzeMinutesRegressions,
+  MINUTES_DROP_TOLERANCE,
+  sampleRegressionDrops,
+} from "@/lib/minutes-regression";
 import type { MinutesValuePlayer, PlayerStatsResult } from "@/app/types";
 
 const FORCE_REFRESH = process.argv.includes("--force") || process.env.FORCE_REFRESH === "1";
@@ -491,24 +496,24 @@ async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<vo
         `Player count regressed: ${oldCount} → ${newCount} (${Math.round((newCount / oldCount) * 100)}%).`,
       );
     }
-    // Per-player regression: tolerate small minute drops. TM adjusts individual
-    // game minute totals 1-2' post-match (injury-time recalcs, sub-time
-    // corrections), so small drops are noise. A real scrape regression loses
-    // a whole game (90+') per player or zeros stats wholesale — both still
-    // tripped by the threshold.
-    const MINUTES_DROP_TOLERANCE = 5;
-    const byId = new Map(existing.map((p) => [p.playerId, p]));
-    const regressed = players.filter((p) => {
-      const old = byId.get(p.playerId);
-      return !!old && old.minutes - p.minutes > MINUTES_DROP_TOLERANCE;
-    });
-    if (regressed.length > 0) {
-      const sample = regressed
-        .slice(0, 5)
-        .map((p) => `${p.name} (${byId.get(p.playerId)!.minutes}' → ${p.minutes}')`)
-        .join(", ");
+    // Per-player regression: tolerate small minute drops, whole-club corrections
+    // (TM voids/postpones a match → every club player loses ~90'), and a small
+    // number of scattered drops (individual stat tweaks). Fail only on a wide
+    // wave that suggests the scrape itself broke.
+    const report = analyzeMinutesRegressions(existing, players);
+    if (report.ignoredClubs.length > 0) {
+      console.warn(
+        `[refresh] Ignoring whole-club corrections (likely match void/postpone): ${report.ignoredClubs.join(", ")} — ${report.ignoredCount} players`,
+      );
+    }
+    if (report.fail) {
       throw new Error(
-        `${regressed.length} player(s) have decreasing minutes >${MINUTES_DROP_TOLERANCE}' (e.g. ${sample}) — scrape regressed silently.`,
+        `${report.scattered.length} player(s) regressed >${MINUTES_DROP_TOLERANCE}' (tolerance ${report.maxScattered}, e.g. ${sampleRegressionDrops(existing, report.scattered)}) — scrape regressed silently.`,
+      );
+    }
+    if (report.scattered.length > 0) {
+      console.warn(
+        `[refresh] ${report.scattered.length} scattered minute drops within tolerance ${report.maxScattered}: ${sampleRegressionDrops(existing, report.scattered)}`,
       );
     }
   } catch (e) {
@@ -516,7 +521,7 @@ async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<vo
       e instanceof Error &&
       (e.message.startsWith("Stats regressed") ||
         e.message.startsWith("Player count") ||
-        e.message.includes("decreasing minutes"))
+        e.message.includes("regressed >"))
     )
       throw e;
   }
