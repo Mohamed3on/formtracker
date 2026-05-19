@@ -23,8 +23,8 @@ import {
 import type { MinutesValuePlayer, PlayerStatsResult } from "@/app/types";
 
 const FORCE_REFRESH = process.argv.includes("--force") || process.env.FORCE_REFRESH === "1";
-setMaxConcurrent(30);
-const CONCURRENCY = { max: 30, min: 10 };
+setMaxConcurrent(40);
+const CONCURRENCY = { max: 40, min: 10 };
 const DELAY = { base: 100, multiplier: 2 };
 const FAILURE_THRESHOLD = 0.3;
 const CLEAN_BATCHES_TO_RAMP = 3;
