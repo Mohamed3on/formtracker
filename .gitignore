@@ -49,3 +49,6 @@ next-env.d.ts
 # player cache (rebuilt by GH Actions)
 data/player-cache.json
 .env*.local
+
+# local agent state
+.claude/scheduled_tasks.lock
