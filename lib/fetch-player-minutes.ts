@@ -158,15 +158,42 @@ interface AggregatedStats {
 /** CEAPI competition type IDs */
 const COMP_TYPE_DOMESTIC_LEAGUE = 1;
 
+/** Alpha-API clubTypeId for senior first teams. Anything else (2=B, 3=U21,
+ *  4/6/8/9/10=youth, 5/7=NTs) is excluded from club stats. */
+const CLUB_TYPE_SENIOR = 1;
+
+/** Map of clubId → alpha-API clubTypeId. Source: data/club-types.json. */
+export type ClubTypes = Record<string, number>;
+
+/** True when this game belongs in the player's senior first-team aggregation.
+ *  Returns false for B/U21/youth variants. When the type isn't yet known
+ *  (alpha API hasn't resolved it), fall back to "same club as the player's
+ *  profile header" so we never drop a senior previous-club game just because
+ *  it's a freshly-encountered ID. */
+function isFirstTeamGame(
+  gameClubId: string | undefined,
+  currentClubId: string,
+  clubTypes: ClubTypes,
+): boolean {
+  if (!gameClubId) return false;
+  const type = clubTypes[gameClubId];
+  if (type !== undefined) return type === CLUB_TYPE_SENIOR;
+  return !!currentClubId && gameClubId === currentClubId;
+}
+
 /** States that count as "missed" (injury, suspension, absence — but not "not in squad") */
 const MISSED_STATES = new Set(["injured", "absent", "suspended"]);
 
-// Club aggregation only counts games played for the player's current first-team
-// club (clubId in the profile header). This drops B/U21/U18/youth-team
-// appearances and previous-club games from prior senior teams, both of which
-// otherwise inflate season G/A/minutes for youth-squad and mid-season-transfer
-// players.
-function aggregateSeasonStats(games: CeapiGame[], currentClubId: string): AggregatedStats {
+// Club aggregation only counts games played for any *senior first team*
+// (clubTypeId === 1 in the alpha API). This drops B/U21/U18/youth-team
+// appearances while preserving previous-club games for mid-season transfers
+// (e.g. Semenyo's pre-Man-City Bournemouth minutes). Unresolved clubIds fall
+// back to currentClubId equality so unseen-but-real senior teams aren't wiped.
+function aggregateSeasonStats(
+  games: CeapiGame[],
+  currentClubId: string,
+  clubTypes: ClubTypes,
+): AggregatedStats {
   const seasonId = currentSeasonId();
   let goals = 0,
     assists = 0,
@@ -197,9 +224,7 @@ function aggregateSeasonStats(games: CeapiGame[], currentClubId: string): Aggreg
       if (mins > 0) intlAppearances++;
       continue;
     }
-    // Skip B-team / youth / previous-club games. Falls open (no filter) when
-    // currentClubId couldn't be parsed so we don't wipe stats on TM markup drift.
-    if (currentClubId && g.clubsInformation?.club?.clubId !== currentClubId) continue;
+    if (!isFirstTeamGame(g.clubsInformation?.club?.clubId, currentClubId, clubTypes)) continue;
     totalGames++;
     if (MISSED_STATES.has(state)) gamesMissed++;
     const gls = gs.goalsScoredTotal ?? 0;
@@ -239,7 +264,7 @@ function aggregateSeasonStats(games: CeapiGame[], currentClubId: string): Aggreg
   // ceapi returns games newest-first; sort to ensure that, then keep last 10
   recentDomestic.sort((a, b) => b.date.localeCompare(a.date));
   const recentForm = recentDomestic.slice(0, 10);
-  const positionStats = derivePositionStats(games, currentClubId);
+  const positionStats = derivePositionStats(games, currentClubId, clubTypes);
   const playedPosition = positionStats[0]?.position ?? "";
   return {
     goals,
@@ -266,6 +291,7 @@ function aggregateSeasonStats(games: CeapiGame[], currentClubId: string): Aggreg
 export function derivePositionStats(
   rawGames: CeapiGame[],
   currentClubId: string,
+  clubTypes: ClubTypes,
 ): NonNullable<PlayerStatsResult["positionStats"]> {
   const season = currentSeasonId();
   const byPos: Record<
@@ -275,7 +301,7 @@ export function derivePositionStats(
   for (const g of rawGames) {
     if (g.gameInformation.seasonId !== season) continue;
     if (g.gameInformation.isNationalGame) continue;
-    if (currentClubId && g.clubsInformation?.club?.clubId !== currentClubId) continue;
+    if (!isFirstTeamGame(g.clubsInformation?.club?.clubId, currentClubId, clubTypes)) continue;
     const mins = g.statistics.playingTimeStatistics.playedMinutes ?? 0;
     const posId = g.statistics.generalStatistics.positionId;
     if (mins > 0 && posId) {
@@ -295,8 +321,25 @@ export function derivePositionStats(
     .sort((a, b) => b.minutes - a.minutes);
 }
 
+/** Re-aggregate season stats from already-fetched rawGames using an updated
+ *  clubTypes map. Lets the refresh script enrich club types after the parallel
+ *  fetch phase and then rebuild totals without re-hitting the network. */
+export function reaggregatePlayerStats(
+  prev: PlayerStatsResult,
+  clubTypes: ClubTypes,
+): PlayerStatsResult {
+  const games = prev.rawGames;
+  if (!games?.length) return prev;
+  const currentClubId = (prev.clubLogoUrl || "").match(/\/(\d+)\.png/)?.[1] ?? "";
+  const stats = aggregateSeasonStats(games, currentClubId, clubTypes);
+  return { ...prev, ...stats };
+}
+
 /** Raw fetch — no caching. Used by the offline refresh script. */
-export async function fetchPlayerMinutesRaw(playerId: string): Promise<PlayerStatsResult> {
+export async function fetchPlayerMinutesRaw(
+  playerId: string,
+  clubTypes: ClubTypes,
+): Promise<PlayerStatsResult> {
   if (!playerId) return ZERO_STATS;
 
   // Fetch HTML (club/ribbon), ceapi (per-game stats), and the alpha-API senior
@@ -377,7 +420,7 @@ export async function fetchPlayerMinutesRaw(playerId: string): Promise<PlayerSta
   if (!Array.isArray(games)) {
     throw new Error(`ceapi returned no performance array for ${playerId}`);
   }
-  const stats = aggregateSeasonStats(games, currentClubId);
+  const stats = aggregateSeasonStats(games, currentClubId, clubTypes);
 
   // The alpha API is the canonical source for senior caps + whether the
   // player is in the current squad (the same data powers TM's green/yellow

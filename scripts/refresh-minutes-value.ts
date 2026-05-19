@@ -7,7 +7,11 @@ import {
   fetchTopForwardsRaw,
 } from "@/lib/fetch-minutes-value";
 import { fetchTopScorersRaw, fetchYearlyScorersRaw } from "@/lib/fetch-top-scorers";
-import { fetchPlayerMinutesRaw } from "@/lib/fetch-player-minutes";
+import {
+  fetchPlayerMinutesRaw,
+  reaggregatePlayerStats,
+  type ClubTypes,
+} from "@/lib/fetch-player-minutes";
 import { extractClubIdFromLogoUrl } from "@/lib/format";
 import { fetchPage, setMaxConcurrent } from "@/lib/fetch";
 import { BASE_URL } from "@/lib/constants";
@@ -30,6 +34,9 @@ const DATA_DIR = join(process.cwd(), "data");
 const OUT_PATH = join(DATA_DIR, "minutes-value.json");
 const CACHE_PATH = join(DATA_DIR, "player-cache.json");
 const CLUBS_PATH = join(DATA_DIR, "clubs.json");
+const CLUB_TYPES_PATH = join(DATA_DIR, "club-types.json");
+const ALPHA_CLUBS_API = "https://tmapi-alpha.transfermarkt.technology/clubs";
+const ALPHA_CLUBS_BATCH = 40;
 // MV-based lists (most valuable, O30, top forwards) only move on TM's value
 // update cycles — cache for a day. Scorer lists change after every match so we
 // always try to refresh them per run, with the cached version as fallback for
@@ -187,7 +194,7 @@ async function loadOrGatherPlayers(): Promise<MinutesValuePlayer[]> {
 
 // --- 2. Fetch per-player stats with adaptive concurrency ---
 
-async function fetchAllStats(playerIds: string[]): Promise<Cache> {
+async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise<Cache> {
   // Load cache from previous runs as fallback for rate-limited players
   const now = Date.now();
   let staleCache: Cache = {};
@@ -238,7 +245,9 @@ async function fetchAllStats(playerIds: string[]): Promise<Cache> {
 
     for (let i = 0; i < remaining.length; i += state.concurrency) {
       const batch = remaining.slice(i, i + state.concurrency);
-      const results = await Promise.allSettled(batch.map((id) => fetchPlayerMinutesRaw(id)));
+      const results = await Promise.allSettled(
+        batch.map((id) => fetchPlayerMinutesRaw(id, clubTypes)),
+      );
 
       let failures = 0;
       for (let j = 0; j < batch.length; j++) {
@@ -507,9 +516,14 @@ async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<vo
       );
     }
     if (report.fail) {
-      throw new Error(
-        `${report.scattered.length} player(s) regressed >${MINUTES_DROP_TOLERANCE}' (tolerance ${report.maxScattered}, e.g. ${sampleRegressionDrops(existing, report.scattered)}) — scrape regressed silently.`,
-      );
+      const msg = `${report.scattered.length} player(s) regressed >${MINUTES_DROP_TOLERANCE}' (tolerance ${report.maxScattered}, e.g. ${sampleRegressionDrops(existing, report.scattered)}) — scrape regressed silently.`;
+      // Escape hatch for intentional aggregation changes (e.g. tightening the
+      // first-team filter). Keep narrow: only honor when explicitly opted in.
+      if (process.env.SKIP_MINUTES_REGRESSION === "1") {
+        console.warn(`[refresh] SKIP_MINUTES_REGRESSION=1 — tolerating: ${msg}`);
+      } else {
+        throw new Error(msg);
+      }
     }
     if (report.scattered.length > 0) {
       console.warn(
@@ -527,13 +541,84 @@ async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<vo
   }
 }
 
+// --- Club types (alpha API) ---
+// Maps clubId → clubTypeId so aggregation can keep senior previous-club games
+// (e.g. winter-transfer history) while dropping B-team / U21 / youth variants.
+
+async function loadClubTypes(): Promise<ClubTypes> {
+  try {
+    return JSON.parse(await readFile(CLUB_TYPES_PATH, "utf-8")) as ClubTypes;
+  } catch {
+    return {};
+  }
+}
+
+async function enrichClubTypes(cache: Cache, clubTypes: ClubTypes): Promise<number> {
+  const unknown = new Set<string>();
+  for (const entry of Object.values(cache)) {
+    for (const g of entry.data.rawGames ?? []) {
+      if (g.gameInformation.isNationalGame) continue;
+      const id = g.clubsInformation?.club?.clubId;
+      if (id && !(id in clubTypes)) unknown.add(id);
+    }
+  }
+  if (unknown.size === 0) return 0;
+  const ids = [...unknown];
+  console.log(`[refresh] Resolving ${ids.length} unknown clubTypeIds from alpha API...`);
+  const headers = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
+  let resolved = 0;
+  for (let i = 0; i < ids.length; i += ALPHA_CLUBS_BATCH) {
+    const batch = ids.slice(i, i + ALPHA_CLUBS_BATCH);
+    const url = `${ALPHA_CLUBS_API}?${batch.map((id) => `ids[]=${id}`).join("&")}`;
+    const r = await fetch(url, { headers });
+    if (!r.ok) {
+      console.warn(`[refresh] clubTypes batch ${i / ALPHA_CLUBS_BATCH}: HTTP ${r.status}`);
+      continue;
+    }
+    const j = (await r.json()) as {
+      data?: Array<{ id: string; baseDetails?: { clubTypeId?: number } }>;
+    };
+    for (const c of j.data ?? []) {
+      const t = c.baseDetails?.clubTypeId;
+      if (typeof t === "number") {
+        clubTypes[c.id] = t;
+        resolved++;
+      }
+    }
+  }
+  console.log(`[refresh] clubTypes resolved ${resolved}/${ids.length}`);
+  return resolved;
+}
+
+async function saveClubTypes(clubTypes: ClubTypes): Promise<void> {
+  const sorted = Object.fromEntries(
+    Object.entries(clubTypes).sort(([a], [b]) => Number(a) - Number(b)),
+  );
+  await writeFile(CLUB_TYPES_PATH, JSON.stringify(sorted, null, 2) + "\n");
+}
+
 // --- Main pipeline ---
 
 async function main() {
   const players = await loadOrGatherPlayers();
+  const clubTypes = await loadClubTypes();
 
   console.log(`[refresh] Fetching stats for ${players.length} players...`);
-  const cache = await fetchAllStats(players.map((p) => p.playerId));
+  const cache = await fetchAllStats(
+    players.map((p) => p.playerId),
+    clubTypes,
+  );
+
+  // Resolve any newly-seen clubIds (winter transfers, new comps, etc.) and
+  // re-aggregate so previous senior-club minutes aren't dropped because the
+  // type lookup hadn't resolved them yet at fetch time.
+  const newlyResolved = await enrichClubTypes(cache, clubTypes);
+  if (newlyResolved > 0) {
+    for (const entry of Object.values(cache)) {
+      entry.data = reaggregatePlayerStats(entry.data, clubTypes);
+    }
+    await saveClubTypes(clubTypes);
+  }
 
   mergeStats(players, cache);
 

@@ -13,6 +13,10 @@ on:
         description: "Cache TTL in hours (default 12; 1 for button-triggered aggressive refresh)"
         type: string
         required: false
+      skip_minutes_regression:
+        description: "Skip minutes-drop safety check (use after intentional aggregation change)"
+        type: boolean
+        default: false
 
 concurrency:
   group: data-refresh
@@ -77,6 +81,7 @@ jobs:
           TM_2CAPTCHA_KEY: ${{ secrets.TM_2CAPTCHA_KEY }}
           FORCE_REFRESH: ${{ inputs.force_refresh && '1' || '0' }}
           STALE_HOURS: ${{ inputs.stale_hours }}
+          SKIP_MINUTES_REGRESSION: ${{ inputs.skip_minutes_regression && '1' || '0' }}
         run: bun run scripts/refresh-minutes-value.ts
 
       - name: Sync fresh cookie
