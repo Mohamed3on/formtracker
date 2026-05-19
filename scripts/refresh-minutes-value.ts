@@ -13,6 +13,7 @@ import {
   type ClubTypes,
 } from "@/lib/fetch-player-minutes";
 import { extractClubIdFromLogoUrl } from "@/lib/format";
+import { fetchClubTypes } from "@/lib/alpha-clubs";
 import { fetchPage, setMaxConcurrent } from "@/lib/fetch";
 import { BASE_URL } from "@/lib/constants";
 import {
@@ -35,8 +36,6 @@ const OUT_PATH = join(DATA_DIR, "minutes-value.json");
 const CACHE_PATH = join(DATA_DIR, "player-cache.json");
 const CLUBS_PATH = join(DATA_DIR, "clubs.json");
 const CLUB_TYPES_PATH = join(DATA_DIR, "club-types.json");
-const ALPHA_CLUBS_API = "https://tmapi-alpha.transfermarkt.technology/clubs";
-const ALPHA_CLUBS_BATCH = 40;
 // MV-based lists (most valuable, O30, top forwards) only move on TM's value
 // update cycles — cache for a day. Scorer lists change after every match so we
 // always try to refresh them per run, with the cached version as fallback for
@@ -541,9 +540,7 @@ async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<vo
   }
 }
 
-// --- Club types (alpha API) ---
-// Maps clubId → clubTypeId so aggregation can keep senior previous-club games
-// (e.g. winter-transfer history) while dropping B-team / U21 / youth variants.
+// --- Club types ---
 
 async function loadClubTypes(): Promise<ClubTypes> {
   try {
@@ -553,7 +550,10 @@ async function loadClubTypes(): Promise<ClubTypes> {
   }
 }
 
-async function enrichClubTypes(cache: Cache, clubTypes: ClubTypes): Promise<number> {
+/** Resolve any clubIds in the cache that aren't yet in `clubTypes` and merge
+ *  the results in. Returns the set of newly-resolved IDs so callers can scope
+ *  re-aggregation to only the players that referenced them. */
+async function enrichClubTypes(cache: Cache, clubTypes: ClubTypes): Promise<Set<string>> {
   const unknown = new Set<string>();
   for (const entry of Object.values(cache)) {
     for (const g of entry.data.rawGames ?? []) {
@@ -562,31 +562,16 @@ async function enrichClubTypes(cache: Cache, clubTypes: ClubTypes): Promise<numb
       if (id && !(id in clubTypes)) unknown.add(id);
     }
   }
-  if (unknown.size === 0) return 0;
+  if (unknown.size === 0) return new Set();
   const ids = [...unknown];
   console.log(`[refresh] Resolving ${ids.length} unknown clubTypeIds from alpha API...`);
-  const headers = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
-  let resolved = 0;
-  for (let i = 0; i < ids.length; i += ALPHA_CLUBS_BATCH) {
-    const batch = ids.slice(i, i + ALPHA_CLUBS_BATCH);
-    const url = `${ALPHA_CLUBS_API}?${batch.map((id) => `ids[]=${id}`).join("&")}`;
-    const r = await fetch(url, { headers });
-    if (!r.ok) {
-      console.warn(`[refresh] clubTypes batch ${i / ALPHA_CLUBS_BATCH}: HTTP ${r.status}`);
-      continue;
-    }
-    const j = (await r.json()) as {
-      data?: Array<{ id: string; baseDetails?: { clubTypeId?: number } }>;
-    };
-    for (const c of j.data ?? []) {
-      const t = c.baseDetails?.clubTypeId;
-      if (typeof t === "number") {
-        clubTypes[c.id] = t;
-        resolved++;
-      }
-    }
+  const resolvedMap = await fetchClubTypes(ids, (msg) => console.warn(`[refresh] ${msg}`));
+  const resolved = new Set<string>();
+  for (const [id, t] of Object.entries(resolvedMap)) {
+    clubTypes[id] = t;
+    resolved.add(id);
   }
-  console.log(`[refresh] clubTypes resolved ${resolved}/${ids.length}`);
+  console.log(`[refresh] clubTypes resolved ${resolved.size}/${ids.length}`);
   return resolved;
 }
 
@@ -600,8 +585,7 @@ async function saveClubTypes(clubTypes: ClubTypes): Promise<void> {
 // --- Main pipeline ---
 
 async function main() {
-  const players = await loadOrGatherPlayers();
-  const clubTypes = await loadClubTypes();
+  const [players, clubTypes] = await Promise.all([loadOrGatherPlayers(), loadClubTypes()]);
 
   console.log(`[refresh] Fetching stats for ${players.length} players...`);
   const cache = await fetchAllStats(
@@ -609,13 +593,16 @@ async function main() {
     clubTypes,
   );
 
-  // Resolve any newly-seen clubIds (winter transfers, new comps, etc.) and
-  // re-aggregate so previous senior-club minutes aren't dropped because the
-  // type lookup hadn't resolved them yet at fetch time.
+  // Re-aggregate only entries that referenced a newly-resolved clubId, so
+  // senior previous-club minutes aren't dropped just because the type lookup
+  // hadn't resolved them at fetch time.
   const newlyResolved = await enrichClubTypes(cache, clubTypes);
-  if (newlyResolved > 0) {
+  if (newlyResolved.size > 0) {
     for (const entry of Object.values(cache)) {
-      entry.data = reaggregatePlayerStats(entry.data, clubTypes);
+      const touched = entry.data.rawGames?.some((g) =>
+        newlyResolved.has(g.clubsInformation?.club?.clubId ?? ""),
+      );
+      if (touched) entry.data = reaggregatePlayerStats(entry.data, clubTypes);
     }
     await saveClubTypes(clubTypes);
   }

@@ -3,14 +3,18 @@ import type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/app/types"
 import { BASE_URL } from "./constants";
 import { fetchPage, withSlot } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
+import { extractClubIdFromLogoUrl } from "./format";
 import nationalTeamTypes from "@/data/national-teams.json";
 
 const NATIONAL_TEAM_TYPES = nationalTeamTypes as Record<string, number>;
-const SENIOR_NT_TYPE_ID = 1;
+/** alpha-API `clubTypeId` for senior squads (national and club). Anything
+ *  else (2=B, 3=U21, 4/6/8/9/10=youth variants, 5/7=non-senior NTs) is
+ *  excluded from club aggregation. */
+const ALPHA_TYPE_SENIOR = 1;
 const TM_API_BASE = "https://tmapi-alpha.transfermarkt.technology";
 
 function isSeniorNationalTeam(clubId: string | undefined): boolean {
-  return !!clubId && NATIONAL_TEAM_TYPES[clubId] === SENIOR_NT_TYPE_ID;
+  return !!clubId && NATIONAL_TEAM_TYPES[clubId] === ALPHA_TYPE_SENIOR;
 }
 
 interface NationalCareerEntry {
@@ -158,18 +162,13 @@ interface AggregatedStats {
 /** CEAPI competition type IDs */
 const COMP_TYPE_DOMESTIC_LEAGUE = 1;
 
-/** Alpha-API clubTypeId for senior first teams. Anything else (2=B, 3=U21,
- *  4/6/8/9/10=youth, 5/7=NTs) is excluded from club stats. */
-const CLUB_TYPE_SENIOR = 1;
-
-/** Map of clubId → alpha-API clubTypeId. Source: data/club-types.json. */
+/** Source: data/club-types.json */
 export type ClubTypes = Record<string, number>;
 
 /** True when this game belongs in the player's senior first-team aggregation.
- *  Returns false for B/U21/youth variants. When the type isn't yet known
- *  (alpha API hasn't resolved it), fall back to "same club as the player's
- *  profile header" so we never drop a senior previous-club game just because
- *  it's a freshly-encountered ID. */
+ *  When clubTypeId isn't yet known (alpha API hasn't resolved it) we fall back
+ *  to clubId equality so a freshly-encountered senior previous-club isn't
+ *  dropped on first sight. */
 function isFirstTeamGame(
   gameClubId: string | undefined,
   currentClubId: string,
@@ -177,7 +176,7 @@ function isFirstTeamGame(
 ): boolean {
   if (!gameClubId) return false;
   const type = clubTypes[gameClubId];
-  if (type !== undefined) return type === CLUB_TYPE_SENIOR;
+  if (type !== undefined) return type === ALPHA_TYPE_SENIOR;
   return !!currentClubId && gameClubId === currentClubId;
 }
 
@@ -330,7 +329,7 @@ export function reaggregatePlayerStats(
 ): PlayerStatsResult {
   const games = prev.rawGames;
   if (!games?.length) return prev;
-  const currentClubId = (prev.clubLogoUrl || "").match(/\/(\d+)\.png/)?.[1] ?? "";
+  const currentClubId = extractClubIdFromLogoUrl(prev.clubLogoUrl) ?? "";
   const stats = aggregateSeasonStats(games, currentClubId, clubTypes);
   return { ...prev, ...stats };
 }

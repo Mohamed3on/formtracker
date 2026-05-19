@@ -6,13 +6,12 @@
  */
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
+import { fetchClubTypes } from "@/lib/alpha-clubs";
 import type { CeapiGame, PlayerStatsResult } from "@/app/types";
 
 const DATA_DIR = join(process.cwd(), "data");
 const NT_PATH = join(DATA_DIR, "national-teams.json");
 const CACHE_PATH = join(DATA_DIR, "player-cache.json");
-const CLUBS_API = "https://tmapi-alpha.transfermarkt.technology/clubs";
-const BATCH = 40;
 
 type Cache = Record<string, { data: PlayerStatsResult; fetchedAt: number }>;
 
@@ -37,23 +36,7 @@ async function main() {
   );
   if (missing.length === 0) return;
 
-  const headers = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
-  const updated = { ...existing };
-  for (let i = 0; i < missing.length; i += BATCH) {
-    const batch = missing.slice(i, i + BATCH);
-    const url = `${CLUBS_API}?${batch.map((id) => `ids[]=${id}`).join("&")}`;
-    const r = await fetch(url, { headers });
-    if (!r.ok) {
-      console.warn(`batch ${i}: HTTP ${r.status}`);
-      continue;
-    }
-    const j = await r.json();
-    for (const c of j.data ?? []) {
-      const t = c.baseDetails?.clubTypeId;
-      if (typeof t === "number") updated[c.id] = t;
-    }
-  }
-
+  const updated = { ...existing, ...(await fetchClubTypes(missing)) };
   const sorted = Object.fromEntries(
     Object.entries(updated).sort(([a], [b]) => Number(a) - Number(b)),
   );
