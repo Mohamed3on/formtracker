@@ -4,18 +4,16 @@ import { BASE_URL } from "./constants";
 import { fetchPage, withSlot } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
 import { extractClubIdFromLogoUrl } from "./format";
-import nationalTeamTypes from "@/data/national-teams.json";
+import clubTypesData from "@/data/club-types.json";
 
-const NATIONAL_TEAM_TYPES = nationalTeamTypes as Record<string, number>;
+/** Static snapshot of data/club-types.json (clubId → alpha-API clubTypeId).
+ *  The refresh script holds its own mutable copy when enriching new IDs. */
+const STATIC_CLUB_TYPES = clubTypesData as Record<string, number>;
 /** alpha-API `clubTypeId` for senior squads (national and club). Anything
  *  else (2=B, 3=U21, 4/6/8/9/10=youth variants, 5/7=non-senior NTs) is
  *  excluded from club aggregation. */
 const ALPHA_TYPE_SENIOR = 1;
 const TM_API_BASE = "https://tmapi-alpha.transfermarkt.technology";
-
-function isSeniorNationalTeam(clubId: string | undefined): boolean {
-  return !!clubId && NATIONAL_TEAM_TYPES[clubId] === ALPHA_TYPE_SENIOR;
-}
 
 interface NationalCareerEntry {
   clubId: string;
@@ -37,7 +35,9 @@ async function fetchSeniorCareer(
     });
     if (!r.ok) return null;
     const j = (await r.json()) as { data?: { history?: NationalCareerEntry[] } };
-    const senior = j?.data?.history?.find((h) => isSeniorNationalTeam(h.clubId));
+    const senior = j?.data?.history?.find(
+      (h) => !!h.clubId && STATIC_CLUB_TYPES[h.clubId] === ALPHA_TYPE_SENIOR,
+    );
     if (!senior) return null;
     return {
       caps: senior.gamesPlayed ?? 0,
@@ -209,6 +209,10 @@ function aggregateSeasonStats(
   let totalGames = 0;
   let league = "";
   const recentDomestic: RecentGameStats[] = [];
+  const byPos: Record<
+    number,
+    { minutes: number; goals: number; assists: number; appearances: number }
+  > = {};
   for (const g of games) {
     if (g.gameInformation.seasonId !== seasonId) continue;
     const gs = g.statistics.goalStatistics;
@@ -236,6 +240,13 @@ function aggregateSeasonStats(
     minutes += mins;
     if (mins > 0) {
       appearances++;
+      if (posId) {
+        const ps = (byPos[posId] ??= { minutes: 0, goals: 0, assists: 0, appearances: 0 });
+        ps.minutes += mins;
+        ps.goals += gls;
+        ps.assists += ast;
+        ps.appearances++;
+      }
       recentDomestic.push({
         goals: gls,
         assists: ast,
@@ -263,7 +274,13 @@ function aggregateSeasonStats(
   // ceapi returns games newest-first; sort to ensure that, then keep last 10
   recentDomestic.sort((a, b) => b.date.localeCompare(a.date));
   const recentForm = recentDomestic.slice(0, 10);
-  const positionStats = derivePositionStats(games, currentClubId, clubTypes);
+  const positionStats = Object.entries(byPos)
+    .map(([id, ps]) => ({
+      positionId: Number(id),
+      position: POSITION_NAMES[Number(id)] ?? `Position ${id}`,
+      ...ps,
+    }))
+    .sort((a, b) => b.minutes - a.minutes);
   const playedPosition = positionStats[0]?.position ?? "";
   return {
     goals,
@@ -284,40 +301,6 @@ function aggregateSeasonStats(
     totalGames,
     positionStats,
   };
-}
-
-/** Derive per-position stats from raw CEAPI games (server-only). */
-export function derivePositionStats(
-  rawGames: CeapiGame[],
-  currentClubId: string,
-  clubTypes: ClubTypes,
-): NonNullable<PlayerStatsResult["positionStats"]> {
-  const season = currentSeasonId();
-  const byPos: Record<
-    number,
-    { minutes: number; goals: number; assists: number; appearances: number }
-  > = {};
-  for (const g of rawGames) {
-    if (g.gameInformation.seasonId !== season) continue;
-    if (g.gameInformation.isNationalGame) continue;
-    if (!isFirstTeamGame(g.clubsInformation?.club?.clubId, currentClubId, clubTypes)) continue;
-    const mins = g.statistics.playingTimeStatistics.playedMinutes ?? 0;
-    const posId = g.statistics.generalStatistics.positionId;
-    if (mins > 0 && posId) {
-      const ps = (byPos[posId] ??= { minutes: 0, goals: 0, assists: 0, appearances: 0 });
-      ps.minutes += mins;
-      ps.goals += g.statistics.goalStatistics.goalsScoredTotal ?? 0;
-      ps.assists += g.statistics.goalStatistics.assists ?? 0;
-      ps.appearances++;
-    }
-  }
-  return Object.entries(byPos)
-    .map(([id, ps]) => ({
-      positionId: Number(id),
-      position: POSITION_NAMES[Number(id)] ?? `Position ${id}`,
-      ...ps,
-    }))
-    .sort((a, b) => b.minutes - a.minutes);
 }
 
 /** Re-aggregate season stats from already-fetched rawGames using an updated

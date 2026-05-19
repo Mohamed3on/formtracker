@@ -557,7 +557,6 @@ async function enrichClubTypes(cache: Cache, clubTypes: ClubTypes): Promise<Set<
   const unknown = new Set<string>();
   for (const entry of Object.values(cache)) {
     for (const g of entry.data.rawGames ?? []) {
-      if (g.gameInformation.isNationalGame) continue;
       const id = g.clubsInformation?.club?.clubId;
       if (id && !(id in clubTypes)) unknown.add(id);
     }

@@ -1,5 +1,5 @@
 /** Shared helper for resolving alpha-API `clubTypeId` lookups. Used by the
- *  refresh scripts to populate data/club-types.json and data/national-teams.json. */
+ *  refresh script to populate data/club-types.json. */
 
 const ALPHA_CLUBS_API = "https://tmapi-alpha.transfermarkt.technology/clubs";
 const ALPHA_CLUBS_BATCH = 40;
