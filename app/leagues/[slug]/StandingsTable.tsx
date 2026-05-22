@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import {
@@ -83,7 +83,12 @@ export function StandingsTable({
           <TableHead className="text-left">Team</TableHead>
           <TableHead className="text-right">Pts</TableHead>
           <SortHeader
-            label="Market value"
+            label={
+              <>
+                <span className="sm:hidden">Value</span>
+                <span className="hidden sm:inline">Market value</span>
+              </>
+            }
             active={sort.key === "marketValue"}
             dir={sort.dir}
             onClick={() => toggle("marketValue")}
@@ -116,7 +121,7 @@ function SortHeader({
   align = "left",
   className,
 }: {
-  label: string;
+  label: ReactNode;
   active: boolean;
   dir: Dir;
   onClick: () => void;
@@ -157,7 +162,7 @@ function StandingsRow({ team, formLeader }: { team: TeamFormEntry; formLeader?: 
       <TableCell className="text-left font-value text-text-secondary">
         {team.leaguePosition}
       </TableCell>
-      <TableCell>
+      <TableCell className="w-full max-w-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-white p-0.5">
             {team.logoUrl ? (
