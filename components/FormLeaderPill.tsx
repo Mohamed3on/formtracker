@@ -26,7 +26,8 @@ export function FormLeaderPill({
           colors,
         )}
       >
-        {isTop ? "↑ form" : "↓ form"}
+        {isTop ? "↑" : "↓"}
+        <span className="hidden sm:inline"> form</span>
       </Link>
     );
   }
