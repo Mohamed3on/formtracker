@@ -104,6 +104,7 @@ export const LEAGUE_NAMES: Record<string, string> = {
   RU1: "Premier Liga",
   GR1: "Super League 1",
   DK1: "Superliga",
+  MLS1: "MLS",
   GB2: "Championship",
   ES2: "LaLiga2",
 };
