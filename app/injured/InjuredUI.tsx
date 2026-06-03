@@ -661,6 +661,7 @@ export function InjuredUI({ initialData, failedLeagues = [] }: InjuredUIProps) {
           players={allPlayers}
           value={leagueFilter}
           onChange={(v) => update({ league: v === "all" ? null : v || null })}
+          getValue={(p) => p.marketValueNum}
         />
         <Combobox
           value={clubFilter}

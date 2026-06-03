@@ -17,13 +17,15 @@ export function uniqueFilterOptions<T>(
   ];
 }
 
-/** Build grouped league options (Top 5 + Other, sorted by player count) for Combobox. */
-export function buildLeagueGroups(players: { league: string }[]): ComboboxGroup[] {
-  const counts = new Map<string, number>();
-  for (const p of players) if (p.league) counts.set(p.league, (counts.get(p.league) ?? 0) + 1);
-  const byCount = (a: string, b: string) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0);
-  const top5 = [...counts.keys()].filter((l) => TOP_5_LEAGUES.includes(l)).sort(byCount);
-  const other = [...counts.keys()].filter((l) => !TOP_5_LEAGUES.includes(l)).sort(byCount);
+/** Build league options for Combobox: quick filters (All / Top 5) + one list of leagues sorted by total market value. */
+export function buildLeagueGroups<T extends { league: string }>(
+  players: T[],
+  getValue: (p: T) => number = (p) => (p as { marketValue?: number }).marketValue ?? 0,
+): ComboboxGroup[] {
+  const value = new Map<string, number>();
+  for (const p of players)
+    if (p.league) value.set(p.league, (value.get(p.league) ?? 0) + getValue(p));
+  const leagues = [...value.keys()].sort((a, b) => (value.get(b) ?? 0) - (value.get(a) ?? 0));
   return [
     {
       options: [
@@ -31,12 +33,7 @@ export function buildLeagueGroups(players: { league: string }[]): ComboboxGroup[
         { value: "top5", label: "Top 5 leagues" },
       ],
     },
-    ...(top5.length
-      ? [{ heading: "Top 5", options: top5.map((l) => ({ value: l, label: l })) }]
-      : []),
-    ...(other.length
-      ? [{ heading: "Other", options: other.map((l) => ({ value: l, label: l })) }]
-      : []),
+    ...(leagues.length ? [{ options: leagues.map((l) => ({ value: l, label: l })) }] : []),
   ];
 }
 
