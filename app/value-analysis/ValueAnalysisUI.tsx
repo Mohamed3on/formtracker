@@ -486,6 +486,7 @@ interface DiscoveryFilters {
   league: string;
   club: string;
   nationality: string;
+  sameOrStronger: boolean;
 }
 
 function DiscoverySection({
@@ -507,7 +508,12 @@ function DiscoverySection({
   onFilterChange: (patch: Partial<DiscoveryFilters>) => void;
   pointsLabel?: string;
 }) {
-  const { league: leagueFilter, club: clubFilter, nationality: nationalityFilter } = filters;
+  const {
+    league: leagueFilter,
+    club: clubFilter,
+    nationality: nationalityFilter,
+    sameOrStronger,
+  } = filters;
   const isOverpriced = variant === "overpriced";
   const accentColor = isOverpriced ? "var(--accent-cold-soft)" : "var(--accent-green)";
   const isTop5 = leagueFilter === "top5";
@@ -522,6 +528,7 @@ function DiscoverySection({
   );
 
   const isSingleLeague = leagueFilter !== "all" && !isTop5;
+  const leagueValues = useMemo(() => buildLeagueValues(allPlayers), [allPlayers]);
   const scopedPool = useMemo(() => {
     if (isTop5) return allPlayers.filter((p) => TOP_5_LEAGUES.includes(p.league));
     if (isSingleLeague) return allPlayers.filter((p) => p.league === leagueFilter);
@@ -532,7 +539,20 @@ function DiscoverySection({
     let filtered = filterPlayersByLeagueAndClub(candidates, leagueFilter, clubFilter);
     if (nationalityFilter !== "all")
       filtered = filtered.filter((p) => p.nationality === nationalityFilter);
-    if (scopedPool) {
+    if (sameOrStronger) {
+      // Recount each candidate against only peers in its own league or a stronger one (pool cached per league).
+      const poolByLeague = new Map<string, PlayerStats[]>();
+      filtered = filtered
+        .map((player) => {
+          let pool = poolByLeague.get(player.league);
+          if (!pool) {
+            pool = allPlayers.filter(isSameOrStrongerLeague(leagueValues, player.league));
+            poolByLeague.set(player.league, pool);
+          }
+          return { ...player, comparisonCount: countComparisons(player, pool, !isOverpriced) };
+        })
+        .filter((p) => p.comparisonCount >= MIN_COMPARISON_COUNT);
+    } else if (scopedPool) {
       filtered = filtered
         .map((player) => ({
           ...player,
@@ -546,7 +566,18 @@ function DiscoverySection({
     if (sortBy === "ga-desc") return sorted.sort((a, b) => b.points - a.points);
     if (sortBy === "ga-asc") return sorted.sort((a, b) => a.points - b.points);
     return sorted.sort((a, b) => b.comparisonCount - a.comparisonCount);
-  }, [candidates, scopedPool, leagueFilter, clubFilter, nationalityFilter, sortBy, isOverpriced]);
+  }, [
+    candidates,
+    scopedPool,
+    sameOrStronger,
+    leagueValues,
+    allPlayers,
+    leagueFilter,
+    clubFilter,
+    nationalityFilter,
+    sortBy,
+    isOverpriced,
+  ]);
 
   const isValueActive = sortBy === "value-asc" || sortBy === "value-desc";
   const isGaActive = sortBy === "ga-asc" || sortBy === "ga-desc";
@@ -617,8 +648,22 @@ function DiscoverySection({
           <LeagueCombobox
             players={candidates}
             value={leagueFilter}
-            onChange={(v) => onFilterChange({ league: v || "all" })}
+            onChange={(v) => onFilterChange({ league: v || "all", sameOrStronger: false })}
           />
+          <FilterButton
+            active={sameOrStronger}
+            onClick={() => onFilterChange({ sameOrStronger: !sameOrStronger, league: "all" })}
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 19V14M9 19V11M14 19V8M19 19V5"
+              />
+            </svg>
+            Same or stronger league
+          </FilterButton>
           <Combobox
             value={clubFilter || "all"}
             onChange={(v) => onFilterChange({ club: v === "all" ? "" : v })}
@@ -962,6 +1007,7 @@ export function ValueAnalysisUI({
   const underLeagueFilter = params.get("uLeague") || "all";
   const underClubFilter = params.get("uClub") || "";
   const underNatFilter = params.get("uNat") || "all";
+  const underStrongerOnly = params.get("uStronger") === "1";
   const underSortBy = parseDiscoverySort(params.get("uSort"));
   const benchStrongerOnly = params.get("bStronger") === "1";
   const benchSameLeagueOnly = params.get("bLeague") === "1";
@@ -970,6 +1016,7 @@ export function ValueAnalysisUI({
   const overLeagueFilter = params.get("oLeague") || "all";
   const overClubFilter = params.get("oClub") || "";
   const overNatFilter = params.get("oNat") || "all";
+  const overStrongerOnly = params.get("oStronger") === "1";
   const overSortBy = parseDiscoverySort(params.get("oSort"));
 
   // ── Discovery tab state ──
@@ -1396,6 +1443,7 @@ export function ValueAnalysisUI({
                     league: underLeagueFilter,
                     club: underClubFilter,
                     nationality: underNatFilter,
+                    sameOrStronger: underStrongerOnly,
                   }}
                   onFilterChange={(f) =>
                     update({
@@ -1405,6 +1453,9 @@ export function ValueAnalysisUI({
                       ...(f.club !== undefined && { uClub: f.club || null }),
                       ...(f.nationality !== undefined && {
                         uNat: f.nationality === "all" ? null : f.nationality,
+                      }),
+                      ...(f.sameOrStronger !== undefined && {
+                        uStronger: f.sameOrStronger ? "1" : null,
                       }),
                     })
                   }
@@ -1422,6 +1473,7 @@ export function ValueAnalysisUI({
                     league: overLeagueFilter,
                     club: overClubFilter,
                     nationality: overNatFilter,
+                    sameOrStronger: overStrongerOnly,
                   }}
                   onFilterChange={(f) =>
                     update({
@@ -1431,6 +1483,9 @@ export function ValueAnalysisUI({
                       ...(f.club !== undefined && { oClub: f.club || null }),
                       ...(f.nationality !== undefined && {
                         oNat: f.nationality === "all" ? null : f.nationality,
+                      }),
+                      ...(f.sameOrStronger !== undefined && {
+                        oStronger: f.sameOrStronger ? "1" : null,
                       }),
                     })
                   }
