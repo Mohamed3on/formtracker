@@ -19,6 +19,8 @@ import { VirtualList } from "@/components/VirtualList";
 import {
   filterPlayersByLeagueAndClub,
   TOP_5_LEAGUES,
+  buildLeagueValues,
+  isSameOrStrongerLeague,
   filterMinutesBenchmark,
   gamesAvailable,
   missedPct,
@@ -961,7 +963,7 @@ export function ValueAnalysisUI({
   const underClubFilter = params.get("uClub") || "";
   const underNatFilter = params.get("uNat") || "all";
   const underSortBy = parseDiscoverySort(params.get("uSort"));
-  const benchTop5Only = params.get("bTop5") === "1";
+  const benchStrongerOnly = params.get("bStronger") === "1";
   const benchSameLeagueOnly = params.get("bLeague") === "1";
 
   // ── Overperformer state ──
@@ -991,11 +993,13 @@ export function ValueAnalysisUI({
   const targetMinutes = gaData?.targetPlayer?.minutes;
 
   const targetLeague = gaData?.targetPlayer?.league;
+  const leagueValues = useMemo(() => buildLeagueValues(allPlayers), [allPlayers]);
   const benchScopePredicate = useMemo(() => {
     if (benchSameLeagueOnly && targetLeague) return (p: PlayerStats) => p.league === targetLeague;
-    if (benchTop5Only) return (p: PlayerStats) => TOP_5_LEAGUES.includes(p.league);
+    if (benchStrongerOnly && targetLeague)
+      return isSameOrStrongerLeague(leagueValues, targetLeague);
     return null;
-  }, [benchSameLeagueOnly, targetLeague, benchTop5Only]);
+  }, [benchSameLeagueOnly, targetLeague, benchStrongerOnly, leagueValues]);
 
   const filteredUnderperformers = useMemo(
     () =>
@@ -1021,12 +1025,19 @@ export function ValueAnalysisUI({
       const count = allPlayers.filter((p) => p.league === targetLeague).length;
       return `Analyzed ${count.toLocaleString()} players in ${targetLeague}`;
     }
-    if (benchTop5Only) {
-      const count = allPlayers.filter((p) => TOP_5_LEAGUES.includes(p.league)).length;
-      return `Analyzed ${count.toLocaleString()} players across the top 5 leagues`;
+    if (benchStrongerOnly && targetLeague) {
+      const count = allPlayers.filter(isSameOrStrongerLeague(leagueValues, targetLeague)).length;
+      return `Analyzed ${count.toLocaleString()} players in ${targetLeague} or stronger leagues`;
     }
     return `Analyzed ${gaData?.totalPlayers.toLocaleString()} players across top European leagues`;
-  }, [benchSameLeagueOnly, benchTop5Only, targetLeague, allPlayers, gaData?.totalPlayers]);
+  }, [
+    benchSameLeagueOnly,
+    benchStrongerOnly,
+    targetLeague,
+    allPlayers,
+    leagueValues,
+    gaData?.totalPlayers,
+  ]);
 
   // ── Discovery tab counts ──
   const underTabCount = rawUnderCandidates.length;
@@ -1088,7 +1099,7 @@ export function ValueAnalysisUI({
           value={mode}
           onValueChange={(v) => {
             if (!v) return;
-            push({ mode: v === "ga" ? null : v, tab: null, bTop5: null, bLeague: null });
+            push({ mode: v === "ga" ? null : v, tab: null, bStronger: null, bLeague: null });
           }}
         >
           <ToggleGroupItem value="ga" className="px-4">
@@ -1181,22 +1192,26 @@ export function ValueAnalysisUI({
 
               <div className="flex flex-wrap items-center gap-2">
                 <FilterButton
-                  active={benchTop5Only}
-                  onClick={() => update({ bTop5: benchTop5Only ? null : "1", bLeague: null })}
+                  active={benchStrongerOnly}
+                  onClick={() =>
+                    update({ bStronger: benchStrongerOnly ? null : "1", bLeague: null })
+                  }
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M4 19V14M9 19V11M14 19V8M19 19V5"
                     />
                   </svg>
-                  Top 5 leagues
+                  Same or stronger league
                 </FilterButton>
                 <FilterButton
                   active={benchSameLeagueOnly}
-                  onClick={() => update({ bLeague: benchSameLeagueOnly ? null : "1", bTop5: null })}
+                  onClick={() =>
+                    update({ bLeague: benchSameLeagueOnly ? null : "1", bStronger: null })
+                  }
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path

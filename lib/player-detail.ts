@@ -4,10 +4,11 @@ import type { MarketValueMover, MinutesValuePlayer, PlayerStats } from "@/app/ty
 import { findRepeatLosers, findRepeatWinners } from "@/lib/biggest-movers";
 import { applyStatsToggles, getMinutesValueData, toPlayerStats } from "@/lib/fetch-minutes-value";
 import {
+  buildLeagueValues,
   filterMinutesBenchmark,
-  filterTop5,
   getFormStats,
   gamesScheduled,
+  isSameOrStrongerLeague,
   missedPct,
 } from "@/lib/filter-players";
 import { extractClubIdFromLogoUrl, formatMarketValue } from "@/lib/format";
@@ -381,10 +382,13 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
     };
   };
 
+  const leagueValues = buildLeagueValues(comparisonPlayers);
   const comparisons: Record<ComparisonScope, ScopedComparison> = {
     all: buildScope(comparisonPlayers),
     league: buildScope(comparisonPlayers.filter((p) => p.league === comparisonTarget.league)),
-    top5: buildScope(filterTop5(comparisonPlayers)),
+    sameOrStronger: buildScope(
+      comparisonPlayers.filter(isSameOrStrongerLeague(leagueValues, comparisonTarget.league)),
+    ),
   };
 
   const topClubmatesByNpga = [...clubmates]
@@ -462,7 +466,7 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
 }
 
 export const getPlayerDetailData = cache((playerId: string) =>
-  unstable_cache(() => computePlayerDetailData(playerId), [`player-detail-v3-${playerId}`], {
+  unstable_cache(() => computePlayerDetailData(playerId), [`player-detail-v4-${playerId}`], {
     revalidate: 43200,
     tags: ["form-analysis"],
   })(),

@@ -16,12 +16,12 @@ export function HeroSignalBadges({
   const params = useSearchParams();
   const scope = paramsToScope({
     sameLeague: params.get("sameLeague"),
-    top5: params.get("top5"),
+    allLeagues: params.get("allLeagues"),
   });
   const summary = signalSummaries[scope];
   const scopeSuffix = {
     all: "",
-    top5: " in top-5 leagues",
+    sameOrStronger: " in same or stronger leagues",
     league: ` in ${leagueLabel}`,
   }[scope];
 

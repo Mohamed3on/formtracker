@@ -17,14 +17,23 @@ export function uniqueFilterOptions<T>(
   ];
 }
 
+/** Total market value per league — the ranking that sorts the players-page league list and judges league strength. */
+export function buildLeagueValues<T extends { league: string }>(
+  players: T[],
+  getValue: (p: T) => number = (p) => (p as { marketValue?: number }).marketValue ?? 0,
+): Map<string, number> {
+  const value = new Map<string, number>();
+  for (const p of players)
+    if (p.league) value.set(p.league, (value.get(p.league) ?? 0) + getValue(p));
+  return value;
+}
+
 /** Build league options for Combobox: quick filters (All / Top 5) + one list of leagues sorted by total market value. */
 export function buildLeagueGroups<T extends { league: string }>(
   players: T[],
   getValue: (p: T) => number = (p) => (p as { marketValue?: number }).marketValue ?? 0,
 ): ComboboxGroup[] {
-  const value = new Map<string, number>();
-  for (const p of players)
-    if (p.league) value.set(p.league, (value.get(p.league) ?? 0) + getValue(p));
+  const value = buildLeagueValues(players, getValue);
   const leagues = [...value.keys()].sort((a, b) => (value.get(b) ?? 0) - (value.get(a) ?? 0));
   return [
     {
@@ -51,8 +60,13 @@ export function filterPlayersByLeagueAndClub<T extends { league: string; club: s
   });
 }
 
-export function filterTop5<T extends { league: string }>(players: T[]): T[] {
-  return players.filter((p) => TOP_5_LEAGUES.includes(p.league));
+/** Predicate: a player's league is the target's league or a stronger one (ranked by total market value). */
+export function isSameOrStrongerLeague(
+  leagueValues: Map<string, number>,
+  targetLeague: string,
+): (p: { league: string }) => boolean {
+  const threshold = leagueValues.get(targetLeague) ?? 0;
+  return (p) => (leagueValues.get(p.league) ?? 0) >= threshold;
 }
 
 export function getFormMinutes(
