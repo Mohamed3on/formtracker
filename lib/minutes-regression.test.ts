@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
-import { join } from "path";
 import { analyzeMinutesRegressions } from "./minutes-regression";
 import type { MinutesValuePlayer } from "@/app/types";
 
@@ -96,26 +94,42 @@ describe("analyzeMinutesRegressions", () => {
   });
 
   it("ignores Al-Hilal whole-club regression from the real failed CI run", () => {
-    const old = JSON.parse(
-      readFileSync(join(process.cwd(), "data/minutes-value.json"), "utf-8"),
-    ) as MinutesValuePlayer[];
-    // Simulate the actual TM correction: 5 Al-Hilal players lose ~90'
+    // The real incident: TM voided an Al-Hilal match, so its players each lost ~90'.
+    // Al-Hilal has few enough qualifying players that 5 regressing is >=50% of the club,
+    // so the whole-club rule attributes it to a TM correction rather than a scrape failure.
+    const alHilal = [
+      makePlayer("339808", "Theo Hernández", "Al-Hilal", 1200),
+      makePlayer("225161", "Rúben Neves", "Al-Hilal", 1100),
+      makePlayer("266302", "Sergej Milinković-Savić", "Al-Hilal", 1300),
+      makePlayer("668267", "Marcos Leonardo", "Al-Hilal", 900),
+      makePlayer("323704", "Malcom", "Al-Hilal", 1000),
+      makePlayer("357565", "Yassine Bounou", "Al-Hilal", 1400),
+      makePlayer("232456", "Kalidou Koulibaly", "Al-Hilal", 1350),
+      makePlayer("180066", "Aleksandar Mitrović", "Al-Hilal", 800),
+    ];
+    // A realistically-sized rest-of-dataset so maxScattered mirrors production.
+    const others = Array.from({ length: 1200 }, (_, i) =>
+      makePlayer(`o${i}`, `P${i}`, `Club${i % 80}`, 1000),
+    );
+    const old = [...alHilal, ...others];
+
+    // Simulate the TM correction: 5 of the Al-Hilal players lose ~90'.
     const dropped: Record<string, number> = {
-      "339808": 90, // Theo Hernández
-      "225161": 90, // Rúben Neves
-      "266302": 90, // Sergej Milinković-Savić
-      "668267": 79, // Marcos Leonardo
-      "323704": 89, // Malcom
+      "339808": 90,
+      "225161": 90,
+      "266302": 90,
+      "668267": 79,
+      "323704": 89,
     };
     const fresh = old.map((p) => {
       const drop = dropped[p.playerId];
       return drop ? { ...p, minutes: p.minutes - drop } : p;
     });
-    const droppedNames = Object.keys(dropped);
-    expect(droppedNames.every((id) => old.some((p) => p.playerId === id))).toBe(true);
 
     const r = analyzeMinutesRegressions(old, fresh);
     expect(r.ignoredClubs).toContain("Al-Hilal");
+    expect(r.ignoredCount).toBe(5);
+    expect(r.scattered).toHaveLength(0);
     expect(r.fail).toBe(false);
   });
 });
