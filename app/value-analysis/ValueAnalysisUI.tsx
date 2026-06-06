@@ -501,6 +501,40 @@ interface DiscoveryFilters {
   sameOrStronger: boolean;
 }
 
+type DiscoveryPrefix = "u" | "o";
+
+/** Filter/sort props for one discovery section, mirrored to/from prefixed URL params (Overpriced "u" / Bargains "o"). */
+function discoveryControls(
+  prefix: DiscoveryPrefix,
+  params: { get(key: string): string | null },
+  update: (patch: Record<string, string | null>) => void,
+) {
+  return {
+    sortBy: parseDiscoverySort(params.get(`${prefix}Sort`)),
+    onSortChange: (value: DiscoverySortKey) =>
+      update({ [`${prefix}Sort`]: value === "count" ? null : value }),
+    filters: {
+      league: params.get(`${prefix}League`) || "all",
+      club: params.get(`${prefix}Club`) || "",
+      nationality: params.get(`${prefix}Nat`) || "all",
+      sameOrStronger: params.get(`${prefix}Stronger`) === "1",
+    } satisfies DiscoveryFilters,
+    onFilterChange: (f: Partial<DiscoveryFilters>) =>
+      update({
+        ...(f.league !== undefined && {
+          [`${prefix}League`]: f.league === "all" ? null : f.league,
+        }),
+        ...(f.club !== undefined && { [`${prefix}Club`]: f.club || null }),
+        ...(f.nationality !== undefined && {
+          [`${prefix}Nat`]: f.nationality === "all" ? null : f.nationality,
+        }),
+        ...(f.sameOrStronger !== undefined && {
+          [`${prefix}Stronger`]: f.sameOrStronger ? "1" : null,
+        }),
+      }),
+  };
+}
+
 function DiscoverySection({
   variant,
   candidates,
@@ -1015,21 +1049,13 @@ export function ValueAnalysisUI({
     push({ id: null, name: null, tab: null });
   }, [push]);
 
-  // ── G+A state ──
-  const underLeagueFilter = params.get("uLeague") || "all";
-  const underClubFilter = params.get("uClub") || "";
-  const underNatFilter = params.get("uNat") || "all";
-  const underStrongerOnly = params.get("uStronger") === "1";
-  const underSortBy = parseDiscoverySort(params.get("uSort"));
+  // ── G+A benchmark state ──
   const benchStrongerOnly = params.get("bStronger") === "1";
   const benchSameLeagueOnly = params.get("bLeague") === "1";
 
-  // ── Overperformer state ──
-  const overLeagueFilter = params.get("oLeague") || "all";
-  const overClubFilter = params.get("oClub") || "";
-  const overNatFilter = params.get("oNat") || "all";
-  const overStrongerOnly = params.get("oStronger") === "1";
-  const overSortBy = parseDiscoverySort(params.get("oSort"));
+  // ── Discovery state (Overpriced "u" / Bargains "o") ──
+  const underControls = discoveryControls("u", params, update);
+  const overControls = discoveryControls("o", params, update);
 
   // ── Discovery tab state ──
   const discoveryTab: DiscoveryTab = params.get("dTab") === "bargains" ? "bargains" : "overpriced";
@@ -1443,29 +1469,8 @@ export function ValueAnalysisUI({
                   candidates={rawUnderCandidates}
                   allPlayers={allPlayers}
                   leagueValues={leagueValues}
-                  sortBy={underSortBy}
-                  onSortChange={(value) => update({ uSort: value === "count" ? null : value })}
-                  filters={{
-                    league: underLeagueFilter,
-                    club: underClubFilter,
-                    nationality: underNatFilter,
-                    sameOrStronger: underStrongerOnly,
-                  }}
-                  onFilterChange={(f) =>
-                    update({
-                      ...(f.league !== undefined && {
-                        uLeague: f.league === "all" ? null : f.league,
-                      }),
-                      ...(f.club !== undefined && { uClub: f.club || null }),
-                      ...(f.nationality !== undefined && {
-                        uNat: f.nationality === "all" ? null : f.nationality,
-                      }),
-                      ...(f.sameOrStronger !== undefined && {
-                        uStronger: f.sameOrStronger ? "1" : null,
-                      }),
-                    })
-                  }
                   pointsLabel={pointsLabel}
+                  {...underControls}
                 />
               </TabsContent>
               <TabsContent value="bargains">
@@ -1474,29 +1479,8 @@ export function ValueAnalysisUI({
                   candidates={rawOverCandidates}
                   allPlayers={allPlayers}
                   leagueValues={leagueValues}
-                  sortBy={overSortBy}
-                  onSortChange={(value) => update({ oSort: value === "count" ? null : value })}
-                  filters={{
-                    league: overLeagueFilter,
-                    club: overClubFilter,
-                    nationality: overNatFilter,
-                    sameOrStronger: overStrongerOnly,
-                  }}
-                  onFilterChange={(f) =>
-                    update({
-                      ...(f.league !== undefined && {
-                        oLeague: f.league === "all" ? null : f.league,
-                      }),
-                      ...(f.club !== undefined && { oClub: f.club || null }),
-                      ...(f.nationality !== undefined && {
-                        oNat: f.nationality === "all" ? null : f.nationality,
-                      }),
-                      ...(f.sameOrStronger !== undefined && {
-                        oStronger: f.sameOrStronger ? "1" : null,
-                      }),
-                    })
-                  }
                   pointsLabel={pointsLabel}
+                  {...overControls}
                 />
               </TabsContent>
             </Tabs>
