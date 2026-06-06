@@ -64,6 +64,18 @@ type DiscoveryCandidate = PlayerStats & { comparisonCount: number };
 
 const EMPTY_MV: MinutesValuePlayer[] = [];
 
+// Ascending-bars glyph shared by the two "Same or stronger league" filters (league strength).
+const strongerLeagueIcon = (
+  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 19V14M9 19V11M14 19V8M19 19V5"
+    />
+  </svg>
+);
+
 function computeBenchmark(players: PlayerStats[], id: string, name: string) {
   const normalized = name ? normalizeForSearch(name) : "";
   const target =
@@ -493,6 +505,7 @@ function DiscoverySection({
   variant,
   candidates,
   allPlayers,
+  leagueValues,
   sortBy,
   onSortChange,
   filters,
@@ -502,6 +515,7 @@ function DiscoverySection({
   variant: DiscoveryTab;
   candidates: DiscoveryCandidate[];
   allPlayers: PlayerStats[];
+  leagueValues: Map<string, number>;
   sortBy: DiscoverySortKey;
   onSortChange: (value: DiscoverySortKey) => void;
   filters: DiscoveryFilters;
@@ -528,29 +542,35 @@ function DiscoverySection({
   );
 
   const isSingleLeague = leagueFilter !== "all" && !isTop5;
-  const leagueValues = useMemo(() => buildLeagueValues(allPlayers), [allPlayers]);
   const scopedPool = useMemo(() => {
     if (isTop5) return allPlayers.filter((p) => TOP_5_LEAGUES.includes(p.league));
     if (isSingleLeague) return allPlayers.filter((p) => p.league === leagueFilter);
     return null;
   }, [allPlayers, isTop5, isSingleLeague, leagueFilter]);
 
+  // Same-or-stronger peers for a league, cached so sort/club/nationality changes don't rebuild pools.
+  const poolForLeague = useMemo(() => {
+    const cache = new Map<string, PlayerStats[]>();
+    return (league: string) => {
+      let pool = cache.get(league);
+      if (!pool) {
+        pool = allPlayers.filter(isSameOrStrongerLeague(leagueValues, league));
+        cache.set(league, pool);
+      }
+      return pool;
+    };
+  }, [allPlayers, leagueValues]);
+
   const filteredCandidates = useMemo(() => {
     let filtered = filterPlayersByLeagueAndClub(candidates, leagueFilter, clubFilter);
     if (nationalityFilter !== "all")
       filtered = filtered.filter((p) => p.nationality === nationalityFilter);
     if (sameOrStronger) {
-      // Recount each candidate against only peers in its own league or a stronger one (pool cached per league).
-      const poolByLeague = new Map<string, PlayerStats[]>();
       filtered = filtered
-        .map((player) => {
-          let pool = poolByLeague.get(player.league);
-          if (!pool) {
-            pool = allPlayers.filter(isSameOrStrongerLeague(leagueValues, player.league));
-            poolByLeague.set(player.league, pool);
-          }
-          return { ...player, comparisonCount: countComparisons(player, pool, !isOverpriced) };
-        })
+        .map((player) => ({
+          ...player,
+          comparisonCount: countComparisons(player, poolForLeague(player.league), !isOverpriced),
+        }))
         .filter((p) => p.comparisonCount >= MIN_COMPARISON_COUNT);
     } else if (scopedPool) {
       filtered = filtered
@@ -570,8 +590,7 @@ function DiscoverySection({
     candidates,
     scopedPool,
     sameOrStronger,
-    leagueValues,
-    allPlayers,
+    poolForLeague,
     leagueFilter,
     clubFilter,
     nationalityFilter,
@@ -654,14 +673,7 @@ function DiscoverySection({
             active={sameOrStronger}
             onClick={() => onFilterChange({ sameOrStronger: !sameOrStronger, league: "all" })}
           >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 19V14M9 19V11M14 19V8M19 19V5"
-              />
-            </svg>
+            {strongerLeagueIcon}
             Same or stronger league
           </FilterButton>
           <Combobox
@@ -1244,14 +1256,7 @@ export function ValueAnalysisUI({
                     update({ bStronger: benchStrongerOnly ? null : "1", bLeague: null })
                   }
                 >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 19V14M9 19V11M14 19V8M19 19V5"
-                    />
-                  </svg>
+                  {strongerLeagueIcon}
                   Same or stronger league
                 </FilterButton>
                 <FilterButton
@@ -1437,6 +1442,7 @@ export function ValueAnalysisUI({
                   variant="overpriced"
                   candidates={rawUnderCandidates}
                   allPlayers={allPlayers}
+                  leagueValues={leagueValues}
                   sortBy={underSortBy}
                   onSortChange={(value) => update({ uSort: value === "count" ? null : value })}
                   filters={{
@@ -1467,6 +1473,7 @@ export function ValueAnalysisUI({
                   variant="bargains"
                   candidates={rawOverCandidates}
                   allPlayers={allPlayers}
+                  leagueValues={leagueValues}
                   sortBy={overSortBy}
                   onSortChange={(value) => update({ oSort: value === "count" ? null : value })}
                   filters={{
