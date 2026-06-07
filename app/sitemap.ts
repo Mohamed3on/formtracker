@@ -12,6 +12,8 @@ const CORE_ROUTES = [
   "/value-analysis",
   "/injured",
   "/biggest-movers",
+  "/wc-live",
+  "/wc",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
