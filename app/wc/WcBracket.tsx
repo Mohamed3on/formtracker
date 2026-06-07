@@ -165,8 +165,9 @@ export function WcBracket() {
 
       <div className="section-title">Every Team by Market Value</div>
       <p className="hint">
-        Sorted by squad value. <b>Click a team</b> to trace its path above. The <b>vs Value</b>{" "}
-        column shows whether the draw let it over- or under-achieve its value rank.
+        Sorted by squad value. <b>Click a team</b> to trace its path above. <b>vs Exp</b> shows how
+        many knockout rounds further (▲) or shorter (▼) a team went than its market-value seeding
+        predicts — ranks 5–8 are seeded to the quarters, 9–16 to the last 16, and so on.
       </p>
       <div className="mv-grid">
         <PlacementTable
@@ -249,18 +250,17 @@ export function WcBracket() {
 
 function DeltaCell({ delta }: { delta: number }) {
   if (delta === 0) return <span className="delta met">— met</span>;
+  const n = Math.abs(delta);
+  const rounds = `${n} round${n > 1 ? "s" : ""}`;
   if (delta > 0)
     return (
-      <span className="delta over" title={`Overachieved by ${delta} place${delta > 1 ? "s" : ""}`}>
-        ▲ {delta}
+      <span className="delta over" title={`Went ${rounds} further than its value seeding`}>
+        ▲ {n}
       </span>
     );
   return (
-    <span
-      className="delta under"
-      title={`Underachieved by ${-delta} place${-delta > 1 ? "s" : ""}`}
-    >
-      ▼ {-delta}
+    <span className="delta under" title={`Fell ${rounds} short of its value seeding`}>
+      ▼ {n}
     </span>
   );
 }
@@ -286,7 +286,7 @@ function PlacementTable({
           <th className="r">Value</th>
           <th>Finish</th>
           <th className="r">Pos</th>
-          <th className="r">vs Value</th>
+          <th className="r">vs Exp</th>
         </tr>
       </thead>
       <tbody>

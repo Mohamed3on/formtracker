@@ -304,6 +304,24 @@ const finishCls = (t: Team) => {
   return r === 3 ? "p-qf" : r === 2 ? "p-r16" : r === 1 ? "p-r32" : "p-group";
 };
 
+// Rounds reached vs the round a team's market-value rank seeds it into.
+// Stage scale: groups 0, R32 1, R16 2, QF 3, SF 4, final 5, champion 6.
+const actualStage = (t: Team) => (t === champion ? 6 : reachRank[t.name]);
+const expectedStage = (rank: number) =>
+  rank === 1
+    ? 6
+    : rank === 2
+      ? 5
+      : rank <= 4
+        ? 4
+        : rank <= 8
+          ? 3
+          : rank <= 16
+            ? 2
+            : rank <= 32
+              ? 1
+              : 0;
+
 // ---- Serialisable view model ----
 export type TeamLite = { name: string; short: string; flag: string; mv: number };
 export type Card = {
@@ -366,7 +384,7 @@ const ranked: RankRow[] = [...TEAMS]
       posLabel: ordinal(pos),
       finishLabel: reachLabel[t.name],
       finishCls: finishCls(t),
-      delta: rank - pos, // >0 overachieved, <0 underachieved
+      delta: actualStage(t) - expectedStage(rank), // rounds over/under expected seeding
     };
   });
 
