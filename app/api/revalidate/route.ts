@@ -8,6 +8,8 @@ const ALL_TAGS = [
   "injured",
   "player-recent-matches",
   "biggest-movers",
+  "wc-teams",
+  "wc-live",
 ];
 
 export async function POST(request: NextRequest) {

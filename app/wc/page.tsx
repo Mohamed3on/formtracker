@@ -1,4 +1,6 @@
 import { createPageMetadata } from "@/lib/metadata";
+import { buildModel } from "@/lib/wc/model";
+import { getWcTeams } from "@/lib/wc/teams";
 import { WcBracket } from "./WcBracket";
 
 export const metadata = {
@@ -11,10 +13,11 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function WcPage() {
+export default async function WcPage() {
+  const model = buildModel(await getWcTeams());
   return (
     <div className="py-6 sm:py-10">
-      <WcBracket />
+      <WcBracket model={model} />
     </div>
   );
 }

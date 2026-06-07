@@ -1,15 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { MODEL, fmt, fmtS, type Card, type RankRow, type TeamLite } from "./sim";
+import { fmt, fmtS, type Card, type RankRow, type TeamLite, type WcModel } from "@/lib/wc/model";
 import "./wc.css";
 
 const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
-const { bracket, cardH, cardW } = MODEL;
-const knockoutTeams = new Set(bracket.cards.flatMap((c) => [c.home.name, c.away.name]));
-
-export function WcBracket() {
+export function WcBracket({ model }: { model: WcModel }) {
+  const { bracket, cardH, cardW } = model;
+  const knockoutTeams = new Set(bracket.cards.flatMap((c) => [c.home.name, c.away.name]));
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const active = hovered ?? pinned;
@@ -72,7 +71,7 @@ export function WcBracket() {
     </div>
   );
 
-  const info = hovered ? MODEL.info[hovered] : null;
+  const info = hovered ? model.info[hovered] : null;
 
   return (
     <div className="wc-root" onMouseMove={onMove}>
@@ -86,7 +85,7 @@ export function WcBracket() {
       </header>
 
       <div className="podiums">
-        {MODEL.podium.map((p, i) => (
+        {model.podium.map((p, i) => (
           <div key={p.team.name} className={j("podium", p.cls)} {...hoverProps(p.team.name)}>
             <div className="medal">{["🥇", "🥈", "🥉", "4"][i]}</div>
             <div className="pflag">{p.team.flag}</div>
@@ -171,22 +170,24 @@ export function WcBracket() {
       </p>
       <div className="mv-grid">
         <PlacementTable
-          rows={MODEL.ranked.slice(0, 24)}
+          rows={model.ranked.slice(0, 24)}
           pinned={pinned}
           onPin={pinTeam}
           hoverProps={hoverProps}
+          knockoutTeams={knockoutTeams}
         />
         <PlacementTable
-          rows={MODEL.ranked.slice(24)}
+          rows={model.ranked.slice(24)}
           pinned={pinned}
           onPin={pinTeam}
           hoverProps={hoverProps}
+          knockoutTeams={knockoutTeams}
         />
       </div>
 
       <div className="section-title">Group Stage</div>
       <div className="groups">
-        {MODEL.groups.map((grp) => (
+        {model.groups.map((grp) => (
           <div key={grp.g} className="group-card">
             <div className="ghead">Group {grp.g}</div>
             <table>
@@ -270,11 +271,13 @@ function PlacementTable({
   pinned,
   onPin,
   hoverProps,
+  knockoutTeams,
 }: {
   rows: RankRow[];
   pinned: string | null;
   onPin: (name: string) => void;
   hoverProps: (name: string) => { onMouseEnter: () => void; onMouseLeave: () => void };
+  knockoutTeams: Set<string>;
 }) {
   const clickable = (name: string) => knockoutTeams.has(name);
   return (
