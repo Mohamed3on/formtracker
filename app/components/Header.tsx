@@ -125,7 +125,7 @@ function MainNavLink({
         size="sm"
         asChild
         className={cn(
-          "h-auto px-3 py-1.5 text-sm",
+          "h-auto px-2 py-1.5 text-sm",
           isActive && "bg-elevated text-text-primary",
           className,
         )}
@@ -234,7 +234,7 @@ export function Header() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 xl:flex">
+        <nav className="hidden items-center gap-0.5 xl:flex">
           {navItems
             .filter((i) => !("desktopHidden" in i && i.desktopHidden))
             .map(({ href, label }) => (
