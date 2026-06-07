@@ -43,6 +43,8 @@ export type LiveGroupRow = {
   pts: number;
   cls: string;
   predicted: boolean;
+  expPos: number; // value-rank position within the group
+  delta: number | null; // expPos - actualPos (>0 = above its expected slot); null until played
 };
 export type LiveModel = {
   model: WcModel;
@@ -186,6 +188,13 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
       .map((t) => t.group),
   );
 
+  // Each team's expected position within its group = its value rank in the group.
+  const expPosByGroup: Record<string, Record<string, number>> = {};
+  for (const [g, rows] of predGroups) {
+    expPosByGroup[g] = {};
+    rows.forEach((r, i) => (expPosByGroup[g][r.team.name] = i + 1));
+  }
+
   const liveGroups: Record<string, { live: boolean; rows: LiveGroupRow[] }> = {};
   for (const g of GROUPS) {
     const rd = results.groups[g];
@@ -193,15 +202,21 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
       const sorted = [...rd.rows].sort((a, b) => a.rank - b.rank || b.pts - a.pts || b.gd - a.gd);
       liveGroups[g] = {
         live: true,
-        rows: sorted.map((r, i) => ({
-          team: lite(r.name),
-          pos: r.rank || i + 1,
-          pl: r.played,
-          gd: r.gd,
-          pts: r.pts,
-          cls: i < 2 ? "q" : i === 2 && bestThirdGroups.has(g) ? "q3" : "ko",
-          predicted: false,
-        })),
+        rows: sorted.map((r, i) => {
+          const pos = r.rank || i + 1;
+          const expPos = expPosByGroup[g]?.[r.name] ?? i + 1;
+          return {
+            team: lite(r.name),
+            pos,
+            pl: r.played,
+            gd: r.gd,
+            pts: r.pts,
+            cls: i < 2 ? "q" : i === 2 && bestThirdGroups.has(g) ? "q3" : "ko",
+            predicted: false,
+            expPos,
+            delta: r.played > 0 ? expPos - pos : null,
+          };
+        }),
       };
     } else {
       liveGroups[g] = {
@@ -214,6 +229,8 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
           pts: r.pts,
           cls: r.cls,
           predicted: true,
+          expPos: i + 1,
+          delta: null,
         })),
       };
     }

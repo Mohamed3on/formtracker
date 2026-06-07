@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { fmtS, type Card, type TeamLite } from "@/lib/wc/model";
+import { fmtS, ordinal, type Card, type TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
 import "../wc/wc.css";
 
 const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
+
+function groupDelta(delta: number | null) {
+  if (delta === null) return <span className="delta met">—</span>;
+  if (delta === 0) return <span className="delta met">met</span>;
+  if (delta > 0) return <span className="delta over">▲ {delta}</span>;
+  return <span className="delta under">▼ {-delta}</span>;
+}
 
 export function WcLive({ live }: { live: LiveModel }) {
   const { model, tracker, cardByKey, liveGroups, started } = live;
@@ -259,9 +266,8 @@ export function WcLive({ live }: { live: LiveModel }) {
                 <tr>
                   <th />
                   <th>Team</th>
-                  <th>Pl</th>
-                  <th>+/-</th>
                   <th>Pts</th>
+                  <th className="r">vs Exp</th>
                 </tr>
               </thead>
               <tbody>
@@ -277,9 +283,10 @@ export function WcLive({ live }: { live: LiveModel }) {
                       <span className="flag">{r.team.flag}</span>
                       <span>{r.team.name}</span>
                     </td>
-                    <td className="n">{r.pl}</td>
-                    <td className="n">{r.gd}</td>
                     <td className="n pts">{r.pts}</td>
+                    <td className="n r" title={`Seeded ${ordinal(r.expPos)} by squad value`}>
+                      {groupDelta(r.delta)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
