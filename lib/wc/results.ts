@@ -100,14 +100,15 @@ async function fetchResults(): Promise<WcResults> {
     if (tds.length < 7) return;
     let info: { round: Round; num: number } | null = null;
     let labelIdx = -1;
-    tds.each((i, td) => {
-      if (info) return;
-      const li = parseLabel($(td).text());
+    const cells = tds.toArray();
+    for (let i = 0; i < cells.length; i++) {
+      const li = parseLabel($(cells[i]).text());
       if (li) {
         info = li;
         labelIdx = i;
+        break;
       }
-    });
+    }
     if (!info || labelIdx < 0) return;
     let hs: number | null = null;
     let as: number | null = null;

@@ -87,6 +87,7 @@ function SpinnerIcon({ className }: { className?: string }) {
 
 const navItems = [
   { href: "/", label: "Home", desktopHidden: true },
+  { href: "/wc-live", label: "World Cup" },
   { href: "/form", label: "Recent Form" },
   { href: "/expected-position", label: "Value vs Table" },
   { href: "/players", label: "Players" },
