@@ -39,9 +39,7 @@ export function WcLive({ live }: { live: LiveModel }) {
   }
 
   function pinTeam(name: string) {
-    const next = name === pinned ? null : name;
-    setPinned(next);
-    if (!next) return;
+    setPinned(name);
     const el = scrollRef.current;
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
     requestAnimationFrame(() => {
@@ -50,7 +48,7 @@ export function WcLive({ live }: { live: LiveModel }) {
         const lc = cardByKey[`${c.round}-${c.num}`];
         const home = lc?.home ?? c.home;
         const away = lc?.away ?? c.away;
-        return home.name === next || away.name === next;
+        return home.name === name || away.name === name;
       });
       if (!cs.length) return;
       const minX = Math.min(...cs.map((c) => c.x));
@@ -60,6 +58,11 @@ export function WcLive({ live }: { live: LiveModel }) {
         behavior: "smooth",
       });
     });
+  }
+
+  // Click a team (chip, tracker or group row) to pin its trace; click empty canvas to reset.
+  function onCanvasClick(e: React.MouseEvent) {
+    if (!(e.target as HTMLElement).closest(".bt, tr, .trow")) setPinned(null);
   }
 
   const hover = (name: string) => ({
@@ -76,6 +79,7 @@ export function WcLive({ live }: { live: LiveModel }) {
   ) => (
     <div
       className={j("bt", win && "w", lose && "l", pred && "pred", active === team.name && "on")}
+      onClick={() => pinTeam(team.name)}
       {...hover(team.name)}
     >
       <span className="bf">{team.flag}</span>
@@ -160,7 +164,7 @@ export function WcLive({ live }: { live: LiveModel }) {
   };
 
   return (
-    <div className="wc-root" onMouseMove={onMove}>
+    <div className="wc-root" onMouseMove={onMove} onClick={onCanvasClick}>
       <header className="wc-hero">
         <div className="kicker">FIFA World Cup 2026 · Live vs the value model</div>
         <h1 className="wc-title">Expectations vs Reality</h1>
@@ -218,10 +222,8 @@ export function WcLive({ live }: { live: LiveModel }) {
         <b>Hover or click</b> a team to trace its run.
         {pinned && (
           <>
-            {" — "}
-            <button type="button" onClick={() => setPinned(null)} className="wc-clear">
-              tracing {pinned} (clear)
-            </button>
+            {" "}
+            <span className="wc-clear">Pinned {pinned}</span> — click empty space to reset.
           </>
         )}
       </p>

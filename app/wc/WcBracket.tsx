@@ -26,14 +26,12 @@ export function WcBracket({ model }: { model: WcModel }) {
   }
 
   function pinTeam(name: string) {
-    const next = name === pinned ? null : name;
-    setPinned(next);
-    if (!next) return;
+    setPinned(name);
     const el = scrollRef.current;
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
     requestAnimationFrame(() => {
       if (!el) return;
-      const cards = bracket.cards.filter((c) => c.home.name === next || c.away.name === next);
+      const cards = bracket.cards.filter((c) => c.home.name === name || c.away.name === name);
       if (!cards.length) return;
       const minX = Math.min(...cards.map((c) => c.x));
       const maxX = Math.max(...cards.map((c) => c.x + cardW));
@@ -44,6 +42,11 @@ export function WcBracket({ model }: { model: WcModel }) {
     });
   }
 
+  // Click a team (chip or table row) to pin its trace; click empty canvas to reset.
+  function onCanvasClick(e: React.MouseEvent) {
+    if (!(e.target as HTMLElement).closest(".bt, tr")) setPinned(null);
+  }
+
   const hoverProps = (name: string) => ({
     onMouseEnter: () => setHovered(name),
     onMouseLeave: () => setHovered(null),
@@ -52,6 +55,7 @@ export function WcBracket({ model }: { model: WcModel }) {
   const chip = (team: TeamLite, win: boolean) => (
     <div
       className={j("bt", win ? "w" : "l", active === team.name && "on")}
+      onClick={() => pinTeam(team.name)}
       {...hoverProps(team.name)}
     >
       <span className="bf">{team.flag}</span>
@@ -74,7 +78,7 @@ export function WcBracket({ model }: { model: WcModel }) {
   const info = hovered ? model.info[hovered] : null;
 
   return (
-    <div className="wc-root" onMouseMove={onMove}>
+    <div className="wc-root" onMouseMove={onMove} onClick={onCanvasClick}>
       <header className="wc-hero">
         <div className="kicker">FIFA World Cup 2026 · USA · Canada · Mexico</div>
         <h1 className="wc-title">The Market-Value World Cup</h1>
@@ -98,30 +102,13 @@ export function WcBracket({ model }: { model: WcModel }) {
 
       <div className="section-title">The Bracket</div>
       <p className="hint">
-        Winners flow toward the centre. <b>Hover</b> any team to trace its run and see the round it
-        reached
-        {pinned ? (
+        Winners flow toward the centre. <b>Hover</b> any team to trace its run; <b>click a team</b>{" "}
+        to pin it.
+        {pinned && (
           <>
-            {" — "}
-            <button
-              type="button"
-              onClick={() => setPinned(null)}
-              style={{
-                color: "var(--wc-gold)",
-                fontWeight: 600,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                font: "inherit",
-              }}
-            >
-              tracing {pinned} (clear)
-            </button>
-          </>
-        ) : (
-          <>
-            , or <b>click a row below</b> to pin it.
+            {" "}
+            <span style={{ color: "var(--wc-gold)", fontWeight: 600 }}>Pinned {pinned}</span> —
+            click empty space to reset.
           </>
         )}
       </p>
