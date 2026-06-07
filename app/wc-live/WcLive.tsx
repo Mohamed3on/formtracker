@@ -178,12 +178,12 @@ export function WcLive({ live }: { live: LiveModel }) {
         <div className="wc-banner">
           ⏳ The tournament kicks off <b>Thursday 11 June 2026</b>. Until then this mirrors the
           value prediction below — it fills in with real results as matches are played (refreshed
-          every 12 hours).
+          every 6 hours).
         </div>
       ) : (
         <div className="wc-banner live">
           🔴 Live · <b>{overRows.length}</b> teams ahead of their value seeding,{" "}
-          <b>{underRows.length}</b> behind. Refreshed every 12 hours.
+          <b>{underRows.length}</b> behind. Refreshed every 6 hours.
         </div>
       )}
 
@@ -307,7 +307,7 @@ export function WcLive({ live }: { live: LiveModel }) {
 
       <div className="wc-foot">
         Live data from Transfermarkt · value seeding from current squad market values · refreshed
-        every 12 hours.
+        every 6 hours.
       </div>
 
       <div ref={tipRef} className={j("tip", info && "show")}>
