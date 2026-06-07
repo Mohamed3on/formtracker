@@ -1,0 +1,578 @@
+/* World Cup 2026 sim — styles scoped under .wc-root so they never touch the rest of the app. */
+.wc-root {
+  --wc-panel: #141d2b;
+  --wc-panel2: #0e1521;
+  --wc-line: rgba(125, 145, 170, 0.32);
+  --wc-txt: #e8eef6;
+  --wc-muted: #8a98ab;
+  --wc-win: #3fb950;
+  --wc-gold: #ffd24a;
+  --wc-over: #3fce6b;
+  --wc-under: #ff6b7a;
+
+  color: var(--wc-txt);
+  font-family:
+    var(--font-geist-sans),
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+.wc-root .wc-num,
+.wc-root .bv,
+.wc-root .n,
+.wc-root .pts,
+.wc-root .pos,
+.wc-root .mv-rank,
+.wc-root .mv-val,
+.wc-root .mv-pos,
+.wc-root .pmv,
+.wc-root .delta {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+.wc-root .flag {
+  line-height: 1;
+}
+
+/* hero / podium */
+.wc-root .wc-hero {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.wc-root .kicker {
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--wc-muted);
+  margin-bottom: 12px;
+}
+.wc-root .wc-title {
+  font-size: clamp(28px, 5vw, 50px);
+  margin: 0 0 6px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #fff, #9fb0c4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.wc-root .rule {
+  color: var(--wc-muted);
+  font-size: 15px;
+  max-width: 560px;
+  margin: 8px auto 0;
+}
+.wc-root .rule b {
+  color: var(--wc-gold);
+  font-weight: 600;
+}
+
+.wc-root .podiums {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 26px 0 14px;
+}
+.wc-root .podium {
+  background: var(--wc-panel);
+  border: 1px solid var(--wc-line);
+  border-radius: 18px;
+  padding: 18px 12px;
+  text-align: center;
+}
+.wc-root .podium.gold {
+  border-color: rgba(255, 210, 74, 0.5);
+  background: linear-gradient(180deg, rgba(255, 210, 74, 0.12), transparent);
+  box-shadow: 0 24px 60px -30px rgba(255, 210, 74, 0.5);
+}
+.wc-root .podium.silver {
+  border-color: rgba(205, 215, 225, 0.4);
+}
+.wc-root .podium.bronze {
+  border-color: rgba(205, 139, 79, 0.45);
+}
+.wc-root .podium .medal {
+  font-size: 22px;
+}
+.wc-root .podium.iron .medal {
+  font-size: 13px;
+  color: var(--wc-muted);
+  width: 24px;
+  height: 24px;
+  line-height: 22px;
+  margin: 0 auto;
+  border: 1px solid var(--wc-line);
+  border-radius: 50%;
+}
+.wc-root .podium .pflag {
+  font-size: 38px;
+  margin: 4px 0 2px;
+  line-height: 1;
+}
+.wc-root .podium .pname {
+  font-weight: 700;
+  font-size: 15px;
+}
+.wc-root .podium .pword {
+  color: var(--wc-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 3px;
+}
+.wc-root .podium .pmv {
+  color: var(--wc-muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.wc-root .section-title {
+  font-size: 13px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--wc-muted);
+  margin: 50px 0 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--wc-line);
+}
+.wc-root .hint {
+  color: var(--wc-muted);
+  font-size: 13px;
+  margin: 0 0 4px;
+}
+.wc-root .hint b {
+  color: var(--wc-txt);
+  font-weight: 600;
+}
+
+/* bracket */
+.wc-root .wc-bracket-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  justify-content: safe center;
+  padding: 44px 20px 14px;
+}
+.wc-root .bracket {
+  position: relative;
+  flex: 0 0 auto;
+}
+.wc-root .rlabel {
+  position: absolute;
+  top: 46px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wc-muted);
+  font-weight: 600;
+}
+.wc-root .lines {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.wc-root .lines path {
+  fill: none;
+  stroke: var(--wc-line);
+  stroke-width: 1.6;
+  transition:
+    stroke 0.15s,
+    opacity 0.15s,
+    stroke-width 0.15s;
+}
+
+.wc-root .bcard {
+  position: absolute;
+  z-index: 1;
+}
+.wc-root .bt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px;
+  cursor: default;
+  border: 1px solid var(--wc-line);
+  background: var(--wc-panel);
+  transition:
+    opacity 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+}
+.wc-root .bcard .bt:first-child {
+  border-radius: 9px 9px 0 0;
+  border-bottom: none;
+}
+.wc-root .bcard .bt:last-child {
+  border-radius: 0 0 9px 9px;
+}
+.wc-root .bt .bf {
+  font-size: 14px;
+  line-height: 1;
+}
+.wc-root .bt .bn {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wc-root .bt .bv {
+  font-size: 9.5px;
+  color: var(--wc-muted);
+}
+.wc-root .bt.w {
+  background: linear-gradient(90deg, rgba(63, 185, 80, 0.18), rgba(63, 185, 80, 0.03));
+  box-shadow: inset 2px 0 0 var(--wc-win);
+}
+.wc-root .bt.w .bn {
+  color: #d7ffe0;
+}
+.wc-root .bt.l {
+  opacity: 0.42;
+}
+
+.wc-root .bcard.isfinal .bt {
+  height: 30px;
+  border-color: rgba(255, 210, 74, 0.4);
+}
+.wc-root .bcard.isfinal .bt.w {
+  background: linear-gradient(90deg, rgba(255, 210, 74, 0.22), transparent);
+  box-shadow: inset 2px 0 0 var(--wc-gold);
+}
+.wc-root .bcard.isfinal .bt.w .bn {
+  color: #fff3cf;
+}
+
+.wc-root .crown {
+  position: absolute;
+  width: 180px;
+  text-align: center;
+  z-index: 2;
+  height: 116px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+.wc-root .crown .ccup {
+  font-size: 30px;
+  filter: drop-shadow(0 6px 14px rgba(255, 210, 74, 0.5));
+}
+.wc-root .crown .cfl {
+  font-size: 30px;
+  line-height: 1;
+  margin-top: -2px;
+}
+.wc-root .crown .cnm {
+  font-weight: 800;
+  font-size: 16px;
+  margin-top: 2px;
+}
+.wc-root .crown .clb {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--wc-gold);
+  margin-top: 2px;
+}
+
+.wc-root .tpp {
+  position: absolute;
+  z-index: 2;
+}
+.wc-root .tpp .tplb {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wc-muted);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+/* hover / pin trace */
+.wc-root .bracket.lit .bt:not(.on) {
+  opacity: 0.14;
+}
+.wc-root .bracket.lit .bt.on {
+  opacity: 1;
+}
+.wc-root .bt.on {
+  box-shadow:
+    inset 2px 0 0 var(--wc-gold),
+    0 0 0 1px rgba(255, 210, 74, 0.7);
+  background: linear-gradient(90deg, rgba(255, 210, 74, 0.16), rgba(255, 210, 74, 0.03));
+}
+.wc-root .bt.on .bn {
+  color: #fff3cf;
+}
+.wc-root .bracket.lit .lines path:not(.on) {
+  opacity: 0.08;
+}
+.wc-root .lines path.on {
+  stroke: var(--wc-gold);
+  stroke-width: 3;
+}
+
+/* round-reached tooltip */
+.wc-root .tip {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  background: #0b121d;
+  border: 1px solid var(--wc-line);
+  border-radius: 10px;
+  padding: 7px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+}
+.wc-root .tip.show {
+  display: flex;
+}
+.wc-root .tip .tf {
+  font-size: 15px;
+}
+.wc-root .tip .td {
+  color: var(--wc-muted);
+}
+.wc-root .tip .tr {
+  color: var(--wc-gold);
+  font-weight: 700;
+}
+
+/* value-sorted placement table */
+.wc-root .mv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 4px 28px;
+}
+.wc-root .mv-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.wc-root .mv-table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--wc-muted);
+  padding: 8px 8px 6px;
+  font-weight: 600;
+}
+.wc-root .mv-table th.r,
+.wc-root .mv-table td.r {
+  text-align: right;
+}
+.wc-root .mv-table td {
+  padding: 7px 8px;
+  border-top: 1px solid rgba(125, 145, 170, 0.14);
+  font-size: 13px;
+}
+.wc-root .mv-table tr.row {
+  cursor: pointer;
+}
+.wc-root .mv-table tr.row:hover td {
+  background: rgba(125, 145, 170, 0.07);
+}
+.wc-root .mv-table tr.row.pinned td {
+  background: rgba(255, 210, 74, 0.09);
+}
+.wc-root .mv-table tr.row.pinned td:first-child {
+  box-shadow: inset 3px 0 0 var(--wc-gold);
+}
+.wc-root .mv-rank {
+  color: var(--wc-muted);
+  width: 26px;
+}
+.wc-root .mv-team {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.wc-root .mv-team .flag {
+  margin-right: 8px;
+  font-size: 15px;
+}
+.wc-root .mv-val {
+  color: var(--wc-muted);
+}
+.wc-root .mv-pos {
+  color: var(--wc-txt);
+  font-weight: 600;
+  width: 42px;
+}
+.wc-root .pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.wc-root .p-champ {
+  background: rgba(255, 210, 74, 0.18);
+  color: #ffd24a;
+}
+.wc-root .p-runner {
+  background: rgba(205, 215, 225, 0.16);
+  color: #d6e0ea;
+}
+.wc-root .p-third {
+  background: rgba(205, 139, 79, 0.2);
+  color: #e0a06a;
+}
+.wc-root .p-fourth {
+  background: rgba(205, 139, 79, 0.12);
+  color: #c79873;
+}
+.wc-root .p-qf {
+  background: rgba(63, 185, 80, 0.16);
+  color: #5fd07a;
+}
+.wc-root .p-r16 {
+  background: rgba(63, 185, 140, 0.14);
+  color: #54c69a;
+}
+.wc-root .p-r32 {
+  background: rgba(91, 112, 137, 0.2);
+  color: #9fb1c6;
+}
+.wc-root .p-group {
+  background: rgba(125, 135, 150, 0.12);
+  color: #8696a8;
+}
+
+/* over / under achievement vs market value */
+.wc-root .delta {
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.wc-root .delta.over {
+  color: var(--wc-over);
+}
+.wc-root .delta.under {
+  color: var(--wc-under);
+}
+.wc-root .delta.met {
+  color: var(--wc-muted);
+}
+
+/* groups */
+.wc-root .groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(264px, 1fr));
+  gap: 14px;
+}
+.wc-root .group-card {
+  background: var(--wc-panel);
+  border: 1px solid var(--wc-line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.wc-root .ghead {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--wc-panel2);
+  border-bottom: 1px solid var(--wc-line);
+  color: var(--wc-muted);
+}
+.wc-root .group-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.wc-root .group-card th {
+  text-align: right;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--wc-muted);
+  padding: 8px 10px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.wc-root .group-card th:nth-child(2) {
+  text-align: left;
+}
+.wc-root .group-card td {
+  padding: 8px 10px;
+  border-top: 1px solid rgba(125, 145, 170, 0.16);
+  font-size: 13.5px;
+}
+.wc-root .group-card tr.row {
+  cursor: pointer;
+}
+.wc-root .group-card tr.row:hover td {
+  background: rgba(125, 145, 170, 0.07);
+}
+.wc-root .group-card .pos {
+  color: var(--wc-muted);
+  width: 22px;
+}
+.wc-root .group-card .tc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.wc-root .group-card .tc .flag {
+  font-size: 15px;
+}
+.wc-root .group-card .n {
+  text-align: right;
+  color: var(--wc-muted);
+  width: 30px;
+}
+.wc-root .group-card .pts {
+  color: var(--wc-txt);
+  font-weight: 700;
+}
+.wc-root .group-card tr.q {
+  box-shadow: inset 3px 0 0 var(--wc-win);
+}
+.wc-root .group-card tr.q .pos {
+  color: var(--wc-win);
+  font-weight: 700;
+}
+.wc-root .group-card tr.q3 {
+  box-shadow: inset 3px 0 0 var(--wc-gold);
+}
+.wc-root .group-card tr.q3 .pos {
+  color: var(--wc-gold);
+  font-weight: 700;
+}
+.wc-root .group-card tr.ko {
+  opacity: 0.5;
+}
+
+.wc-root .legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 14px 2px 0;
+  color: var(--wc-muted);
+  font-size: 12px;
+}
+.wc-root .legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.wc-root .wc-foot {
+  text-align: center;
+  color: var(--wc-muted);
+  font-size: 12px;
+  margin-top: 54px;
+}
