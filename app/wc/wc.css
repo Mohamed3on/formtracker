@@ -149,6 +149,8 @@
 .wc-root .wc-bracket-scroll {
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   justify-content: safe center;
   padding: 44px 20px 14px;
@@ -351,7 +353,7 @@
 /* value-sorted placement table */
 .wc-root .mv-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(500px, 100%), 1fr));
   gap: 4px 28px;
 }
 .wc-root .mv-table {
@@ -400,6 +402,19 @@
   margin-right: 8px;
   font-size: 15px;
 }
+/* "view players" icon next to a nation name */
+.wc-root .nat-players {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 2px;
+  color: var(--wc-muted);
+  vertical-align: middle;
+  transition: color 0.15s;
+}
+.wc-root .nat-players:hover {
+  color: var(--wc-gold);
+}
 .wc-root .mv-val {
   color: var(--wc-muted);
 }
@@ -407,6 +422,10 @@
   color: var(--wc-txt);
   font-weight: 600;
   width: 42px;
+}
+.wc-root td.mv-exp {
+  color: var(--wc-muted);
+  white-space: nowrap;
 }
 .wc-root .pill {
   display: inline-block;
@@ -700,4 +719,26 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
+}
+
+/* mobile: keep the value tables inside the viewport */
+@media (max-width: 640px) {
+  .wc-root .mv-exp {
+    display: none;
+  }
+  .wc-root .mv-team {
+    white-space: normal;
+  }
+  .wc-root .mv-table th,
+  .wc-root .mv-table td {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+/* the mouse-following tooltip is meaningless on touch and gets stuck after a tap */
+@media (hover: none) {
+  .wc-root .tip {
+    display: none !important;
+  }
 }

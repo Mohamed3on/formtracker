@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { fmtS, ordinal, type Card, type TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
+import { PlayersLink } from "../wc/PlayersLink";
 import "../wc/wc.css";
 
 const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -15,9 +16,41 @@ function groupDelta(delta: number | null) {
   return <span className="delta under">▼ {-delta}</span>;
 }
 
-export function WcLive({ live }: { live: LiveModel }) {
+// Colour the "Reached" pill by the round actually reached (index = actualStage 0..6).
+const STAGE_PILL = ["p-group", "p-r32", "p-r16", "p-qf", "p-qf", "p-runner", "p-champ"];
+const reachedPill = (r: TrackerRow) =>
+  r.actualStage === null ? (
+    <span className="pill p-group">Yet to play</span>
+  ) : (
+    <span className={j("pill", STAGE_PILL[r.actualStage])}>
+      {r.actualLabel}
+      {r.alive ? " · in" : ""}
+    </span>
+  );
+// vs Exp: blank until played; while alive only show a positive (already overachieving) delta.
+const vsExpDelta = (r: TrackerRow): number | null => {
+  if (r.actualStage === null) return null;
+  const d = r.actualStage - r.expStage;
+  return r.alive && d <= 0 ? null : d;
+};
+
+export function WcLive({
+  live,
+  playerLinks,
+}: {
+  live: LiveModel;
+  playerLinks: Record<string, string>;
+}) {
   const { model, tracker, cardByKey, liveGroups, started } = live;
   const { bracket, cardH, cardW } = model;
+
+  // Teams currently shown in the bracket (real or predicted) are clickable to trace.
+  const knockoutTeams = new Set<string>();
+  for (const c of bracket.cards) {
+    const lc = cardByKey[`${c.round}-${c.num}`];
+    knockoutTeams.add((lc?.home ?? c.home).name);
+    knockoutTeams.add((lc?.away ?? c.away).name);
+  }
 
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
@@ -216,6 +249,31 @@ export function WcLive({ live }: { live: LiveModel }) {
         </div>
       </div>
 
+      <div className="section-title">Every Team by Market Value</div>
+      <p className="hint">
+        Every squad ranked by value, with the round it&apos;s <b>Reached</b> so far against the{" "}
+        <b>Exp</b> round its value seeds it into. <b>Click a knockout team</b> to trace its run
+        below.
+      </p>
+      <div className="mv-grid">
+        <LiveTable
+          rows={tracker.slice(0, 24)}
+          pinned={pinned}
+          onPin={pinTeam}
+          hover={hover}
+          knockoutTeams={knockoutTeams}
+          playerLinks={playerLinks}
+        />
+        <LiveTable
+          rows={tracker.slice(24)}
+          pinned={pinned}
+          onPin={pinTeam}
+          hover={hover}
+          knockoutTeams={knockoutTeams}
+          playerLinks={playerLinks}
+        />
+      </div>
+
       <div className="section-title">The Bracket {started ? "· live" : "· predicted"}</div>
       <p className="hint">
         Solid cards are real results; faded cards are the value prediction awaiting kickoff.{" "}
@@ -324,5 +382,62 @@ export function WcLive({ live }: { live: LiveModel }) {
         )}
       </div>
     </div>
+  );
+}
+
+function LiveTable({
+  rows,
+  pinned,
+  onPin,
+  hover,
+  knockoutTeams,
+  playerLinks,
+}: {
+  rows: TrackerRow[];
+  pinned: string | null;
+  onPin: (name: string) => void;
+  hover: (name: string) => { onMouseEnter: () => void; onMouseLeave: () => void };
+  knockoutTeams: Set<string>;
+  playerLinks: Record<string, string>;
+}) {
+  return (
+    <table className="mv-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Team</th>
+          <th className="r">Value</th>
+          <th>Reached</th>
+          <th className="mv-exp">Exp</th>
+          <th className="r">vs Exp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => {
+          const canPin = knockoutTeams.has(r.team.name);
+          return (
+            <tr
+              key={r.team.name}
+              className={j(canPin && "row", pinned === r.team.name && "pinned")}
+              onClick={canPin ? () => onPin(r.team.name) : undefined}
+              {...hover(r.team.name)}
+            >
+              <td className="mv-rank">{r.rank}</td>
+              <td className="mv-team">
+                <span className="flag">{r.team.flag}</span>
+                {r.team.name}
+                {playerLinks[r.team.name] && (
+                  <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+                )}
+              </td>
+              <td className="mv-val r">{fmtS(r.team.mv)}</td>
+              <td>{reachedPill(r)}</td>
+              <td className="mv-exp">{r.expLabel}</td>
+              <td className="r">{groupDelta(vsExpDelta(r))}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }

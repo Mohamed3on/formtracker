@@ -1,6 +1,7 @@
 import { createPageMetadata } from "@/lib/metadata";
 import { buildModel } from "@/lib/wc/model";
 import { getWcTeams } from "@/lib/wc/teams";
+import { playerLinks } from "@/lib/wc/linkable-nations";
 import { WcBracket } from "./WcBracket";
 
 export const metadata = createPageMetadata({
@@ -11,10 +12,12 @@ export const metadata = createPageMetadata({
 });
 
 export default async function WcPage() {
-  const model = buildModel(await getWcTeams());
+  const teams = await getWcTeams();
+  const model = buildModel(teams);
+  const links = await playerLinks(teams);
   return (
     <div className="py-6 sm:py-10">
-      <WcBracket model={model} />
+      <WcBracket model={model} playerLinks={links} />
     </div>
   );
 }

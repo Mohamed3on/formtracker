@@ -2,11 +2,18 @@
 
 import { useRef, useState } from "react";
 import { fmt, fmtS, type Card, type RankRow, type TeamLite, type WcModel } from "@/lib/wc/model";
+import { PlayersLink } from "./PlayersLink";
 import "./wc.css";
 
 const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
-export function WcBracket({ model }: { model: WcModel }) {
+export function WcBracket({
+  model,
+  playerLinks,
+}: {
+  model: WcModel;
+  playerLinks: Record<string, string>;
+}) {
   const { bracket, cardH, cardW } = model;
   const knockoutTeams = new Set(bracket.cards.flatMap((c) => [c.home.name, c.away.name]));
   const [hovered, setHovered] = useState<string | null>(null);
@@ -162,6 +169,7 @@ export function WcBracket({ model }: { model: WcModel }) {
           onPin={pinTeam}
           hoverProps={hoverProps}
           knockoutTeams={knockoutTeams}
+          playerLinks={playerLinks}
         />
         <PlacementTable
           rows={model.ranked.slice(24)}
@@ -169,6 +177,7 @@ export function WcBracket({ model }: { model: WcModel }) {
           onPin={pinTeam}
           hoverProps={hoverProps}
           knockoutTeams={knockoutTeams}
+          playerLinks={playerLinks}
         />
       </div>
 
@@ -259,12 +268,14 @@ function PlacementTable({
   onPin,
   hoverProps,
   knockoutTeams,
+  playerLinks,
 }: {
   rows: RankRow[];
   pinned: string | null;
   onPin: (name: string) => void;
   hoverProps: (name: string) => { onMouseEnter: () => void; onMouseLeave: () => void };
   knockoutTeams: Set<string>;
+  playerLinks: Record<string, string>;
 }) {
   const clickable = (name: string) => knockoutTeams.has(name);
   return (
@@ -293,6 +304,9 @@ function PlacementTable({
               <td className="mv-team">
                 <span className="flag">{r.team.flag}</span>
                 {r.team.name}
+                {playerLinks[r.team.name] && (
+                  <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+                )}
               </td>
               <td className="mv-val r">{fmtS(r.team.mv)}</td>
               <td>
