@@ -1,11 +1,10 @@
 "use client";
 
+import { clsx } from "clsx";
 import { useRef, useState } from "react";
 import { fmt, fmtS, type Card, type RankRow, type TeamLite, type WcModel } from "@/lib/wc/model";
 import { TeamCell } from "./TeamCell";
 import "./wc.css";
-
-const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
 export function WcBracket({
   model,
@@ -61,7 +60,7 @@ export function WcBracket({
 
   const chip = (team: TeamLite, win: boolean) => (
     <div
-      className={j("bt", win ? "w" : "l", active === team.name && "on")}
+      className={clsx("bt", win ? "w" : "l", active === team.name && "on")}
       onClick={() => pinTeam(team.name)}
       {...hoverProps(team.name)}
     >
@@ -74,7 +73,7 @@ export function WcBracket({
   const card = (c: Card) => (
     <div
       key={c.id}
-      className={j("bcard", c.isFinal && "isfinal")}
+      className={clsx("bcard", c.isFinal && "isfinal")}
       style={{ left: c.x, top: c.y - cardH / 2, width: cardW }}
     >
       {chip(c.home, c.home.name === c.winner)}
@@ -97,7 +96,7 @@ export function WcBracket({
 
       <div className="podiums">
         {model.podium.map((p, i) => (
-          <div key={p.team.name} className={j("podium", p.cls)} {...hoverProps(p.team.name)}>
+          <div key={p.team.name} className={clsx("podium", p.cls)} {...hoverProps(p.team.name)}>
             <div className="medal">{["🥇", "🥈", "🥉", "4"][i]}</div>
             <div className="pflag">{p.team.flag}</div>
             <div className="pname">{p.team.name}</div>
@@ -122,7 +121,7 @@ export function WcBracket({
 
       <div ref={scrollRef} className="full-bleed wc-bracket-scroll" style={{ scrollMarginTop: 72 }}>
         <div
-          className={j("bracket", active && "lit")}
+          className={clsx("bracket", active && "lit")}
           style={{ width: bracket.width, height: bracket.height }}
         >
           <svg className="lines" width={bracket.width} height={bracket.height} aria-hidden>
@@ -198,7 +197,7 @@ export function WcBracket({
               </thead>
               <tbody>
                 {grp.rows.map((r) => (
-                  <tr key={r.team.name} className={j("row", r.cls)} {...hoverProps(r.team.name)}>
+                  <tr key={r.team.name} className={clsx("row", r.cls)} {...hoverProps(r.team.name)}>
                     <td className="pos">
                       {r.pts === 9 ? 1 : r.pts === 6 ? 2 : r.pts === 3 ? 3 : 4}
                     </td>
@@ -231,7 +230,7 @@ export function WcBracket({
         Built from Transfermarkt squad market values · higher value wins every match.
       </div>
 
-      <div ref={tipRef} className={j("tip", info && "show")}>
+      <div ref={tipRef} className={clsx("tip", info && "show")}>
         {info && (
           <>
             <span className="tf">{info.flag}</span>
@@ -296,7 +295,7 @@ function PlacementTable({
           return (
             <tr
               key={r.team.name}
-              className={j(canPin && "row", pinned === r.team.name && "pinned")}
+              className={clsx(canPin && "row", pinned === r.team.name && "pinned")}
               onClick={canPin ? () => onPin(r.team.name) : undefined}
               {...hoverProps(r.team.name)}
             >
@@ -304,7 +303,7 @@ function PlacementTable({
               <TeamCell team={r.team} playerLinks={playerLinks} />
               <td className="mv-val r">{fmtS(r.team.mv)}</td>
               <td>
-                <span className={j("pill", r.finishCls)}>{r.finishLabel}</span>
+                <span className={clsx("pill", r.finishCls)}>{r.finishLabel}</span>
               </td>
               <td className="mv-pos r">{r.posLabel}</td>
               <td className="r">

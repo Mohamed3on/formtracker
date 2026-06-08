@@ -1,13 +1,12 @@
 "use client";
 
+import { clsx } from "clsx";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { fmtS, ordinal, type Card, type TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
 import { TeamCell } from "../wc/TeamCell";
 import "../wc/wc.css";
-
-const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
 function groupDelta(delta: number | null) {
   if (delta === null) return <span className="delta met">—</span>;
@@ -23,7 +22,7 @@ const reachedPill = (r: TrackerRow) =>
   r.actualStage === null ? (
     <span className="pill p-group">Yet to play</span>
   ) : (
-    <span className={j("pill", STAGE_PILL[r.actualStage])}>
+    <span className={clsx("pill", STAGE_PILL[r.actualStage])}>
       {r.actualLabel}
       {r.alive ? " · in" : ""}
     </span>
@@ -112,7 +111,7 @@ export function WcLive({
     score: string | null,
   ) => (
     <div
-      className={j("bt", win && "w", lose && "l", pred && "pred", active === team.name && "on")}
+      className={clsx("bt", win && "w", lose && "l", pred && "pred", active === team.name && "on")}
       onClick={() => pinTeam(team.name)}
       {...hover(team.name)}
     >
@@ -132,7 +131,7 @@ export function WcLive({
     return (
       <div
         key={c.id}
-        className={j("bcard", c.isFinal && "isfinal", pred && "predcard")}
+        className={clsx("bcard", c.isFinal && "isfinal", pred && "predcard")}
         style={{ left: c.x, top: c.y - cardH / 2, width: cardW }}
       >
         {chip(
@@ -190,7 +189,7 @@ export function WcLive({
           {r.actualLabel}
           {r.alive ? " (in)" : ""} <span className="tmut">· exp {r.expLabel}</span>
         </span>
-        <span className={j("delta", kind)}>
+        <span className={clsx("delta", kind)}>
           {kind === "over" ? "▲" : "▼"} {Math.abs(d)}
         </span>
       </div>
@@ -288,7 +287,7 @@ export function WcLive({
       </p>
       <div ref={scrollRef} className="full-bleed wc-bracket-scroll" style={{ scrollMarginTop: 72 }}>
         <div
-          className={j("bracket", active && "lit")}
+          className={clsx("bracket", active && "lit")}
           style={{ width: bracket.width, height: bracket.height }}
         >
           <svg className="lines" width={bracket.width} height={bracket.height} aria-hidden>
@@ -303,7 +302,7 @@ export function WcLive({
           ))}
           {bracket.cards.map(card)}
           <div
-            className={j("crown", !crownDecided && "pred")}
+            className={clsx("crown", !crownDecided && "pred")}
             style={{ left: bracket.crown.x, top: bracket.crown.y }}
             {...hover(crownTeam.name)}
           >
@@ -318,7 +317,7 @@ export function WcLive({
       <div className="section-title">Groups {started ? "" : "· predicted"}</div>
       <div className="groups">
         {Object.entries(liveGroups).map(([g, grp]) => (
-          <div key={g} className={j("group-card", !grp.live && "predcard")}>
+          <div key={g} className={clsx("group-card", !grp.live && "predcard")}>
             <div className="ghead">
               Group {g} {grp.live ? <span className="glive">live</span> : ""}
             </div>
@@ -335,7 +334,7 @@ export function WcLive({
                 {grp.rows.map((r) => (
                   <tr
                     key={r.team.name}
-                    className={j("row", r.cls)}
+                    className={clsx("row", r.cls)}
                     onClick={() => pinTeam(r.team.name)}
                     {...hover(r.team.name)}
                   >
@@ -371,7 +370,7 @@ export function WcLive({
         every 6 hours.
       </div>
 
-      <div ref={tipRef} className={j("tip", info && "show")}>
+      <div ref={tipRef} className={clsx("tip", info && "show")}>
         {info && (
           <>
             <span className="tf">{info.team.flag}</span>
@@ -419,7 +418,7 @@ function LiveTable({
           return (
             <tr
               key={r.team.name}
-              className={j(canPin && "row", pinned === r.team.name && "pinned")}
+              className={clsx(canPin && "row", pinned === r.team.name && "pinned")}
               onClick={canPin ? () => onPin(r.team.name) : undefined}
               {...hover(r.team.name)}
             >
