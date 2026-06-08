@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { fmt, fmtS, type Card, type RankRow, type TeamLite, type WcModel } from "@/lib/wc/model";
-import { PlayersLink } from "./PlayersLink";
+import { TeamCell } from "./TeamCell";
 import "./wc.css";
 
 const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -301,13 +301,7 @@ function PlacementTable({
               {...hoverProps(r.team.name)}
             >
               <td className="mv-rank">{r.rank}</td>
-              <td className="mv-team">
-                <span className="flag">{r.team.flag}</span>
-                {r.team.name}
-                {playerLinks[r.team.name] && (
-                  <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
-                )}
-              </td>
+              <TeamCell team={r.team} playerLinks={playerLinks} />
               <td className="mv-val r">{fmtS(r.team.mv)}</td>
               <td>
                 <span className={j("pill", r.finishCls)}>{r.finishLabel}</span>

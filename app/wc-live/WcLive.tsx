@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { fmtS, ordinal, type Card, type TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
-import { PlayersLink } from "../wc/PlayersLink";
+import { TeamCell } from "../wc/TeamCell";
 import "../wc/wc.css";
 
 const j = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -16,7 +16,8 @@ function groupDelta(delta: number | null) {
   return <span className="delta under">▼ {-delta}</span>;
 }
 
-// Colour the "Reached" pill by the round actually reached (index = actualStage 0..6).
+// Colour the "Reached" pill by the round reached (index = actualStage 0..6); the
+// semi-final reuses the quarter-final colour, as there's no dedicated pill class.
 const STAGE_PILL = ["p-group", "p-r32", "p-r16", "p-qf", "p-qf", "p-runner", "p-champ"];
 const reachedPill = (r: TrackerRow) =>
   r.actualStage === null ? (
@@ -45,12 +46,12 @@ export function WcLive({
   const { bracket, cardH, cardW } = model;
 
   // Teams currently shown in the bracket (real or predicted) are clickable to trace.
-  const knockoutTeams = new Set<string>();
-  for (const c of bracket.cards) {
-    const lc = cardByKey[`${c.round}-${c.num}`];
-    knockoutTeams.add((lc?.home ?? c.home).name);
-    knockoutTeams.add((lc?.away ?? c.away).name);
-  }
+  const knockoutTeams = new Set(
+    bracket.cards.flatMap((c) => {
+      const lc = cardByKey[`${c.round}-${c.num}`];
+      return [(lc?.home ?? c.home).name, (lc?.away ?? c.away).name];
+    }),
+  );
 
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
@@ -423,13 +424,7 @@ function LiveTable({
               {...hover(r.team.name)}
             >
               <td className="mv-rank">{r.rank}</td>
-              <td className="mv-team">
-                <span className="flag">{r.team.flag}</span>
-                {r.team.name}
-                {playerLinks[r.team.name] && (
-                  <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
-                )}
-              </td>
+              <TeamCell team={r.team} playerLinks={playerLinks} />
               <td className="mv-val r">{fmtS(r.team.mv)}</td>
               <td>{reachedPill(r)}</td>
               <td className="mv-exp">{r.expLabel}</td>
