@@ -106,7 +106,7 @@ function TeamCard({
       className="h-full w-full overflow-hidden hover-lift animate-slide-up"
       style={{ animationDelay: `${Math.min(index * 0.03, 0.3)}s` }}
     >
-      <div className="flex items-stretch">
+      <div className="flex items-stretch h-full">
         {/* Main content */}
         <div className="flex-1 min-w-0 p-3 sm:p-4">
           <div className="flex items-center gap-3 sm:gap-4">

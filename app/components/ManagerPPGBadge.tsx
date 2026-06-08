@@ -32,7 +32,7 @@ export function ManagerSkeleton() {
 
 export function ManagerSection({ manager }: ManagerPPGBadgeProps) {
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+    <div className="@container flex flex-wrap items-center gap-x-2 gap-y-1">
       <div className="inline-flex min-w-0 items-center gap-1.5">
         <span className="shrink-0 text-text-muted">Manager:</span>
         <a
@@ -160,7 +160,7 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
 
   return (
     <span className="inline-flex max-w-full flex-wrap items-center gap-1">
-      <span className="text-[10px] sm:text-xs text-text-secondary">
+      <span className="hidden @sm:inline text-[10px] sm:text-xs text-text-secondary">
         ({manager.matches} {manager.matches === 1 ? "game" : "games"})
       </span>
       {isTouchDevice ? (
