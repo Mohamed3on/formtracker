@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import type { ManagerInfo } from "@/app/types";
 
 export function useManagerQuery(clubId: string) {
@@ -22,3 +23,20 @@ export const managerQueryOptions = (clubId: string) => ({
   refetchOnWindowFocus: false,
   refetchOnMount: false,
 });
+
+/** Fetches managers for many clubs at once, returning a lookup map and a loading set. */
+export function useManagersMap(clubIds: string[]) {
+  const queries = useQueries({
+    queries: clubIds.map((clubId) => managerQueryOptions(clubId)),
+  });
+
+  return useMemo(() => {
+    const managersMap: Record<string, ManagerInfo | null> = {};
+    const loadingSet = new Set<string>();
+    queries.forEach((q, i) => {
+      if (q.data !== undefined) managersMap[clubIds[i]] = q.data;
+      if (q.isLoading) loadingSet.add(clubIds[i]);
+    });
+    return { managersMap, loadingSet };
+  }, [queries, clubIds]);
+}

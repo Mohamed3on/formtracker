@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useQueries } from "@tanstack/react-query";
 import type { ManagerInfo, TeamFormEntry } from "@/app/types";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -14,8 +13,9 @@ import { LeagueBadge } from "@/components/LeagueBadge";
 import { RankBadge } from "@/components/RankBadge";
 import { formatValueStr, getTeamDetailHref, ordinal } from "@/lib/format";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
-import { managerQueryOptions } from "@/lib/hooks/use-manager-query";
+import { useManagersMap } from "@/lib/hooks/use-manager-query";
 import { splitPerformers } from "@/lib/team-form";
+import { TeamGapBars } from "./TeamGapBars";
 
 export interface TeamFormResponse {
   success: boolean;
@@ -215,19 +215,7 @@ export function TeamListsGrid({
     [displayedTeams],
   );
 
-  const managerQueries = useQueries({
-    queries: clubIds.map((clubId) => managerQueryOptions(clubId)),
-  });
-
-  const { managersMap, loadingSet } = useMemo(() => {
-    const map: Record<string, ManagerInfo | null> = {};
-    const loading = new Set<string>();
-    managerQueries.forEach((q, i) => {
-      if (q.data !== undefined) map[clubIds[i]] = q.data;
-      if (q.isLoading) loading.add(clubIds[i]);
-    });
-    return { managersMap: map, loadingSet: loading };
-  }, [managerQueries, clubIds]);
+  const { managersMap, loadingSet } = useManagersMap(clubIds);
 
   const maxLength = Math.max(overperformers.length, underperformers.length);
 
@@ -413,9 +401,57 @@ export function TeamListsGrid({
   );
 }
 
+type ViewMode = "cards" | "bars";
+
+const CARDS_ICON = (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+    <rect x="1" y="1" width="6" height="6" rx="1.5" />
+    <rect x="9" y="1" width="6" height="6" rx="1.5" />
+    <rect x="1" y="9" width="6" height="6" rx="1.5" />
+    <rect x="9" y="9" width="6" height="6" rx="1.5" />
+  </svg>
+);
+
+const RANKED_ICON = (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+    <rect x="1" y="2" width="14" height="3" rx="1.5" />
+    <rect x="1" y="6.5" width="10" height="3" rx="1.5" />
+    <rect x="1" y="11" width="6" height="3" rx="1.5" />
+  </svg>
+);
+
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  return (
+    <ToggleGroup
+      type="single"
+      value={view}
+      onValueChange={(value) => value && onChange(value as ViewMode)}
+      className="inline-flex gap-0.5 rounded-lg border border-border-subtle bg-card p-0.5"
+    >
+      <ToggleGroupItem
+        value="cards"
+        aria-label="Card view"
+        className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium text-text-muted transition-colors hover:text-text-secondary active:scale-[0.97] data-[state=on]:bg-elevated data-[state=on]:text-accent-blue"
+      >
+        {CARDS_ICON}
+        Cards
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="bars"
+        aria-label="Ranked view"
+        className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium text-text-muted transition-colors hover:text-text-secondary active:scale-[0.97] data-[state=on]:bg-elevated data-[state=on]:text-accent-blue"
+      >
+        {RANKED_ICON}
+        Ranked
+      </ToggleGroupItem>
+    </ToggleGroup>
+  );
+}
+
 export function TeamFormUI({ initialData, formLeaders }: TeamFormUIProps) {
   const data = initialData;
   const { params, update } = useQueryParams("/expected-position");
+  const [view, setView] = useState<ViewMode>("cards");
   const requestedLeague = params.get("league");
   const selectedLeague =
     requestedLeague && LEAGUES.some((league) => league.name === requestedLeague)
@@ -433,16 +469,29 @@ export function TeamFormUI({ initialData, formLeaders }: TeamFormUIProps) {
 
   return (
     <>
-      <LeagueFilter
-        selectedLeague={selectedLeague}
-        onValueChange={(value) => update({ league: value === "all" ? null : value })}
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <LeagueFilter
+          selectedLeague={selectedLeague}
+          onValueChange={(value) => update({ league: value === "all" ? null : value })}
+        />
+        <div className="mb-4 sm:mb-6">
+          <ViewToggle view={view} onChange={setView} />
+        </div>
+      </div>
 
-      <TeamListsGrid
-        overperformers={filteredOverperformers}
-        underperformers={filteredUnderperformers}
-        formLeaders={formLeaders}
-      />
+      {view === "cards" ? (
+        <TeamListsGrid
+          overperformers={filteredOverperformers}
+          underperformers={filteredUnderperformers}
+          formLeaders={formLeaders}
+        />
+      ) : (
+        <TeamGapBars
+          overperformers={filteredOverperformers}
+          underperformers={filteredUnderperformers}
+          formLeaders={formLeaders}
+        />
+      )}
     </>
   );
 }
