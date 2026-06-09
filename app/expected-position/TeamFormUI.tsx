@@ -451,7 +451,7 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
 export function TeamFormUI({ initialData, formLeaders }: TeamFormUIProps) {
   const data = initialData;
   const { params, update } = useQueryParams("/expected-position");
-  const [view, setView] = useState<ViewMode>("cards");
+  const [view, setView] = useState<ViewMode>("bars");
   const requestedLeague = params.get("league");
   const selectedLeague =
     requestedLeague && LEAGUES.some((league) => league.name === requestedLeague)
