@@ -199,7 +199,8 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   for (const g of GROUPS) {
     const rd = results.groups[g];
     if (rd?.anyPlayed && rd.rows.length) {
-      const sorted = [...rd.rows].sort((a, b) => a.rank - b.rank || b.pts - a.pts || b.gd - a.gd);
+      // Trust TM's published rank — they apply the same FIFA tiebreakers, so don't re-sort.
+      const sorted = [...rd.rows].sort((a, b) => a.rank - b.rank);
       liveGroups[g] = {
         live: true,
         rows: sorted.map((r, i) => {

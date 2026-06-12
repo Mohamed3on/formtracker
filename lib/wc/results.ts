@@ -59,7 +59,7 @@ function teamIn(cell: cheerio.Cheerio<any>): string | null {
 }
 
 async function fetchResults(): Promise<WcResults> {
-  const html = await fetchPage(FIXTURES_URL, 21600);
+  const html = await fetchPage(FIXTURES_URL, 3600);
   const $ = cheerio.load(html);
   const groups: Record<string, GroupData> = {};
   let started = false;
@@ -147,5 +147,5 @@ export const getWcResults = unstable_cache(
     }
   },
   ["wc-live-results"],
-  { revalidate: 21600, tags: ["wc-live"] },
+  { revalidate: 3600, tags: ["wc-live"] },
 );
