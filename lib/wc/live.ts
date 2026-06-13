@@ -58,7 +58,38 @@ export type LiveModel = {
 const GROUPS = "ABCDEFGHIJKL".split("");
 
 export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
-  const model = buildModel(teams);
+  // Re-seed the bracket from live group standings where a group has kicked off;
+  // groups/teams that haven't played yet keep their market-value order.
+  const teamsByName = Object.fromEntries(teams.map((t) => [t.name, t])) as Record<string, Team>;
+  const mvGroups: Record<string, Team[]> = {};
+  for (const g of GROUPS)
+    mvGroups[g] = teams.filter((t) => t.group === g).sort((a, b) => b.mv - a.mv);
+
+  const liveOrder: Record<string, string[]> = {};
+  for (const g of GROUPS) {
+    const rd = results.groups[g];
+    if (!rd?.anyPlayed || rd.rows.length !== 4) continue;
+    const names = [...rd.rows].sort((a, b) => a.rank - b.rank).map((r) => r.name);
+    if (names.every((n) => teamsByName[n])) liveOrder[g] = names;
+  }
+
+  // Best-eight third-placed groups for the bracket: live thirds ranked on real
+  // pts/GD/GF, not-yet-played thirds on market value (so it stays MV pre-kickoff).
+  const qualGroups = new Set(
+    GROUPS.map((g) => {
+      const o = liveOrder[g];
+      if (o) {
+        const r = results.groups[g].rows.find((x) => x.name === o[2])!;
+        return { g, pts: r.pts, gd: r.gd, gf: parseInt(r.goals) || 0, mv: teamsByName[o[2]].mv };
+      }
+      return { g, pts: 0, gd: 0, gf: 0, mv: mvGroups[g][2].mv };
+    })
+      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || b.mv - a.mv)
+      .slice(0, 8)
+      .map((t) => t.g),
+  );
+
+  const model = buildModel(teams, { order: liveOrder, qualGroups });
   const lite = (name: string): TeamLite =>
     model.byName[name] ?? { name, short: name, flag: "🏳️", mv: 0 };
   const predGroups = new Map(model.groups.map((x) => [x.g, x.rows]));

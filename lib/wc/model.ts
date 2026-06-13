@@ -156,7 +156,10 @@ const ROW = 82,
 
 export type WcModel = ReturnType<typeof buildModel>;
 
-export function buildModel(teams: Team[]) {
+export function buildModel(
+  teams: Team[],
+  live?: { order?: Record<string, string[]>; qualGroups?: Set<string> },
+) {
   const lite = (t: Team): TeamLite => ({
     name: t.name,
     short: shortName(t.name),
@@ -164,23 +167,33 @@ export function buildModel(teams: Team[]) {
     mv: t.mv,
   });
 
-  // ---- Group stage (standings = MV order) ----
-  const standings: Record<string, Team[]> = {};
+  // ---- Group stage ----
+  // MV order drives the predicted group table and the value-tier expectations.
+  // The bracket is seeded from `live.order` where a group has kicked off (real
+  // standings); groups/teams that haven't played yet fall back to MV order.
+  const byNameTeam = Object.fromEntries(teams.map((t) => [t.name, t])) as Record<string, Team>;
+  const mvStandings: Record<string, Team[]> = {};
   for (const g of GROUPS)
-    standings[g] = teams.filter((t) => t.group === g).sort((a, b) => b.mv - a.mv);
-  const winner = (g: string) => standings[g][0];
-  const runner = (g: string) => standings[g][1];
-  const third = (g: string) => standings[g][2];
-
-  // ---- 8 best third-placed teams (by MV) ----
-  const qualSet = new Set(
-    GROUPS.map(third)
+    mvStandings[g] = teams.filter((t) => t.group === g).sort((a, b) => b.mv - a.mv);
+  const mvQualSet = new Set(
+    GROUPS.map((g) => mvStandings[g][2])
       .sort((a, b) => b.mv - a.mv)
       .slice(0, 8)
       .map((t) => t.group),
   );
 
-  // ---- Slot the qualifying thirds into the Round of 32 ----
+  const standings: Record<string, Team[]> = {};
+  for (const g of GROUPS) {
+    const mapped = live?.order?.[g]?.map((n) => byNameTeam[n]).filter(Boolean) as
+      | Team[]
+      | undefined;
+    standings[g] = mapped?.length === 4 ? mapped : mvStandings[g];
+  }
+  const winner = (g: string) => standings[g][0];
+  const runner = (g: string) => standings[g][1];
+  const third = (g: string) => standings[g][2];
+
+  // ---- Slot the 8 best third-placed teams into the Round of 32 ----
   const SLOT_ALLOWED: Record<number, string[]> = {
     2: ["A", "B", "C", "D", "F"],
     5: ["C", "D", "F", "G", "H"],
@@ -192,20 +205,28 @@ export function buildModel(teams: Team[]) {
     15: ["D", "E", "I", "J", "L"],
   };
   const SLOTS = [2, 5, 7, 8, 9, 10, 13, 15];
-  const assign: Record<number, string> = {};
-  (function solve(i: number, used: Set<string>): boolean {
-    if (i === SLOTS.length) return true;
-    const slot = SLOTS[i];
-    for (const g of SLOT_ALLOWED[slot].filter((x) => qualSet.has(x)).sort()) {
-      if (used.has(g)) continue;
-      assign[slot] = g;
-      used.add(g);
-      if (solve(i + 1, used)) return true;
-      used.delete(g);
-      delete assign[slot];
-    }
-    return false;
-  })(0, new Set());
+  // Match the qualifying groups to slots; fall back to the MV thirds if a live
+  // combination has no valid slotting (the simplified allocation table cannot
+  // place every 8-of-12 combination).
+  const solveSlots = (qual: Set<string>): Record<number, string> | null => {
+    const assign: Record<number, string> = {};
+    const ok = (function solve(i: number, used: Set<string>): boolean {
+      if (i === SLOTS.length) return true;
+      const slot = SLOTS[i];
+      for (const g of SLOT_ALLOWED[slot].filter((x) => qual.has(x)).sort()) {
+        if (used.has(g)) continue;
+        assign[slot] = g;
+        used.add(g);
+        if (solve(i + 1, used)) return true;
+        used.delete(g);
+        delete assign[slot];
+      }
+      return false;
+    })(0, new Set());
+    return ok ? assign : null;
+  };
+  const qualSet = live?.qualGroups ?? mvQualSet;
+  const assign = solveSlots(qualSet) ?? solveSlots(mvQualSet)!;
   const thirdAt = (slot: number) => third(assign[slot]);
 
   // ---- Knockout tree (higher MV advances) ----
@@ -459,13 +480,13 @@ export function buildModel(teams: Team[]) {
     ranked,
     groups: GROUPS.map((g) => ({
       g,
-      rows: standings[g].map(
+      rows: mvStandings[g].map(
         (t, i): GroupRow => ({
           team: lite(t),
           w: [3, 2, 1, 0][i],
           l: [0, 1, 2, 3][i],
           pts: [9, 6, 3, 0][i],
-          cls: i < 2 ? "q" : i === 2 && qualSet.has(t.group) ? "q3" : "ko",
+          cls: i < 2 ? "q" : i === 2 && mvQualSet.has(t.group) ? "q3" : "ko",
         }),
       ),
     })),
