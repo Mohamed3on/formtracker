@@ -69,9 +69,10 @@ export function WcGroupStage({ data }: { data: MatchupExtremes }) {
         </h1>
         <p className="mt-2 max-w-prose text-sm text-text-secondary">
           The 10 most and 10 least valuable group games by combined squad market value (live).{" "}
-          <b>MD</b> = matchday; <b className="text-amber-400">MD3</b> is the final round, where a
-          game can be a dead rubber if both teams&apos; fates are already settled. Scores fill in as
-          matches are played. Kickoffs in <b>CEST (UTC+2)</b>.
+          <b>MD</b> = matchday; an <b className="text-amber-400">MD3</b> game is flagged a{" "}
+          <b className="text-rose-300">dead rubber</b> once both teams have secured top-2 (the
+          result can&apos;t change who qualifies). Scores fill in as matches are played. Kickoffs in{" "}
+          <b>CEST (UTC+2)</b>.
         </p>
         <div className="mt-4 flex items-center gap-3">
           <span className="text-xs uppercase tracking-wider text-text-muted">Sort</span>
@@ -128,7 +129,27 @@ function TeamName({ t, win }: { t: MatchupTeam; win: boolean }) {
 }
 
 function MatchCard({ row, max, cheap }: { row: MatchupRow; max: number; cheap: boolean }) {
-  const md3 = row.matchday === 3;
+  const md = row.matchday;
+  const badge =
+    md !== 3
+      ? { text: `MD${md}`, cls: "border-border-subtle text-text-muted", title: undefined }
+      : row.deadRubber === true
+        ? {
+            text: "MD3 · dead rubber",
+            cls: "border-rose-500/40 bg-rose-500/10 font-medium text-rose-300",
+            title: "Both teams have already secured top-2 — the result can't change who qualifies",
+          }
+        : row.deadRubber === false
+          ? {
+              text: "MD3",
+              cls: "border-border-subtle text-text-muted",
+              title: "Final matchday — still has stakes",
+            }
+          : {
+              text: "MD3 · dead rubber?",
+              cls: "border-amber-500/40 bg-amber-500/10 font-medium text-amber-400",
+              title: "Final matchday — could be a dead rubber once matchday 2 is played",
+            };
   const accent = cheap ? "text-sky-400" : "text-amber-400";
   const winner =
     row.played && row.hs !== row.as ? ((row.hs ?? 0) > (row.as ?? 0) ? "home" : "away") : null;
@@ -162,20 +183,10 @@ function MatchCard({ row, max, cheap }: { row: MatchupRow; max: number; cheap: b
           Group {row.group}
         </Badge>
         <span
-          title={
-            md3
-              ? "Final matchday — places may already be decided (potential dead rubber)"
-              : undefined
-          }
-          className={clsx(
-            "rounded-full border px-2 py-0.5 text-[11px]",
-            md3
-              ? "border-amber-500/40 bg-amber-500/10 font-medium text-amber-400"
-              : "border-border-subtle text-text-muted",
-          )}
+          title={badge.title}
+          className={clsx("rounded-full border px-2 py-0.5 text-[11px]", badge.cls)}
         >
-          MD{row.matchday}
-          {md3 ? " · dead rubber?" : ""}
+          {badge.text}
         </span>
       </div>
 
