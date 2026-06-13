@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WC 2026 · Most Valuable Group Matchups</title>
+<style>
+  :root{--bg:#0a0b0d;--card:#16181c;--card2:#1d2025;--bd:#2a2e35;--tx:#eceef1;--mut:#8a9099;--gold:#f5c451;--gold2:#e0962f}
+  *{box-sizing:border-box;margin:0}
+  body{background:radial-gradient(1200px 600px at 50% -10%,#181b22,var(--bg));color:var(--tx);
+    font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:40px 20px;min-height:100vh}
+  .wrap{max-width:860px;margin:0 auto}
+  header{margin-bottom:28px}
+  .kick{color:var(--gold);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+  h1{font-size:30px;line-height:1.15;margin:6px 0 8px;letter-spacing:-.02em}
+  .sub{color:var(--mut);font-size:13.5px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .list{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+  .match{display:grid;grid-template-columns:96px 1fr auto;gap:18px;align-items:center;
+    background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--bd);
+    border-radius:14px;padding:14px 18px;transition:transform .15s ease,border-color .15s ease}
+  .match:hover{transform:translateY(-2px);border-color:#3a4049}
+  .when{display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+    border-right:1px solid var(--bd);padding-right:14px}
+  .dow{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .day{font-size:17px;font-weight:700}
+  .time{color:var(--gold);font-size:12px;font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .tie{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .team{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:16px}
+  .flag{font-size:21px;line-height:1}
+  .vs{color:var(--mut);font-size:12px;font-style:italic;padding:0 2px}
+  .grp{color:var(--mut);font-size:11px;border:1px solid var(--bd);border-radius:999px;
+    padding:2px 9px;margin-left:2px}
+  .val{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:120px}
+  .amount{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:20px;color:var(--gold);letter-spacing:-.01em}
+  .vrank{color:var(--mut);font-size:11px}
+  .bar{width:120px;height:4px;background:#23272e;border-radius:3px;overflow:hidden;margin-top:3px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:3px}
+  footer{color:var(--mut);font-size:12px;margin-top:24px;text-align:center}
+  @media(max-width:560px){
+    .match{grid-template-columns:1fr;gap:10px}
+    .when{flex-direction:row;gap:8px;border-right:0;border-bottom:1px solid var(--bd);padding:0 0 8px;width:100%;align-items:baseline}
+    .val{align-items:flex-start}.bar,.val{width:100%}.val .bar{width:100%}
+  }
+</style></head>
+<body><div class="wrap">
+  <header>
+    <div class="kick">FIFA World Cup 2026 · Group Stage</div>
+    <h1>The 10 most valuable matchups</h1>
+    <p class="sub">Ranked by combined squad market value (live, Transfermarkt), shown in date order.
+      Kickoffs in <b>CEST (UTC+2)</b> as Transfermarkt displays them.</p>
+  </header>
+  <div class="list">
+    <article class="match">
+      <div class="when">
+        <span class="dow">Sun</span>
+        <span class="day">14 Jun</span>
+        <span class="time">12:00 AM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🇧🇷</span><span class="name">Brazil</span></span><span class="vs">v</span><span class="team"><span class="flag">🇲🇦</span><span class="name">Morocco</span></span>
+        <span class="grp">Group C</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.38bn</span>
+        <span class="vrank">#9 by value</span>
+        <div class="bar"><i style="width:65.2%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Tue</span>
+        <span class="day">16 Jun</span>
+        <span class="time">9:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🇫🇷</span><span class="name">France</span></span><span class="vs">v</span><span class="team"><span class="flag">🇸🇳</span><span class="name">Senegal</span></span>
+        <span class="grp">Group I</span>
+      </div>
+      <div class="val">
+        <span class="amount">€2.00bn</span>
+        <span class="vrank">#2 by value</span>
+        <div class="bar"><i style="width:94.7%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Wed</span>
+        <span class="day">17 Jun</span>
+        <span class="time">10:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="name">England</span></span><span class="vs">v</span><span class="team"><span class="flag">🇭🇷</span><span class="name">Croatia</span></span>
+        <span class="grp">Group L</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.75bn</span>
+        <span class="vrank">#3 by value</span>
+        <div class="bar"><i style="width:82.8%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Sat</span>
+        <span class="day">20 Jun</span>
+        <span class="time">10:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🇩🇪</span><span class="name">Germany</span></span><span class="vs">v</span><span class="team"><span class="flag">🇨🇮</span><span class="name">Ivory Coast</span></span>
+        <span class="grp">Group E</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.47bn</span>
+        <span class="vrank">#7 by value</span>
+        <div class="bar"><i style="width:69.6%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Mon</span>
+        <span class="day">22 Jun</span>
+        <span class="time">11:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🇫🇷</span><span class="name">France</span></span><span class="vs">v</span><span class="team"><span class="flag">🇮🇶</span><span class="name">Iraq</span></span>
+        <span class="grp">Group I</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.54bn</span>
+        <span class="vrank">#6 by value</span>
+        <div class="bar"><i style="width:73.0%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Tue</span>
+        <span class="day">23 Jun</span>
+        <span class="time">10:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="name">England</span></span><span class="vs">v</span><span class="team"><span class="flag">🇬🇭</span><span class="name">Ghana</span></span>
+        <span class="grp">Group L</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.59bn</span>
+        <span class="vrank">#4 by value</span>
+        <div class="bar"><i style="width:75.6%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Thu</span>
+        <span class="day">25 Jun</span>
+        <span class="time">10:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🇩🇪</span><span class="name">Germany</span></span><span class="vs">v</span><span class="team"><span class="flag">🇪🇨</span><span class="name">Ecuador</span></span>
+        <span class="grp">Group E</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.32bn</span>
+        <span class="vrank">#10 by value</span>
+        <div class="bar"><i style="width:62.4%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Fri</span>
+        <span class="day">26 Jun</span>
+        <span class="time">9:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🇫🇷</span><span class="name">France</span></span><span class="vs">v</span><span class="team"><span class="flag">🇳🇴</span><span class="name">Norway</span></span>
+        <span class="grp">Group I</span>
+      </div>
+      <div class="val">
+        <span class="amount">€2.11bn</span>
+        <span class="vrank">#1 by value</span>
+        <div class="bar"><i style="width:100.0%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Sat</span>
+        <span class="day">27 Jun</span>
+        <span class="time">2:00 AM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🇪🇸</span><span class="name">Spain</span></span><span class="vs">v</span><span class="team"><span class="flag">🇺🇾</span><span class="name">Uruguay</span></span>
+        <span class="grp">Group H</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.58bn</span>
+        <span class="vrank">#5 by value</span>
+        <div class="bar"><i style="width:74.9%"></i></div>
+      </div>
+    </article>
+    <article class="match">
+      <div class="when">
+        <span class="dow">Sat</span>
+        <span class="day">27 Jun</span>
+        <span class="time">11:00 PM</span>
+      </div>
+      <div class="tie">
+        <span class="team"><span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="name">England</span></span><span class="vs">v</span><span class="team"><span class="flag">🇵🇦</span><span class="name">Panama</span></span>
+        <span class="grp">Group L</span>
+      </div>
+      <div class="val">
+        <span class="amount">€1.39bn</span>
+        <span class="vrank">#8 by value</span>
+        <div class="bar"><i style="width:66.1%"></i></div>
+      </div>
+    </article></div>
+  <footer>Combined value top: €2.11bn · 10 matches · data: Transfermarkt</footer>
+</div></body></html>
