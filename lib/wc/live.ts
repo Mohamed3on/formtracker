@@ -10,7 +10,7 @@ import {
   type TeamLite,
   type WcModel,
 } from "./model";
-import type { WcResults } from "./results";
+import type { GroupStanding, WcResults } from "./results";
 
 const ORD: Record<Round, number> = { R32: 1, R16: 2, QF: 3, SF: 4, F: 5 };
 
@@ -68,11 +68,18 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   for (const g of GROUPS)
     mvGroups[g] = teams.filter((t) => t.group === g).sort((a, b) => b.mv - a.mv);
 
+  const mvOf = (name: string) => teamsByName[name]?.mv ?? 0;
+  const gf = (r: GroupStanding) => parseInt(r.goals) || 0;
+  // FIFA criteria we can see (pts → GD → GF); break genuine ties — including teams
+  // that haven't played yet — by market value, not head-to-head / drawing of lots.
+  const byStanding = (a: GroupStanding, b: GroupStanding) =>
+    b.pts - a.pts || b.gd - a.gd || gf(b) - gf(a) || mvOf(b.name) - mvOf(a.name);
+
   const liveOrder: Record<string, string[]> = {};
   for (const g of GROUPS) {
     const rd = results.groups[g];
     if (!rd?.anyPlayed || rd.rows.length !== 4) continue;
-    const names = [...rd.rows].sort((a, b) => a.rank - b.rank).map((r) => r.name);
+    const names = [...rd.rows].sort(byStanding).map((r) => r.name);
     if (names.every((n) => teamsByName[n])) liveOrder[g] = names;
   }
 
@@ -140,7 +147,6 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
 
   // ---- Projected deepest stage: real results first, then higher value wins ----
   const childrenOf = model.bracket.childrenOf;
-  const mvOf = (name: string) => teamsByName[name]?.mv ?? 0;
   const partsMemo: Record<string, [string, string]> = {};
   const winMemo: Record<string, string> = {};
   function parts(key: string): [string, string] {
@@ -252,12 +258,12 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   const realThirds = GROUPS.flatMap((g) => {
     const rd = results.groups[g];
     if (!rd?.anyPlayed || rd.rows.length < 3) return [];
-    const t = [...rd.rows].sort((a, b) => a.rank - b.rank)[2];
-    return [{ group: g, pts: t.pts, gd: t.gd, gf: parseInt(t.goals) || 0 }];
+    const t = [...rd.rows].sort(byStanding)[2];
+    return [{ group: g, pts: t.pts, gd: t.gd, gf: gf(t), mv: mvOf(t.name) }];
   });
   const bestThirdGroups = new Set(
     realThirds
-      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
+      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || b.mv - a.mv)
       .slice(0, 8)
       .map((t) => t.group),
   );
@@ -273,12 +279,13 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   for (const g of GROUPS) {
     const rd = results.groups[g];
     if (rd?.anyPlayed && rd.rows.length) {
-      // Trust TM's published rank — they apply the same FIFA tiebreakers, so don't re-sort.
-      const sorted = [...rd.rows].sort((a, b) => a.rank - b.rank);
+      // Follow TM's pts/GD/GF, but break genuine ties by market value (TM falls back
+      // to head-to-head / lots, which we can't see), so position matches our seeding.
+      const sorted = [...rd.rows].sort(byStanding);
       liveGroups[g] = {
         live: true,
         rows: sorted.map((r, i) => {
-          const pos = r.rank || i + 1;
+          const pos = i + 1;
           const expPos = expPosByGroup[g]?.[r.name] ?? i + 1;
           return {
             team: lite(r.name),
