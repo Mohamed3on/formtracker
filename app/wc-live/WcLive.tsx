@@ -15,24 +15,21 @@ function groupDelta(delta: number | null) {
   return <span className="delta under">▼ {-delta}</span>;
 }
 
-// Colour the "Reached" pill by the round reached (index = actualStage 0..6); the
+// Colour the projected pill by the round reached (index = projStage 0..6); the
 // semi-final reuses the quarter-final colour, as there's no dedicated pill class.
 const STAGE_PILL = ["p-group", "p-r32", "p-r16", "p-qf", "p-qf", "p-runner", "p-champ"];
-const reachedPill = (r: TrackerRow) =>
-  r.actualStage === null ? (
-    <span className="pill p-group">Yet to play</span>
-  ) : (
-    <span className={clsx("pill", STAGE_PILL[r.actualStage])}>
-      {r.actualLabel}
-      {r.alive ? " · in" : ""}
-    </span>
-  );
-// vs Exp: blank until played; while alive only show a positive (already overachieving) delta.
-const vsExpDelta = (r: TrackerRow): number | null => {
-  if (r.actualStage === null) return null;
-  const d = r.actualStage - r.expStage;
-  return r.alive && d <= 0 ? null : d;
-};
+// Suffix: "· out" when projected out in the groups, "· proj" while the run is still
+// projected (not yet achieved), nothing once the stage is actually reached/decided.
+const projSuffix = (r: TrackerRow) =>
+  r.projState === "out" ? " · out" : r.projState === "proj" ? " · proj" : "";
+const projPill = (r: TrackerRow) => (
+  <span className={clsx("pill", STAGE_PILL[r.projStage])}>
+    {r.projLabel}
+    {projSuffix(r)}
+  </span>
+);
+// vs Exp: projected stage minus the round its squad value seeds it into.
+const vsExpDelta = (r: TrackerRow) => r.projStage - r.expStage;
 
 export function WcLive({
   live,
@@ -161,21 +158,16 @@ export function WcLive({
   const crownDecided = !!championName;
 
   const overRows = tracker
-    .filter(
-      (r) =>
-        r.status === "champion" ||
-        r.status === "over" ||
-        (r.alive && (r.actualStage ?? 0) > r.expStage),
-    )
-    .sort((a, b) => (b.actualStage ?? 0) - b.expStage - ((a.actualStage ?? 0) - a.expStage));
+    .filter((r) => r.projStage > r.expStage)
+    .sort((a, b) => b.projStage - b.expStage - (a.projStage - a.expStage));
   const underRows = tracker
-    .filter((r) => r.status === "under")
-    .sort((a, b) => (a.delta ?? 0) - (b.delta ?? 0));
+    .filter((r) => r.projStage < r.expStage)
+    .sort((a, b) => a.projStage - a.expStage - (b.projStage - b.expStage));
 
   const info = hovered ? trackerByName[hovered] : null;
 
   const trackRow = (r: TrackerRow, kind: "over" | "under") => {
-    const d = (r.actualStage ?? 0) - r.expStage;
+    const d = r.projStage - r.expStage;
     return (
       <div
         key={r.team.name}
@@ -186,8 +178,8 @@ export function WcLive({
         <span className="flag">{r.team.flag}</span>
         <span className="tn">{r.team.name}</span>
         <span className="ts">
-          {r.actualLabel}
-          {r.alive ? " (in)" : ""} <span className="tmut">· exp {r.expLabel}</span>
+          {r.projLabel}
+          {projSuffix(r)} <span className="tmut">· exp {r.expLabel}</span>
         </span>
         <span className={clsx("delta", kind)}>
           {kind === "over" ? "▲" : "▼"} {Math.abs(d)}
@@ -219,16 +211,16 @@ export function WcLive({
         </div>
       ) : (
         <div className="wc-banner live">
-          🔴 Live · <b>{overRows.length}</b> teams ahead of their value seeding,{" "}
+          🔴 Live · <b>{overRows.length}</b> teams projected ahead of their value seeding,{" "}
           <b>{underRows.length}</b> behind. Refreshed every hour.
         </div>
       )}
 
       <div className="section-title">Over / Under-achievers</div>
       <p className="hint">
-        Measured in knockout rounds reached vs the round each squad&apos;s market value seeds it
-        into.
-        {!started && " Nothing decided yet."}
+        Measured in knockout rounds projected — real results first, then value — vs the round each
+        squad&apos;s market value seeds it into.
+        {!started && " Projections only — nothing decided yet."}
       </p>
       <div className="tracker">
         <div className="track-col">
@@ -251,9 +243,9 @@ export function WcLive({
 
       <div className="section-title">Every Team by Market Value</div>
       <p className="hint">
-        Every squad ranked by value, with the round it&apos;s <b>Reached</b> so far against the{" "}
-        <b>Exp</b> round its value seeds it into. <b>Click a knockout team</b> to trace its run
-        below.
+        Every squad ranked by value, with the round it&apos;s <b>Projected</b> to reach — real
+        results first, then value — against the <b>Exp</b> round its value seeds it into.{" "}
+        <b>Click a knockout team</b> to trace its run below.
       </p>
       <div className="mv-grid">
         <LiveTable
@@ -344,7 +336,10 @@ export function WcLive({
                       <span>{r.team.name}</span>
                     </td>
                     <td className="n pts">{r.pts}</td>
-                    <td className="n r" title={`Seeded ${ordinal(r.expPos)} by squad value`}>
+                    <td
+                      className="n r"
+                      title={`Seeded ${ordinal(r.expPos)} by value · points vs the team now ${ordinal(r.expPos)}`}
+                    >
                       {groupDelta(r.delta)}
                     </td>
                   </tr>
@@ -376,7 +371,10 @@ export function WcLive({
             <span className="tf">{info.team.flag}</span>
             {info.team.name}
             <span className="td">·</span>
-            <span className="tr">{info.actualLabel}</span>
+            <span className="tr">
+              {info.projLabel}
+              {projSuffix(info)}
+            </span>
             <span className="td">exp {info.expLabel}</span>
           </>
         )}
@@ -407,7 +405,7 @@ function LiveTable({
           <th>#</th>
           <th>Team</th>
           <th className="r">Value</th>
-          <th>Reached</th>
+          <th>Projected</th>
           <th className="mv-exp">Exp</th>
           <th className="r">vs Exp</th>
         </tr>
@@ -425,7 +423,7 @@ function LiveTable({
               <td className="mv-rank">{r.rank}</td>
               <TeamCell team={r.team} playerLinks={playerLinks} />
               <td className="mv-val r">{fmtS(r.team.mv)}</td>
-              <td>{reachedPill(r)}</td>
+              <td>{projPill(r)}</td>
               <td className="mv-exp">{r.expLabel}</td>
               <td className="r">{groupDelta(vsExpDelta(r))}</td>
             </tr>

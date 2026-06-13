@@ -351,6 +351,16 @@ export function buildModel(
     n.kids?.forEach(collect);
   })(final);
 
+  // Child match keys for each parent card, so live results can be propagated up
+  // the bracket (`${round}-${num}` → its two feeder cards).
+  const childrenOf: Record<string, [string, string]> = {};
+  for (const n of allNodes)
+    if (n.kids)
+      childrenOf[`${n.round}-${n.num}`] = [
+        `${n.kids[0].round}-${n.kids[0].num}`,
+        `${n.kids[1].round}-${n.kids[1].num}`,
+      ];
+
   // ---- Round reached (predicted) + value-tier expectation, per team ----
   const reachRank: Record<string, number> = {};
   const reachLabel: Record<string, string> = {};
@@ -471,6 +481,7 @@ export function buildModel(
       labels,
       edges,
       cards,
+      childrenOf,
       crown: { x: final.x + CARD_W / 2 - 90, y: final.y - CARD_H / 2 - 128, team: lite(champion) },
       third: {
         x: final.x + CARD_W / 2 - 90,

@@ -25,6 +25,9 @@ export type TrackerRow = {
   status: TrackerStatus;
   delta: number | null; // stage rounds vs expected, once decided
   alive: boolean;
+  projStage: number; // deepest round projected: real results first, then value
+  projLabel: string;
+  projState: "out" | "proj" | "done"; // out: projected out in groups; proj: not yet reached; done: achieved
 };
 export type LiveCard = {
   home: TeamLite;
@@ -135,6 +138,39 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     };
   }
 
+  // ---- Projected deepest stage: real results first, then higher value wins ----
+  const childrenOf = model.bracket.childrenOf;
+  const mvOf = (name: string) => teamsByName[name]?.mv ?? 0;
+  const partsMemo: Record<string, [string, string]> = {};
+  const winMemo: Record<string, string> = {};
+  function parts(key: string): [string, string] {
+    if (partsMemo[key]) return partsMemo[key];
+    const lc = cardByKey[key];
+    let pair: [string, string];
+    if (lc.real) pair = [lc.home.name, lc.away.name];
+    else {
+      const ch = childrenOf[key];
+      pair = ch ? [win(ch[0]), win(ch[1])] : [lc.home.name, lc.away.name];
+    }
+    return (partsMemo[key] = pair);
+  }
+  function win(key: string): string {
+    if (winMemo[key]) return winMemo[key];
+    const lc = cardByKey[key];
+    if (lc.real && lc.winner) return (winMemo[key] = lc.winner);
+    const [h, a] = parts(key);
+    return (winMemo[key] = mvOf(h) >= mvOf(a) ? h : a);
+  }
+  const projStage: Record<string, number> = {};
+  for (const t of teams) projStage[t.name] = 0;
+  for (const c of model.bracket.cards) {
+    const depth = ORD[c.round];
+    for (const name of parts(`${c.round}-${c.num}`))
+      if (name in projStage) projStage[name] = Math.max(projStage[name], depth);
+  }
+  const projChampion = win("F-1");
+  if (projChampion in projStage) projStage[projChampion] = 6;
+
   // ---- Over/under tracker ----
   const tracker: TrackerRow[] = [...teams]
     .sort((a, b) => b.mv - a.mv)
@@ -192,6 +228,10 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
                   ? "under"
                   : "met";
 
+      const ps = projStage[t.name] ?? 0;
+      const achieved = !alive && actualStage !== null && actualStage === ps;
+      const projState: TrackerRow["projState"] = ps === 0 ? "out" : achieved ? "done" : "proj";
+
       return {
         team: lite(t.name),
         rank: exp.rank,
@@ -202,6 +242,9 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
         status,
         delta: decided ? (actualStage as number) - exp.stage : null,
         alive,
+        projStage: ps,
+        projLabel: STAGE_LABEL[ps],
+        projState,
       };
     });
 
@@ -246,7 +289,8 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
             cls: i < 2 ? "q" : i === 2 && bestThirdGroups.has(g) ? "q3" : "ko",
             predicted: false,
             expPos,
-            delta: r.played > 0 ? expPos - pos : null,
+            // Points behind/ahead of whoever currently sits in this team's value-seeded slot.
+            delta: r.played > 0 ? r.pts - (sorted[expPos - 1]?.pts ?? r.pts) : null,
           };
         }),
       };
