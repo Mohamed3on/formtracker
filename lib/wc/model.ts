@@ -96,6 +96,9 @@ export const shortName = (name: string) => SHORT[name] ?? name;
 // Transfermarkt team names that differ from our stable roster.
 const NAME_ALIAS: Record<string, string> = {
   "Democratic Republic of the Congo": "DR Congo",
+  // Transfermarkt's fixture/standings tables use short names; map them to the roster.
+  USA: "United States",
+  Bosnia: "Bosnia-Herzegovina",
 };
 export const normName = (raw: string) => {
   const s = raw.trim().replace(/\s+/g, " ");
