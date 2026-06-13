@@ -70,10 +70,14 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
 
   const mvOf = (name: string) => teamsByName[name]?.mv ?? 0;
   const gf = (r: GroupStanding) => parseInt(r.goals) || 0;
-  // FIFA criteria we can see (pts → GD → GF); break genuine ties — including teams
-  // that haven't played yet — by market value, not head-to-head / drawing of lots.
+  // Real results decide the order once a team has kicked off (pts → GD → GF, then
+  // TM's published rank for head-to-head / lots). Only teams that haven't played at
+  // all fall back to a pure market-value projection.
   const byStanding = (a: GroupStanding, b: GroupStanding) =>
-    b.pts - a.pts || b.gd - a.gd || gf(b) - gf(a) || mvOf(b.name) - mvOf(a.name);
+    b.pts - a.pts ||
+    b.gd - a.gd ||
+    gf(b) - gf(a) ||
+    (a.played === 0 && b.played === 0 ? mvOf(b.name) - mvOf(a.name) : a.rank - b.rank);
 
   const liveOrder: Record<string, string[]> = {};
   for (const g of GROUPS) {
