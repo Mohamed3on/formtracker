@@ -205,7 +205,11 @@ function PlayerCard({
     nationalityDisplay = (
       <>
         <span className="opacity-40">·</span>
-        <NationalityFlag url={player.nationalityFlagUrl} name={player.nationality} />
+        <NationalityFlag
+          url={player.nationalityFlagUrl}
+          name={player.nationality}
+          calledUp={player.isCurrentIntl}
+        />
         <span className="hidden md:inline">{player.nationality}</span>
       </>
     );
