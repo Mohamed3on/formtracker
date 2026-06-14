@@ -318,6 +318,42 @@
   stroke: var(--wc-gold);
   stroke-width: 3;
 }
+/* the tracked nation's full route — its own chips strong, each opponent softer.
+   Scoped under .bracket.lit so it outranks the predicted / winner / loser chip styles. */
+.wc-root .bracket.lit .bcard.onroute .bt {
+  opacity: 1;
+}
+.wc-root .bracket.lit .bcard.onroute .bt.on {
+  box-shadow:
+    inset 2px 0 0 var(--wc-gold),
+    0 0 0 1px rgba(255, 210, 74, 0.7);
+  background: linear-gradient(90deg, rgba(255, 210, 74, 0.16), rgba(255, 210, 74, 0.03));
+}
+.wc-root .bracket.lit .bcard.onroute .bt.on .bn {
+  color: #fff3cf;
+}
+.wc-root .bracket.lit .bcard.onroute .bt:not(.on) {
+  box-shadow:
+    inset 2px 0 0 rgba(255, 210, 74, 0.4),
+    0 0 0 1px rgba(255, 210, 74, 0.28);
+  background: linear-gradient(90deg, rgba(255, 210, 74, 0.07), rgba(255, 210, 74, 0.01));
+}
+.wc-root .bracket.lit .bcard.onroute .bt:not(.on) .bn {
+  color: #ffe9a8;
+}
+/* same nation highlighted everywhere it appears: groups, value tables, tracker */
+.wc-root .group-card tr.row.on {
+  opacity: 1;
+}
+.wc-root .group-card tr.row.on td {
+  background: rgba(255, 210, 74, 0.12);
+}
+.wc-root .mv-table tr.on td {
+  background: rgba(255, 210, 74, 0.1);
+}
+.wc-root .trow.on {
+  background: rgba(255, 210, 74, 0.1);
+}
 
 /* round-reached tooltip */
 .wc-root .tip {

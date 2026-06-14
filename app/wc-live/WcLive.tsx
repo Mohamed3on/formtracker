@@ -52,6 +52,9 @@ export function WcLive({
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const active = hovered ?? pinned;
+  // Only dim the bracket when the active team is actually in it; group-stage teams
+  // projected out aren't, yet we still highlight them in the tables and groups.
+  const activeInBracket = !!active && knockoutTeams.has(active);
   const tipRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -125,10 +128,13 @@ export function WcLive({
     const winner = lc ? lc.winner : c.winner;
     const pred = !lc?.real;
     const played = !!lc?.played;
+    // A card is on the active team's route when it's one of the two sides — its
+    // opponent then lights up alongside it for the whole run.
+    const onRoute = !!active && (home.name === active || away.name === active);
     return (
       <div
         key={c.id}
-        className={clsx("bcard", c.isFinal && "isfinal", pred && "predcard")}
+        className={clsx("bcard", c.isFinal && "isfinal", pred && "predcard", onRoute && "onroute")}
         style={{ left: c.x, top: c.y - cardH / 2, width: cardW }}
       >
         {chip(
@@ -171,7 +177,7 @@ export function WcLive({
     return (
       <div
         key={r.team.name}
-        className="trow"
+        className={clsx("trow", active === r.team.name && "on")}
         onClick={() => pinTeam(r.team.name)}
         {...hover(r.team.name)}
       >
@@ -250,6 +256,7 @@ export function WcLive({
       <div className="mv-grid">
         <LiveTable
           rows={tracker.slice(0, 24)}
+          active={active}
           pinned={pinned}
           onPin={pinTeam}
           hover={hover}
@@ -258,6 +265,7 @@ export function WcLive({
         />
         <LiveTable
           rows={tracker.slice(24)}
+          active={active}
           pinned={pinned}
           onPin={pinTeam}
           hover={hover}
@@ -279,7 +287,7 @@ export function WcLive({
       </p>
       <div ref={scrollRef} className="full-bleed wc-bracket-scroll" style={{ scrollMarginTop: 72 }}>
         <div
-          className={clsx("bracket", active && "lit")}
+          className={clsx("bracket", activeInBracket && "lit")}
           style={{ width: bracket.width, height: bracket.height }}
         >
           <svg className="lines" width={bracket.width} height={bracket.height} aria-hidden>
@@ -326,7 +334,7 @@ export function WcLive({
                 {grp.rows.map((r) => (
                   <tr
                     key={r.team.name}
-                    className={clsx("row", r.cls)}
+                    className={clsx("row", r.cls, active === r.team.name && "on")}
                     onClick={() => pinTeam(r.team.name)}
                     {...hover(r.team.name)}
                   >
@@ -385,6 +393,7 @@ export function WcLive({
 
 function LiveTable({
   rows,
+  active,
   pinned,
   onPin,
   hover,
@@ -392,6 +401,7 @@ function LiveTable({
   playerLinks,
 }: {
   rows: TrackerRow[];
+  active: string | null;
   pinned: string | null;
   onPin: (name: string) => void;
   hover: (name: string) => { onMouseEnter: () => void; onMouseLeave: () => void };
@@ -416,7 +426,11 @@ function LiveTable({
           return (
             <tr
               key={r.team.name}
-              className={clsx(canPin && "row", pinned === r.team.name && "pinned")}
+              className={clsx(
+                canPin && "row",
+                active === r.team.name && "on",
+                pinned === r.team.name && "pinned",
+              )}
               onClick={canPin ? () => onPin(r.team.name) : undefined}
               {...hover(r.team.name)}
             >
