@@ -21,10 +21,8 @@ export type MatchupRow = {
   // false = stakes remain, null = not yet decidable (matchday 1-2 still pending).
   deadRubber: boolean | null;
 };
-export type MatchupExtremes = { most: MatchupRow[]; least: MatchupRow[] };
-
-// Top 10 and bottom 10 group-stage matchups by combined squad market value.
-export function buildMatchupExtremes(teams: Team[], fixtures: GroupFixture[]): MatchupExtremes {
+// All group-stage matchups, ranked by combined squad market value (1 = most valuable).
+export function buildMatchups(teams: Team[], fixtures: GroupFixture[]): MatchupRow[] {
   const byName = Object.fromEntries(teams.map((t) => [t.name, t])) as Record<string, Team>;
   const lite = (n: string): MatchupTeam => {
     const t = byName[n];
@@ -63,7 +61,7 @@ export function buildMatchupExtremes(teams: Team[], fixtures: GroupFixture[]): M
     return h === null || a === null ? null : h && a;
   };
 
-  const rows: MatchupRow[] = fixtures
+  return fixtures
     .filter((f) => byName[f.home] && byName[f.away])
     .map((f) => {
       const home = lite(f.home);
@@ -86,13 +84,6 @@ export function buildMatchupExtremes(teams: Team[], fixtures: GroupFixture[]): M
         deadRubber: deadRubber(f),
       };
     })
-    .sort((a, b) => b.sum - a.sum);
-
-  return {
-    most: rows.slice(0, 10).map((r, i) => ({ ...r, vrank: i + 1 })),
-    least: rows
-      .slice(-10)
-      .reverse()
-      .map((r, i) => ({ ...r, vrank: i + 1 })),
-  };
+    .sort((a, b) => b.sum - a.sum)
+    .map((r, i) => ({ ...r, vrank: i + 1 }));
 }

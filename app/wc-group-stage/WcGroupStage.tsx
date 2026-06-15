@@ -2,18 +2,17 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { Coins, TrendingUp } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 import { fmt } from "@/lib/wc/model";
-import type { MatchupExtremes, MatchupRow, MatchupTeam } from "@/lib/wc/matchups";
+import type { MatchupRow, MatchupTeam } from "@/lib/wc/matchups";
 
 type Mode = "date" | "value";
 
 // Pre-paint on the client (smooth FLIP), plain effect on the server (no warning).
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-export function WcGroupStage({ data }: { data: MatchupExtremes }) {
+export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
   const [mode, setMode] = useState<Mode>("date");
   const rootRef = useRef<HTMLDivElement>(null);
   const prevTops = useRef(new Map<string, number>());
@@ -36,27 +35,10 @@ export function WcGroupStage({ data }: { data: MatchupExtremes }) {
     });
   });
 
-  const order = (items: MatchupRow[], dir: "asc" | "desc") =>
-    [...items].sort((a, b) =>
-      mode === "value" ? (dir === "asc" ? a.sum - b.sum : b.sum - a.sum) : a.kickoff - b.kickoff,
-    );
-
-  const sections = [
-    {
-      kind: "most" as const,
-      title: "Most valuable",
-      Icon: TrendingUp,
-      items: data.most,
-      dir: "desc" as const,
-    },
-    {
-      kind: "least" as const,
-      title: "Least valuable",
-      Icon: Coins,
-      items: data.least,
-      dir: "asc" as const,
-    },
-  ];
+  const max = Math.max(1, ...rows.map((r) => r.sum));
+  const sorted = [...rows].sort((a, b) =>
+    mode === "value" ? b.sum - a.sum : a.kickoff - b.kickoff,
+  );
 
   return (
     <div ref={rootRef} className="mx-auto max-w-3xl px-4">
@@ -65,11 +47,11 @@ export function WcGroupStage({ data }: { data: MatchupExtremes }) {
           FIFA World Cup 2026 · Group Stage
         </div>
         <h1 className="font-pixel mt-2 text-3xl font-bold tracking-tight">
-          Matchup value extremes
+          Matchups by squad value
         </h1>
         <p className="mt-2 max-w-prose text-sm text-text-secondary">
-          The 10 most and 10 least valuable group games by combined squad market value (live).{" "}
-          <b>MD</b> = matchday; an <b className="text-amber-400">MD3</b> game is flagged a{" "}
+          All {rows.length} group games ranked by combined squad market value (live). <b>MD</b> =
+          matchday; an <b className="text-amber-400">MD3</b> game is flagged a{" "}
           <b className="text-rose-300">dead rubber</b> once both teams have secured top-2 (the
           result can&apos;t change who qualifies). Scores fill in as matches are played. Kickoffs in{" "}
           <b>CEST (UTC+2)</b>.
@@ -89,23 +71,11 @@ export function WcGroupStage({ data }: { data: MatchupExtremes }) {
         </div>
       </header>
 
-      {sections.map(({ kind, title, Icon, items, dir }) => {
-        const max = Math.max(1, ...items.map((i) => i.sum));
-        const cheap = kind === "least";
-        return (
-          <section key={kind} className="mt-8">
-            <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-text-muted">
-              <Icon className={clsx("size-4", cheap ? "text-sky-400" : "text-amber-400")} />
-              {title}
-            </h2>
-            <div className="mt-3 flex flex-col gap-2.5">
-              {order(items, dir).map((row) => (
-                <MatchCard key={row.id} row={row} max={max} cheap={cheap} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      <section className="mt-8 flex flex-col gap-2.5">
+        {sorted.map((row) => (
+          <MatchCard key={row.id} row={row} max={max} total={rows.length} />
+        ))}
+      </section>
 
       <footer className="mt-8 text-center text-xs text-text-muted">
         Combined squad market value · data from Transfermarkt · refreshed hourly
@@ -128,7 +98,7 @@ function TeamName({ t, win }: { t: MatchupTeam; win: boolean }) {
   );
 }
 
-function MatchCard({ row, max, cheap }: { row: MatchupRow; max: number; cheap: boolean }) {
+function MatchCard({ row, max, total }: { row: MatchupRow; max: number; total: number }) {
   const md = row.matchday;
   const badge =
     md !== 3
@@ -150,7 +120,7 @@ function MatchCard({ row, max, cheap }: { row: MatchupRow; max: number; cheap: b
               cls: "border-amber-500/40 bg-amber-500/10 font-medium text-amber-400",
               title: "Final matchday — could be a dead rubber once matchday 2 is played",
             };
-  const accent = cheap ? "text-sky-400" : "text-amber-400";
+  const accent = "text-amber-400";
   const winner =
     row.played && row.hs !== row.as ? ((row.hs ?? 0) > (row.as ?? 0) ? "home" : "away") : null;
 
@@ -193,16 +163,11 @@ function MatchCard({ row, max, cheap }: { row: MatchupRow; max: number; cheap: b
       <div className="flex flex-col items-start gap-0.5 sm:items-end">
         <span className={clsx("font-value text-xl", accent)}>{fmt(row.sum)}</span>
         <span className="text-[11px] text-text-muted">
-          #{row.vrank} {cheap ? "least" : "most"} valuable
+          #{row.vrank} of {total} by value
         </span>
         <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border-subtle sm:w-32">
           <div
-            className={clsx(
-              "h-full rounded-full",
-              cheap
-                ? "bg-gradient-to-r from-sky-700 to-sky-400"
-                : "bg-gradient-to-r from-amber-600 to-amber-400",
-            )}
+            className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400"
             style={{ width: `${((row.sum / max) * 100).toFixed(1)}%` }}
           />
         </div>
