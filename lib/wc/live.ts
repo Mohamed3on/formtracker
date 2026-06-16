@@ -70,9 +70,11 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
 
   const mvOf = (name: string) => teamsByName[name]?.mv ?? 0;
   const gf = (r: GroupStanding) => parseInt(r.goals) || 0;
-  // Real results decide the order once a team has kicked off (pts → GD → GF, then
-  // TM's published rank for head-to-head / lots). Only teams that haven't played at
-  // all fall back to a pure market-value projection.
+  // Official FIFA tie-break, sourced from TM: once a team has kicked off, real
+  // results decide (pts → GD → GF, then TM's published rank — which already encodes
+  // head-to-head → fair play → drawing of lots). A played team can't tie an unplayed
+  // one on pts/GD/GF, so the value fallback only ever orders teams yet to play at
+  // all (our market-value seeding); it never overrides a real result.
   const byStanding = (a: GroupStanding, b: GroupStanding) =>
     b.pts - a.pts ||
     b.gd - a.gd ||
@@ -283,8 +285,9 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   for (const g of GROUPS) {
     const rd = results.groups[g];
     if (rd?.anyPlayed && rd.rows.length) {
-      // Follow TM's pts/GD/GF, but break genuine ties by market value (TM falls back
-      // to head-to-head / lots, which we can't see), so position matches our seeding.
+      // Order by real pts/GD/GF; remaining ties fall to TM's published rank, which
+      // already applies the official FIFA tie-breaks (head-to-head → fair play →
+      // lots). Teams yet to kick off stay in market-value (seeding) order.
       const sorted = [...rd.rows].sort(byStanding);
       liveGroups[g] = {
         live: true,
