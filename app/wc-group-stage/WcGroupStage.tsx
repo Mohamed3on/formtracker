@@ -8,12 +8,29 @@ import { fmt } from "@/lib/wc/model";
 import type { MatchupRow, MatchupTeam } from "@/lib/wc/matchups";
 
 type Mode = "date" | "value";
+type Status = "played" | "live" | "next" | "upcoming";
+
+// A match runs ~2h; past that, an unplayed fixture is treated as awaiting its result, not live.
+const LIVE_WINDOW_MS = 150 * 60_000;
 
 // Pre-paint on the client (smooth FLIP), plain effect on the server (no warning).
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
+// kickoff is YYYYMMDDHHMM in CEST (UTC+2) → epoch ms, to compare against the client clock.
+function kickoffMs(k: number): number {
+  const s = String(k);
+  return Date.UTC(
+    +s.slice(0, 4),
+    +s.slice(4, 6) - 1,
+    +s.slice(6, 8),
+    +s.slice(8, 10) - 2,
+    +s.slice(10, 12),
+  );
+}
+
 export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
   const [mode, setMode] = useState<Mode>("date");
+  const [now, setNow] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
   const prevTops = useRef(new Map<string, number>());
@@ -36,6 +53,13 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
       prevTops.current.set(id, top);
     });
   });
+
+  // Client clock (data only refreshes hourly) so a fixture flips to "live" the moment it kicks off.
+  useIsoLayoutEffect(() => setNow(Date.now()), []);
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const max = Math.max(1, ...rows.map((r) => r.sum));
   const sorted = [...rows].sort((a, b) =>
@@ -81,15 +105,26 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
       </header>
 
       <section className="mt-8 flex flex-col gap-2.5">
-        {sorted.map((row) => (
-          <MatchCard
-            key={row.id}
-            row={row}
-            max={max}
-            total={rows.length}
-            cardRef={row.id === focusId ? anchorRef : undefined}
-          />
-        ))}
+        {sorted.map((row) => {
+          const elapsed = now == null ? -1 : now - kickoffMs(row.kickoff);
+          const status: Status = row.played
+            ? "played"
+            : elapsed >= 0 && elapsed < LIVE_WINDOW_MS
+              ? "live"
+              : row.id === focusId
+                ? "next"
+                : "upcoming";
+          return (
+            <MatchCard
+              key={row.id}
+              row={row}
+              max={max}
+              total={rows.length}
+              status={status}
+              cardRef={row.id === focusId ? anchorRef : undefined}
+            />
+          );
+        })}
       </section>
 
       <footer className="mt-8 text-center text-xs text-text-muted">
@@ -117,11 +152,13 @@ function MatchCard({
   row,
   max,
   total,
+  status,
   cardRef,
 }: {
   row: MatchupRow;
   max: number;
   total: number;
+  status: Status;
   cardRef?: Ref<HTMLDivElement>;
 }) {
   const md = row.matchday;
@@ -152,15 +189,32 @@ function MatchCard({
   return (
     <div
       ref={cardRef}
+      className={clsx(
+        "grid scroll-mt-16 grid-cols-1 items-center gap-3 rounded-xl border px-4 py-3 transition-[transform,border-color,background-color] duration-150 will-change-transform hover:-translate-y-0.5 sm:grid-cols-[5rem_1fr_auto] sm:gap-4 xl:scroll-mt-24",
+        status === "live"
+          ? "border-accent-cold/50 bg-accent-cold-faint"
+          : status === "next"
+            ? "border-amber-500/50 bg-amber-400/5"
+            : "border-border-subtle bg-elevated hover:border-text-muted/50",
+      )}
       data-mid={row.id}
-      className="grid scroll-mt-16 grid-cols-1 items-center gap-3 rounded-xl border border-border-subtle bg-elevated px-4 py-3 transition-[transform,border-color] duration-150 will-change-transform hover:-translate-y-0.5 hover:border-text-muted/50 sm:grid-cols-[5rem_1fr_auto] sm:gap-4 xl:scroll-mt-24"
     >
       <div className="flex items-baseline gap-2 sm:flex-col sm:items-start sm:gap-0 sm:border-r sm:border-border-subtle sm:pr-3">
         <span className="text-[11px] uppercase tracking-wide text-text-muted">{row.dow}</span>
         <span className="text-base font-bold">{row.dayLabel}</span>
-        <span className={clsx("font-value text-xs", row.played ? "text-text-muted" : accent)}>
-          {row.played ? "FT" : row.timeLabel}
-        </span>
+        {status === "live" ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-accent-cold">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-cold opacity-75 motion-reduce:hidden" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-cold" />
+            </span>
+            LIVE
+          </span>
+        ) : (
+          <span className={clsx("font-value text-xs", row.played ? "text-text-muted" : accent)}>
+            {row.played ? "FT" : row.timeLabel}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -175,6 +229,11 @@ function MatchCard({
           <span className="px-1 text-xs italic text-text-muted">v</span>
         )}
         <TeamName t={row.away} win={winner === "away"} />
+        {status === "next" && (
+          <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-400">
+            Next up
+          </span>
+        )}
         <Badge variant="outline" className="text-text-muted">
           Group {row.group}
         </Badge>
