@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type Ref, useEffect, useLayoutEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : use
 export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
   const [mode, setMode] = useState<Mode>("date");
   const rootRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const prevTops = useRef(new Map<string, number>());
 
   // FLIP: animate each card from its previous position whenever the order changes.
@@ -24,7 +25,8 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     root.querySelectorAll<HTMLElement>("[data-mid]").forEach((el) => {
       const id = el.dataset.mid as string;
-      const top = el.getBoundingClientRect().top;
+      // Document-relative so auto-scrolling the page never reads as a reorder.
+      const top = el.getBoundingClientRect().top + window.scrollY;
       const prev = prevTops.current.get(id);
       if (!reduce && prev != null && Math.abs(prev - top) > 1)
         el.animate([{ transform: `translateY(${prev - top}px)` }, { transform: "translateY(0)" }], {
@@ -39,6 +41,13 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
   const sorted = [...rows].sort((a, b) =>
     mode === "value" ? b.sum - a.sum : a.kickoff - b.kickoff,
   );
+
+  // Sorted by date: focus the current or next match — the first not-yet-played fixture in
+  // chronological order (live, so it advances through the day). Finished games stay scrollable above.
+  const focusId = mode === "date" ? (sorted.find((r) => !r.played)?.id ?? null) : null;
+  useIsoLayoutEffect(() => {
+    if (focusId != null) anchorRef.current?.scrollIntoView({ block: "start" });
+  }, [focusId]);
 
   return (
     <div ref={rootRef} className="mx-auto max-w-3xl px-4">
@@ -73,7 +82,13 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
 
       <section className="mt-8 flex flex-col gap-2.5">
         {sorted.map((row) => (
-          <MatchCard key={row.id} row={row} max={max} total={rows.length} />
+          <MatchCard
+            key={row.id}
+            row={row}
+            max={max}
+            total={rows.length}
+            cardRef={row.id === focusId ? anchorRef : undefined}
+          />
         ))}
       </section>
 
@@ -98,7 +113,17 @@ function TeamName({ t, win }: { t: MatchupTeam; win: boolean }) {
   );
 }
 
-function MatchCard({ row, max, total }: { row: MatchupRow; max: number; total: number }) {
+function MatchCard({
+  row,
+  max,
+  total,
+  cardRef,
+}: {
+  row: MatchupRow;
+  max: number;
+  total: number;
+  cardRef?: Ref<HTMLDivElement>;
+}) {
   const md = row.matchday;
   const badge =
     md !== 3
@@ -126,8 +151,9 @@ function MatchCard({ row, max, total }: { row: MatchupRow; max: number; total: n
 
   return (
     <div
+      ref={cardRef}
       data-mid={row.id}
-      className="grid grid-cols-1 items-center gap-3 rounded-xl border border-border-subtle bg-elevated px-4 py-3 transition-[transform,border-color] duration-150 will-change-transform hover:-translate-y-0.5 hover:border-text-muted/50 sm:grid-cols-[5rem_1fr_auto] sm:gap-4"
+      className="grid scroll-mt-16 grid-cols-1 items-center gap-3 rounded-xl border border-border-subtle bg-elevated px-4 py-3 transition-[transform,border-color] duration-150 will-change-transform hover:-translate-y-0.5 hover:border-text-muted/50 sm:grid-cols-[5rem_1fr_auto] sm:gap-4 xl:scroll-mt-24"
     >
       <div className="flex items-baseline gap-2 sm:flex-col sm:items-start sm:gap-0 sm:border-r sm:border-border-subtle sm:pr-3">
         <span className="text-[11px] uppercase tracking-wide text-text-muted">{row.dow}</span>
