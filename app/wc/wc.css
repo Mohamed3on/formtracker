@@ -361,7 +361,7 @@
   z-index: 60;
   pointer-events: none;
   display: none;
-  align-items: center;
+  flex-direction: column;
   gap: 7px;
   background: #0b121d;
   border: 1px solid var(--wc-line);
@@ -370,10 +370,15 @@
   font-size: 13px;
   font-weight: 600;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
-  white-space: nowrap;
 }
 .wc-root .tip.show {
   display: flex;
+}
+.wc-root .tip-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
 }
 .wc-root .tip .tf {
   font-size: 15px;
@@ -384,6 +389,47 @@
 .wc-root .tip .tr {
   color: var(--wc-gold);
   font-weight: 700;
+}
+.wc-root .tip-group {
+  border-top: 1px solid var(--wc-line);
+  padding-top: 6px;
+}
+.wc-root .tip-ghead {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wc-muted);
+  margin-bottom: 4px;
+}
+.wc-root .tip-ghead .glive {
+  color: var(--wc-under);
+  font-weight: 700;
+}
+.wc-root .tip-group table {
+  border-collapse: collapse;
+}
+.wc-root .tip-group td {
+  padding: 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.wc-root .tip-group .pos {
+  color: var(--wc-muted);
+  text-align: right;
+  padding-right: 8px;
+}
+.wc-root .tip-group .tgn .flag {
+  margin-right: 6px;
+  font-size: 13px;
+}
+.wc-root .tip-group .pts {
+  text-align: right;
+  padding-left: 16px;
+  color: var(--wc-txt);
+}
+.wc-root .tip-group tr.on .tgn,
+.wc-root .tip-group tr.on .pts {
+  color: var(--wc-gold);
 }
 
 /* value-sorted placement table */
@@ -450,6 +496,11 @@
 }
 .wc-root .nat-players:hover {
   color: var(--wc-gold);
+}
+/* in flex rows (tracker / group cells) the parent gap already spaces it */
+.wc-root .trow .nat-players,
+.wc-root .group-card .tc .nat-players {
+  margin-left: 0;
 }
 .wc-root .mv-val {
   color: var(--wc-muted);

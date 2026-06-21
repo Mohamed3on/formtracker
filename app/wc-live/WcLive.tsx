@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { fmtS, ordinal, type Card, type TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
 import { TeamCell } from "../wc/TeamCell";
+import { PlayersLink } from "../wc/PlayersLink";
 import "../wc/wc.css";
 
 function groupDelta(delta: number | null) {
@@ -61,6 +62,11 @@ export function WcLive({
   const trackerByName: Record<string, TrackerRow> = Object.fromEntries(
     tracker.map((r) => [r.team.name, r]),
   );
+
+  // Which group each nation came through — for the bracket hover popup.
+  const groupByTeam: Record<string, string> = {};
+  for (const [g, grp] of Object.entries(liveGroups))
+    for (const r of grp.rows) groupByTeam[r.team.name] = g;
 
   function onMove(e: React.MouseEvent) {
     const t = tipRef.current;
@@ -171,6 +177,10 @@ export function WcLive({
     .sort((a, b) => a.projStage - a.expStage - (b.projStage - b.expStage));
 
   const info = hovered ? trackerByName[hovered] : null;
+  // For nations shown in the bracket, reveal the group they came through.
+  const tipGroupLetter =
+    info && knockoutTeams.has(info.team.name) ? groupByTeam[info.team.name] : null;
+  const tipGroup = tipGroupLetter ? liveGroups[tipGroupLetter] : null;
 
   const trackRow = (r: TrackerRow, kind: "over" | "under") => {
     const d = r.projStage - r.expStage;
@@ -183,6 +193,9 @@ export function WcLive({
       >
         <span className="flag">{r.team.flag}</span>
         <span className="tn">{r.team.name}</span>
+        {playerLinks[r.team.name] && (
+          <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+        )}
         <span className="ts">
           {r.projLabel}
           {projSuffix(r)} <span className="tmut">· exp {r.expLabel}</span>
@@ -342,6 +355,9 @@ export function WcLive({
                     <td className="tc">
                       <span className="flag">{r.team.flag}</span>
                       <span>{r.team.name}</span>
+                      {playerLinks[r.team.name] && (
+                        <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+                      )}
                     </td>
                     <td className="n pts">{r.pts}</td>
                     <td
@@ -376,14 +392,41 @@ export function WcLive({
       <div ref={tipRef} className={clsx("tip", info && "show")}>
         {info && (
           <>
-            <span className="tf">{info.team.flag}</span>
-            {info.team.name}
-            <span className="td">·</span>
-            <span className="tr">
-              {info.projLabel}
-              {projSuffix(info)}
-            </span>
-            <span className="td">exp {info.expLabel}</span>
+            <div className="tip-line">
+              <span className="tf">{info.team.flag}</span>
+              {info.team.name}
+              <span className="td">·</span>
+              <span className="tr">
+                {info.projLabel}
+                {projSuffix(info)}
+              </span>
+              <span className="td">exp {info.expLabel}</span>
+            </div>
+            {tipGroup && (
+              <div className="tip-group">
+                <div className="tip-ghead">
+                  Group {tipGroupLetter}
+                  {tipGroup.live && <span className="glive"> live</span>}
+                </div>
+                <table>
+                  <tbody>
+                    {tipGroup.rows.map((r) => (
+                      <tr
+                        key={r.team.name}
+                        className={clsx(r.team.name === info.team.name && "on")}
+                      >
+                        <td className="pos">{r.pos}</td>
+                        <td className="tgn">
+                          <span className="flag">{r.team.flag}</span>
+                          {r.team.short}
+                        </td>
+                        <td className="pts">{r.pts}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
       </div>
