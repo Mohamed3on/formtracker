@@ -218,6 +218,9 @@ export function WcLive({
           them into.{" "}
           <Link href="/wc" className="wc-link">
             See the full value prediction →
+          </Link>{" "}
+          <Link href="/wc-schedule" className="wc-link">
+            See the full schedule →
           </Link>
         </p>
       </header>

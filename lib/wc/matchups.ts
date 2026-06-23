@@ -1,73 +1,51 @@
-import { shortName, type Team } from "./model";
-import type { GroupFixture } from "./fixtures";
+import { shortName, type Round, type Team } from "./model";
+import type { GroupFixture, Kick } from "./fixtures";
+import type { LiveModel } from "./live";
 
 export type MatchupTeam = { name: string; short: string; flag: string; mv: number };
+export type Stage = "group" | Round | "3RD";
 export type MatchupRow = {
   id: string;
-  group: string;
-  matchday: number;
+  stage: Stage;
+  group: string | null; // group letter (group games only)
+  matchday: number | null; // 1-3 (group games only)
   home: MatchupTeam;
   away: MatchupTeam;
   sum: number; // combined squad market value (millions)
-  vrank: number; // 1 = most/least valuable within its list
+  vrank: number; // 1 = most valuable across the whole schedule
   hs: number | null;
   as: number | null;
   played: boolean;
+  projected: boolean; // teams are a value projection, not yet a confirmed matchup
   kickoff: number;
   dow: string;
   dayLabel: string;
   timeLabel: string;
-  // MD3 only: true = both teams already secured top-2 (qualification can't change),
-  // false = stakes remain, null = not yet decidable (matchday 1-2 still pending).
-  deadRubber: boolean | null;
 };
-// All group-stage matchups, ranked by combined squad market value (1 = most valuable).
-export function buildMatchups(teams: Team[], fixtures: GroupFixture[]): MatchupRow[] {
+
+// Every World Cup match — real group fixtures plus knockout games (projected by value,
+// with real teams/scores swapped in as the live model resolves them) — ranked by
+// combined squad market value (1 = most valuable across the whole schedule).
+export function buildMatchups(
+  teams: Team[],
+  fixtures: GroupFixture[],
+  live: LiveModel,
+  koDates: Record<string, Kick>,
+): MatchupRow[] {
   const byName = Object.fromEntries(teams.map((t) => [t.name, t])) as Record<string, Team>;
   const lite = (n: string): MatchupTeam => {
     const t = byName[n];
     return { name: n, short: shortName(n), flag: t?.flag ?? "🏳️", mv: t?.mv ?? 0 };
   };
 
-  // Per group: has a team clinched a top-2 spot going into matchday 3? Only decidable
-  // once all four matchday 1-2 games are played (one game left, max +3 for everyone).
-  // Sound (no false positives): X is safe if ≥2 rivals can't even reach X's current
-  // points (pts+3 < X). Ignores goal difference, so it under-claims rather than over.
-  const clinchedTop2: Record<string, (team: string) => boolean | null> = {};
-  for (const g of [...new Set(fixtures.map((f) => f.group))]) {
-    const early = fixtures.filter((f) => f.group === g && f.matchday <= 2);
-    if (early.length !== 4 || !early.every((f) => f.played)) {
-      clinchedTop2[g] = () => null;
-      continue;
-    }
-    const pts: Record<string, number> = {};
-    const bump = (t: string, p: number) => (pts[t] = (pts[t] ?? 0) + p);
-    for (const f of early) {
-      const h = f.hs as number;
-      const a = f.as as number;
-      bump(f.home, h > a ? 3 : h === a ? 1 : 0);
-      bump(f.away, a > h ? 3 : h === a ? 1 : 0);
-    }
-    clinchedTop2[g] = (team) => {
-      const px = pts[team] ?? 0;
-      const blocked = Object.keys(pts).filter((o) => o !== team && (pts[o] ?? 0) + 3 < px).length;
-      return blocked >= 2;
-    };
-  }
-  const deadRubber = (f: GroupFixture): boolean | null => {
-    if (f.matchday !== 3) return null;
-    const h = clinchedTop2[f.group](f.home);
-    const a = clinchedTop2[f.group](f.away);
-    return h === null || a === null ? null : h && a;
-  };
-
-  return fixtures
+  const groupRows: MatchupRow[] = fixtures
     .filter((f) => byName[f.home] && byName[f.away])
     .map((f) => {
       const home = lite(f.home);
       const away = lite(f.away);
       return {
         id: `${f.home}__${f.away}`,
+        stage: "group",
         group: f.group,
         matchday: f.matchday,
         home,
@@ -77,13 +55,62 @@ export function buildMatchups(teams: Team[], fixtures: GroupFixture[]): MatchupR
         hs: f.hs,
         as: f.as,
         played: f.played,
+        projected: false,
         kickoff: f.kickoff,
         dow: f.dow,
         dayLabel: f.dayLabel,
         timeLabel: f.timeLabel,
-        deadRubber: deadRubber(f),
       };
-    })
+    });
+
+  // Knockout: each bracket card carries the live model's slot (real teams/scores where
+  // known, the value projection otherwise) dropped onto its official kickoff date.
+  const { bracket } = live.model;
+  const koRows: MatchupRow[] = [];
+  for (const c of bracket.cards) {
+    const key = `${c.round}-${c.num}`;
+    const date = koDates[key];
+    if (!date) continue; // no scraped date → skip rather than mis-sort by 0
+    const lc = live.cardByKey[key];
+    const home = lc?.home ?? c.home;
+    const away = lc?.away ?? c.away;
+    koRows.push({
+      id: key,
+      stage: c.round,
+      group: null,
+      matchday: null,
+      home,
+      away,
+      sum: home.mv + away.mv,
+      vrank: 0,
+      hs: lc?.hs ?? null,
+      as: lc?.as ?? null,
+      played: !!lc?.played,
+      projected: !lc?.real,
+      ...date,
+    });
+  }
+  // Third-place play-off — always a value projection (not tracked by the live overlay).
+  const { third } = bracket;
+  const thirdDate = koDates["3RD"];
+  if (thirdDate)
+    koRows.push({
+      id: "3RD",
+      stage: "3RD",
+      group: null,
+      matchday: null,
+      home: third.home,
+      away: third.away,
+      sum: third.home.mv + third.away.mv,
+      vrank: 0,
+      hs: null,
+      as: null,
+      played: false,
+      projected: true,
+      ...thirdDate,
+    });
+
+  return [...groupRows, ...koRows]
     .sort((a, b) => b.sum - a.sum)
     .map((r, i) => ({ ...r, vrank: i + 1 }));
 }

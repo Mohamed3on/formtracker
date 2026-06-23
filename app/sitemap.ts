@@ -14,6 +14,7 @@ const CORE_ROUTES = [
   "/biggest-movers",
   "/wc-live",
   "/wc",
+  "/wc-schedule",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {

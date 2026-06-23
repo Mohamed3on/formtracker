@@ -89,21 +89,35 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     if (names.every((n) => teamsByName[n])) liveOrder[g] = names;
   }
 
+  // Once every group is complete and the real knockout draw is published, which
+  // third-placed teams advanced is a matter of record — take the qualified groups
+  // straight from the bracket (official FIFA ranking, incl. fair-play/lots) rather
+  // than breaking ties by market value. Until then, value is the last-resort seed.
+  const allComplete = GROUPS.every((g) => results.groups[g]?.complete);
+  const realKoTeams = new Set(
+    results.ko.flatMap((m) => [m.home, m.away]).filter((n): n is string => !!n),
+  );
+  const realThirdGroups = GROUPS.filter((g) => liveOrder[g] && realKoTeams.has(liveOrder[g][2]));
+  const officialThirds =
+    allComplete && realThirdGroups.length === 8 ? new Set(realThirdGroups) : null;
+
   // Best-eight third-placed groups for the bracket: live thirds ranked on real
   // pts/GD/GF, not-yet-played thirds on market value (so it stays MV pre-kickoff).
-  const qualGroups = new Set(
-    GROUPS.map((g) => {
-      const o = liveOrder[g];
-      if (o) {
-        const r = results.groups[g].rows.find((x) => x.name === o[2])!;
-        return { g, pts: r.pts, gd: r.gd, gf: parseInt(r.goals) || 0, mv: teamsByName[o[2]].mv };
-      }
-      return { g, pts: 0, gd: 0, gf: 0, mv: mvGroups[g][2].mv };
-    })
-      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || b.mv - a.mv)
-      .slice(0, 8)
-      .map((t) => t.g),
-  );
+  const qualGroups =
+    officialThirds ??
+    new Set(
+      GROUPS.map((g) => {
+        const o = liveOrder[g];
+        if (o) {
+          const r = results.groups[g].rows.find((x) => x.name === o[2])!;
+          return { g, pts: r.pts, gd: r.gd, gf: parseInt(r.goals) || 0, mv: teamsByName[o[2]].mv };
+        }
+        return { g, pts: 0, gd: 0, gf: 0, mv: mvGroups[g][2].mv };
+      })
+        .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || b.mv - a.mv)
+        .slice(0, 8)
+        .map((t) => t.g),
+    );
 
   const model = buildModel(teams, { order: liveOrder, qualGroups });
   const lite = (name: string): TeamLite =>
@@ -129,9 +143,13 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   for (const c of model.bracket.cards) {
     const key = `${c.round}-${c.num}`;
     const m = koByKey.get(key);
-    const real = !!(m && m.home && m.away);
+    // Use whichever side TM has already locked in (e.g. Germany once it tops its
+    // group); the other side stays the value projection until it's decided too.
+    const home = m?.home ? lite(m.home) : c.home;
+    const away = m?.away ? lite(m.away) : c.away;
+    const real = !!(m && m.home && m.away); // both sides confirmed → a real matchup
     const played = !!(m && m.hs !== null && m.as !== null);
-    let winner: string | null = c.winner; // predicted by default
+    let winner: string | null;
     if (real && m) {
       const r = ORD[c.round];
       if (m.home && appearsDeeperThan(m.home, r)) winner = m.home;
@@ -139,16 +157,11 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
       else if (played && m.hs !== m.as)
         winner = (m.hs as number) > (m.as as number) ? m.home : m.away;
       else winner = null; // real teams set, outcome not yet decided
+    } else {
+      // Project the winner by value off whatever teams we have (real or predicted).
+      winner = home.mv >= away.mv ? home.name : away.name;
     }
-    cardByKey[key] = {
-      home: real ? lite(m!.home!) : c.home,
-      away: real ? lite(m!.away!) : c.away,
-      winner,
-      hs: m?.hs ?? null,
-      as: m?.as ?? null,
-      real,
-      played,
-    };
+    cardByKey[key] = { home, away, winner, hs: m?.hs ?? null, as: m?.as ?? null, real, played };
   }
 
   // ---- Projected deepest stage: real results first, then higher value wins ----
@@ -267,12 +280,14 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     const t = [...rd.rows].sort(byStanding)[2];
     return [{ group: g, pts: t.pts, gd: t.gd, gf: gf(t), mv: mvOf(t.name) }];
   });
-  const bestThirdGroups = new Set(
-    realThirds
-      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || b.mv - a.mv)
-      .slice(0, 8)
-      .map((t) => t.group),
-  );
+  const bestThirdGroups =
+    officialThirds ??
+    new Set(
+      realThirds
+        .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || b.mv - a.mv)
+        .slice(0, 8)
+        .map((t) => t.group),
+    );
 
   // Each team's expected position within its group = its value rank in the group.
   const expPosByGroup: Record<string, Record<string, number>> = {};

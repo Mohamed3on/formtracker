@@ -5,10 +5,19 @@ import clsx from "clsx";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 import { fmt } from "@/lib/wc/model";
-import type { MatchupRow, MatchupTeam } from "@/lib/wc/matchups";
+import type { MatchupRow, MatchupTeam, Stage } from "@/lib/wc/matchups";
 
 type Mode = "date" | "value";
 type Status = "played" | "live" | "next" | "upcoming";
+
+const ROUND_LABEL: Record<Exclude<Stage, "group">, string> = {
+  R32: "Round of 32",
+  R16: "Round of 16",
+  QF: "Quarter-final",
+  SF: "Semi-final",
+  F: "Final",
+  "3RD": "3rd place",
+};
 
 // A match runs ~2h; past that, an unplayed fixture is treated as awaiting its result, not live.
 const LIVE_WINDOW_MS = 150 * 60_000;
@@ -28,7 +37,7 @@ function kickoffMs(k: number): number {
   );
 }
 
-export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
+export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
   const [mode, setMode] = useState<Mode>("date");
   const [now, setNow] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -77,17 +86,17 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
     <div ref={rootRef} className="mx-auto max-w-3xl px-4">
       <header>
         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-400">
-          FIFA World Cup 2026 · Group Stage
+          FIFA World Cup 2026 · Full Schedule
         </div>
         <h1 className="font-pixel mt-2 text-3xl font-bold tracking-tight">
-          Matchups by squad value
+          Every match by squad value
         </h1>
         <p className="mt-2 max-w-prose text-sm text-text-secondary">
-          All {rows.length} group games ranked by combined squad market value (live). <b>MD</b> =
-          matchday; an <b className="text-amber-400">MD3</b> game is flagged a{" "}
-          <b className="text-rose-300">dead rubber</b> once both teams have secured top-2 (the
-          result can&apos;t change who qualifies). Scores fill in as matches are played. Kickoffs in{" "}
-          <b>CEST (UTC+2)</b>.
+          All {rows.length} matches — group fixtures and the knockout bracket — ranked by combined
+          squad market value (live). Group scores fill in as games are played;{" "}
+          <b className="text-amber-400">knockout</b> matchups are{" "}
+          <b className="text-amber-400">projected</b> by value (higher value advances) until the
+          real bracket fills in. Kickoffs in <b>CEST (UTC+2)</b>.
         </p>
         <div className="mt-4 flex items-center gap-3">
           <span className="text-xs uppercase tracking-wider text-text-muted">Sort</span>
@@ -109,7 +118,7 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
           const elapsed = now == null ? -1 : now - kickoffMs(row.kickoff);
           const status: Status = row.played
             ? "played"
-            : elapsed >= 0 && elapsed < LIVE_WINDOW_MS
+            : !row.projected && elapsed >= 0 && elapsed < LIVE_WINDOW_MS
               ? "live"
               : row.id === focusId
                 ? "next"
@@ -134,16 +143,21 @@ export function WcGroupStage({ rows }: { rows: MatchupRow[] }) {
   );
 }
 
-function TeamName({ t, win }: { t: MatchupTeam; win: boolean }) {
+function TeamName({ t, win, fav }: { t: MatchupTeam; win: boolean; fav?: boolean }) {
   return (
     <span
       className={clsx(
         "inline-flex items-center gap-2 text-[15px]",
-        win ? "font-bold text-text-primary" : "font-semibold text-text-secondary",
+        win || fav ? "font-bold text-text-primary" : "font-semibold text-text-secondary",
       )}
     >
       <span className="text-xl leading-none">{t.flag}</span>
       {t.short}
+      {fav && (
+        <span title="Projected to win on squad value" className="text-xs text-amber-400">
+          ▸
+        </span>
+      )}
     </span>
   );
 }
@@ -161,30 +175,11 @@ function MatchCard({
   status: Status;
   cardRef?: Ref<HTMLDivElement>;
 }) {
-  const md = row.matchday;
-  const badge =
-    md !== 3
-      ? { text: `MD${md}`, cls: "border-border-subtle text-text-muted", title: undefined }
-      : row.deadRubber === true
-        ? {
-            text: "MD3 · dead rubber",
-            cls: "border-rose-500/40 bg-rose-500/10 font-medium text-rose-300",
-            title: "Both teams have already secured top-2 — the result can't change who qualifies",
-          }
-        : row.deadRubber === false
-          ? {
-              text: "MD3",
-              cls: "border-border-subtle text-text-muted",
-              title: "Final matchday — still has stakes",
-            }
-          : {
-              text: "MD3 · dead rubber?",
-              cls: "border-amber-500/40 bg-amber-500/10 font-medium text-amber-400",
-              title: "Final matchday — could be a dead rubber once matchday 2 is played",
-            };
   const accent = "text-amber-400";
   const winner =
     row.played && row.hs !== row.as ? ((row.hs ?? 0) > (row.as ?? 0) ? "home" : "away") : null;
+  // Before kickoff, flag the higher-value side as the value-model favourite.
+  const fav = row.played ? null : row.home.mv >= row.away.mv ? "home" : "away";
 
   return (
     <div
@@ -218,7 +213,7 @@ function MatchCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <TeamName t={row.home} win={winner === "home"} />
+        <TeamName t={row.home} win={winner === "home"} fav={fav === "home"} />
         {row.played ? (
           <span className="font-value px-1 text-base">
             {row.hs}
@@ -228,21 +223,36 @@ function MatchCard({
         ) : (
           <span className="px-1 text-xs italic text-text-muted">v</span>
         )}
-        <TeamName t={row.away} win={winner === "away"} />
+        <TeamName t={row.away} win={winner === "away"} fav={fav === "away"} />
         {status === "next" && (
           <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-400">
             Next up
           </span>
         )}
-        <Badge variant="outline" className="text-text-muted">
-          Group {row.group}
-        </Badge>
-        <span
-          title={badge.title}
-          className={clsx("rounded-full border px-2 py-0.5 text-[11px]", badge.cls)}
-        >
-          {badge.text}
-        </span>
+        {row.stage === "group" ? (
+          <>
+            <Badge variant="outline" className="text-text-muted">
+              Group {row.group}
+            </Badge>
+            <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[11px] text-text-muted">
+              MD{row.matchday}
+            </span>
+          </>
+        ) : (
+          <>
+            <Badge variant="outline" className="text-text-muted">
+              {ROUND_LABEL[row.stage]}
+            </Badge>
+            {row.projected && (
+              <span
+                title="Projected by squad value — fills in once the real bracket is set"
+                className="rounded-full border border-dashed border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-400"
+              >
+                Projected
+              </span>
+            )}
+          </>
+        )}
       </div>
 
       <div className="flex flex-col items-start gap-0.5 sm:items-end">
