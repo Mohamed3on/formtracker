@@ -216,9 +216,6 @@ export function WcLive({
           The market-value prediction, getting overwritten by real results as they come in.{" "}
           <b>vs Exp</b> tracks who is beating or falling short of the round their squad value seeds
           them into.{" "}
-          <Link href="/wc" className="wc-link">
-            See the full value prediction →
-          </Link>{" "}
           <Link href="/wc-schedule" className="wc-link">
             See the full schedule →
           </Link>
