@@ -82,16 +82,11 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
     const el = focusId != null ? anchorRef.current : null;
     if (!el) return;
     const scroll = () => el.scrollIntoView({ block: "start" });
-    scroll(); // pre-paint: lands flush on desktop with no flash of the list top
-    // Real mobile browsers (iOS Safari especially) drop or clamp a scroll fired during
-    // the initial layout pass, before the URL-bar viewport settles. Re-assert after paint
-    // and once more after a short delay; both are no-ops if we're already in place.
-    const raf = requestAnimationFrame(() => requestAnimationFrame(scroll));
+    scroll(); // instant on desktop, no flash
+    // Mobile fires this before the URL-bar viewport settles, so the scroll is dropped.
+    // Re-assert once after it settles; a no-op if we're already in place.
     const timer = setTimeout(scroll, 250);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [focusId]);
 
   return (
