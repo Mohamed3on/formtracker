@@ -90,7 +90,7 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
   }, [focusId]);
 
   return (
-    <div ref={rootRef} className="mx-auto max-w-3xl px-4">
+    <div ref={rootRef} className="mx-auto max-w-5xl px-4">
       <header>
         <div className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-400">
           FIFA World Cup 2026 · Full Schedule
