@@ -52,6 +52,7 @@ const ZERO_STATS: PlayerStatsResult = {
   minutes: 0,
   appearances: 0,
   goals: 0,
+  topFlightGoals: 0,
   assists: 0,
   penaltyGoals: 0,
   penaltyMisses: 0,
@@ -135,6 +136,7 @@ export const POSITION_NAMES: Record<number, string> = {
 
 interface AggregatedStats {
   goals: number;
+  topFlightGoals: number;
   assists: number;
   minutes: number;
   appearances: number;
@@ -162,6 +164,12 @@ interface AggregatedStats {
 
 /** CEAPI competition type IDs */
 const COMP_TYPE_DOMESTIC_LEAGUE = 1;
+
+/** Domestic league tiers below the top flight (2nd–7th division). competitionTypeId
+ *  1 = first tier; 8+ = domestic cups / continental / national-team, which all
+ *  count. Goals in these lower-tier leagues are discounted for scorer-pool players
+ *  (see refresh-minutes-value) so a 2nd-division tally doesn't read as a top-5 record. */
+const LOWER_LEAGUE_TYPES = new Set([2, 3, 4, 5, 6, 7]);
 
 /** Source: data/club-types.json */
 export type ClubTypes = Record<string, number>;
@@ -196,6 +204,7 @@ function aggregateSeasonStats(
 ): AggregatedStats {
   const seasonId = currentSeasonId();
   let goals = 0,
+    topFlightGoals = 0,
     assists = 0,
     minutes = 0,
     appearances = 0,
@@ -235,6 +244,7 @@ function aggregateSeasonStats(
     const ast = gs.assists ?? 0;
     const pGoals = gs.penaltyShooterGoalsScored ?? 0;
     goals += gls;
+    if (!LOWER_LEAGUE_TYPES.has(g.gameInformation.competitionTypeId)) topFlightGoals += gls;
     assists += ast;
     penaltyGoals += pGoals;
     penaltyMisses += gs.penaltyShooterMisses ?? 0;
@@ -285,6 +295,7 @@ function aggregateSeasonStats(
   const playedPosition = positionStats[0]?.position ?? "";
   return {
     goals,
+    topFlightGoals,
     assists,
     minutes,
     appearances,

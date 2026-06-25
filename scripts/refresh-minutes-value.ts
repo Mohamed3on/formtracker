@@ -179,7 +179,10 @@ async function loadScorerPool(): Promise<MinutesValuePlayer[]> {
   }
 }
 
-async function loadOrGatherPlayers(): Promise<MinutesValuePlayer[]> {
+async function loadOrGatherPlayers(): Promise<{
+  players: MinutesValuePlayer[];
+  mvIds: Set<string>;
+}> {
   const [mvList, scorerList] = await Promise.all([loadMvPool(), loadScorerPool()]);
   const players = dedupeById([
     { label: "MV pool", list: mvList },
@@ -188,7 +191,7 @@ async function loadOrGatherPlayers(): Promise<MinutesValuePlayer[]> {
   if (players.length < 100) {
     throw new Error(`Only ${players.length} players — expected 100+.`);
   }
-  return players;
+  return { players, mvIds: new Set(mvList.map((p) => p.playerId)) };
 }
 
 // --- 2. Fetch per-player stats with adaptive concurrency ---
@@ -584,7 +587,10 @@ async function saveClubTypes(clubTypes: ClubTypes): Promise<void> {
 // --- Main pipeline ---
 
 async function main() {
-  const [players, clubTypes] = await Promise.all([loadOrGatherPlayers(), loadClubTypes()]);
+  const [{ players, mvIds }, clubTypes] = await Promise.all([
+    loadOrGatherPlayers(),
+    loadClubTypes(),
+  ]);
 
   console.log(`[refresh] Fetching stats for ${players.length} players...`);
   const cache = await fetchAllStats(
@@ -616,8 +622,20 @@ async function main() {
 
   await validate(players, cache);
 
-  const withMV = players.filter((p) => p.marketValue > 0);
-  console.log(`[refresh] Filtered: ${players.length - withMV.length} players with no market value`);
+  // Scorer-pool players earn their slot via goals, so only top-flight ones count:
+  // a winter signing's 2nd-division (or reserve-team) tally shouldn't read as a
+  // top-5 scoring record. MV-pool players are notable on value alone, so all their
+  // goals stand. (e.g. Arévalo's 13 "goals" were LaLiga2 + Stuttgart II, 0 Bundesliga.)
+  for (const p of players) {
+    if (!mvIds.has(p.playerId)) p.goals = cache[p.playerId]?.data.topFlightGoals ?? 0;
+  }
+  const withMV = players.filter(
+    (p) => p.marketValue > 0 && (mvIds.has(p.playerId) || p.goals >= 1),
+  );
+  const noMv = players.filter((p) => p.marketValue <= 0).length;
+  console.log(
+    `[refresh] Filtered ${players.length - withMV.length} (${noMv} no market value, rest scorer-pool with no top-flight goal)`,
+  );
 
   await mkdir(DATA_DIR, { recursive: true });
   await writeFile(CLUBS_PATH, JSON.stringify(clubs));

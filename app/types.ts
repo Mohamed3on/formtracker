@@ -289,6 +289,9 @@ export interface PlayerStatsResult {
   minutes: number;
   appearances: number;
   goals: number;
+  /** Goals in top-flight leagues, cups & continental only (excludes 2nd-tier-and-below
+   *  league goals). Used to gate scorer-pool players in the refresh. */
+  topFlightGoals: number;
   assists: number;
   penaltyGoals: number;
   penaltyMisses: number;
