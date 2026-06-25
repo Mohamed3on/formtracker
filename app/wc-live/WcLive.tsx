@@ -389,9 +389,8 @@ export function WcLive({
       </div>
       <p className="hint">
         Eight of the twelve third-placed teams advance to the Round of 32, ranked by points, then
-        goal difference, then goals scored — FIFA&apos;s official order. Remaining ties fall to
-        fair-play record, then world ranking (not tracked here); teams yet to kick off are seeded by
-        squad value. <b>The top eight are in</b>; the rest drop out.
+        goal difference, then goals scored — FIFA&apos;s official order. Teams yet to kick off are
+        seeded by squad value. <b>The top eight are in</b>; the rest drop out.
       </p>
       <div className="third-race">
         <table>
