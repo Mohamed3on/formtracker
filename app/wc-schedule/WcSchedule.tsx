@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 import { fmt } from "@/lib/wc/model";
+import { wcTeamTmUrl } from "@/lib/wc/tm-team-links";
 import type { MatchupRow, MatchupTeam, Stage } from "@/lib/wc/matchups";
 
 type Mode = "date" | "value";
@@ -175,6 +176,7 @@ function TeamName({
   fav?: boolean;
   confirmed?: boolean;
 }) {
+  const tmUrl = wcTeamTmUrl(t.name);
   return (
     <span
       className={clsx(
@@ -185,7 +187,19 @@ function TeamName({
       )}
     >
       <span className="text-xl leading-none">{t.flag}</span>
-      {t.short}
+      {tmUrl ? (
+        <a
+          href={tmUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={`${t.name} on Transfermarkt`}
+          className="hover:text-amber-400 hover:underline"
+        >
+          {t.short}
+        </a>
+      ) : (
+        t.short
+      )}
       {fav && (
         <span title="Projected to win on squad value" className="text-xs text-amber-400">
           ▸
