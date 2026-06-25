@@ -627,7 +627,12 @@ async function main() {
   // top-5 scoring record. MV-pool players are notable on value alone, so all their
   // goals stand. (e.g. Arévalo's 13 "goals" were LaLiga2 + Stuttgart II, 0 Bundesliga.)
   for (const p of players) {
-    if (!mvIds.has(p.playerId)) p.goals = cache[p.playerId]?.data.topFlightGoals ?? 0;
+    if (mvIds.has(p.playerId)) continue;
+    // Only gate when topFlightGoals was actually computed this run. Entries
+    // served from a pre-change cache lack it (undefined) — keep their full goals
+    // rather than zeroing, so a genuine scorer isn't dropped until re-fetched.
+    const tf = cache[p.playerId]?.data.topFlightGoals;
+    if (tf !== undefined) p.goals = tf;
   }
   const withMV = players.filter(
     (p) => p.marketValue > 0 && (mvIds.has(p.playerId) || p.goals >= 1),
