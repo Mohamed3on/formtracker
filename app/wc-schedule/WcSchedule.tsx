@@ -118,6 +118,20 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
             <ToggleGroupItem value="value">Value</ToggleGroupItem>
           </ToggleGroup>
         </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-text-muted">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-400">
+              ✓ Confirmed
+            </span>
+            qualified into the slot
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="rounded-full border border-dashed border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-400">
+              Proj
+            </span>
+            squad-value pick — chip shows why (group spot, best third…)
+          </span>
+        </div>
       </header>
 
       <section className="mt-8 flex flex-col gap-2.5">
@@ -150,12 +164,24 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
   );
 }
 
-function TeamName({ t, win, fav }: { t: MatchupTeam; win: boolean; fav?: boolean }) {
+function TeamName({
+  t,
+  win,
+  fav,
+  confirmed,
+}: {
+  t: MatchupTeam;
+  win: boolean;
+  fav?: boolean;
+  confirmed?: boolean;
+}) {
   return (
     <span
       className={clsx(
         "inline-flex items-center gap-2 text-[15px]",
-        win || fav ? "font-bold text-text-primary" : "font-semibold text-text-secondary",
+        win || fav || confirmed
+          ? "font-bold text-text-primary"
+          : "font-semibold text-text-secondary",
       )}
     >
       <span className="text-xl leading-none">{t.flag}</span>
@@ -165,6 +191,50 @@ function TeamName({ t, win, fav }: { t: MatchupTeam; win: boolean; fav?: boolean
           ▸
         </span>
       )}
+    </span>
+  );
+}
+
+// The chip under a knockout team: green when it's confirmed into the slot, dashed
+// amber when it's only a squad-value projection — and either way, why it sits there.
+function SourceChip({ source, confirmed }: { source: string; confirmed: boolean }) {
+  return (
+    <span
+      title={
+        confirmed
+          ? "Confirmed — this team has qualified into this slot"
+          : "Projected — squad-value pick for this slot until the real team is decided"
+      }
+      className={clsx(
+        "w-fit rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+        confirmed
+          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+          : "border-dashed border-amber-500/40 bg-amber-500/10 text-amber-400",
+      )}
+    >
+      {confirmed ? `✓ ${source}` : `Proj · ${source}`}
+    </span>
+  );
+}
+
+// A knockout slot: team name stacked over its confirmed/projected provenance chip.
+function KoSlot({
+  t,
+  win,
+  fav,
+  confirmed,
+  source,
+}: {
+  t: MatchupTeam;
+  win: boolean;
+  fav?: boolean;
+  confirmed: boolean;
+  source: string | null;
+}) {
+  return (
+    <span className="inline-flex flex-col items-start gap-1">
+      <TeamName t={t} win={win} fav={fav} confirmed={confirmed} />
+      {source && <SourceChip source={source} confirmed={confirmed} />}
     </span>
   );
 }
@@ -187,6 +257,21 @@ function MatchCard({
     row.played && row.hs !== row.as ? ((row.hs ?? 0) > (row.as ?? 0) ? "home" : "away") : null;
   // Before kickoff, flag the higher-value side as the value-model favourite.
   const fav = row.played ? null : row.home.mv >= row.away.mv ? "home" : "away";
+
+  const sep = row.played ? (
+    <span className="font-value px-1 text-base">
+      {row.hs}
+      <span className="px-0.5 text-text-muted">–</span>
+      {row.as}
+    </span>
+  ) : (
+    <span className="px-1 text-xs italic text-text-muted">v</span>
+  );
+  const nextUp = status === "next" && (
+    <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-400">
+      Next up
+    </span>
+  );
 
   return (
     <div
@@ -219,48 +304,46 @@ function MatchCard({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <TeamName t={row.home} win={winner === "home"} fav={fav === "home"} />
-        {row.played ? (
-          <span className="font-value px-1 text-base">
-            {row.hs}
-            <span className="px-0.5 text-text-muted">–</span>
-            {row.as}
+      {row.stage === "group" ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <TeamName t={row.home} win={winner === "home"} fav={fav === "home"} />
+          {sep}
+          <TeamName t={row.away} win={winner === "away"} fav={fav === "away"} />
+          {nextUp}
+          <Badge variant="outline" className="text-text-muted">
+            Group {row.group}
+          </Badge>
+          <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[11px] text-text-muted">
+            MD{row.matchday}
           </span>
-        ) : (
-          <span className="px-1 text-xs italic text-text-muted">v</span>
-        )}
-        <TeamName t={row.away} win={winner === "away"} fav={fav === "away"} />
-        {status === "next" && (
-          <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-400">
-            Next up
-          </span>
-        )}
-        {row.stage === "group" ? (
-          <>
-            <Badge variant="outline" className="text-text-muted">
-              Group {row.group}
-            </Badge>
-            <span className="rounded-full border border-border-subtle px-2 py-0.5 text-[11px] text-text-muted">
-              MD{row.matchday}
-            </span>
-          </>
-        ) : (
-          <>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-start gap-x-2 gap-y-2">
+            <KoSlot
+              t={row.home}
+              win={winner === "home"}
+              fav={fav === "home"}
+              confirmed={row.homeConfirmed}
+              source={row.homeSource}
+            />
+            <span className="self-start pt-1">{sep}</span>
+            <KoSlot
+              t={row.away}
+              win={winner === "away"}
+              fav={fav === "away"}
+              confirmed={row.awayConfirmed}
+              source={row.awaySource}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {nextUp}
             <Badge variant="outline" className="text-text-muted">
               {ROUND_LABEL[row.stage]}
             </Badge>
-            {row.projected && (
-              <span
-                title="Projected by squad value — fills in once the real bracket is set"
-                className="rounded-full border border-dashed border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-400"
-              >
-                Projected
-              </span>
-            )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col items-start gap-0.5 sm:items-end">
         <span className={clsx("font-value text-xl", accent)}>{fmt(row.sum)}</span>

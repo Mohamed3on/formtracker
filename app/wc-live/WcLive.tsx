@@ -2,7 +2,7 @@
 
 import { clsx } from "clsx";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { fmtS, ordinal, type Card, type TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
 import { TeamCell } from "../wc/TeamCell";
@@ -39,7 +39,7 @@ export function WcLive({
   live: LiveModel;
   playerLinks: Record<string, string>;
 }) {
-  const { model, tracker, cardByKey, liveGroups, started } = live;
+  const { model, tracker, cardByKey, liveGroups, thirdPlace, started } = live;
   const { bracket, cardH, cardW } = model;
 
   // Teams currently shown in the bracket (real or predicted) are clickable to trace.
@@ -382,6 +382,75 @@ export function WcLive({
           <i style={{ background: "var(--wc-gold)" }} />
           Best third-placed
         </span>
+      </div>
+
+      <div className="section-title">
+        Best Third-Placed Race {started ? "· live" : "· projected"}
+      </div>
+      <p className="hint">
+        Eight of the twelve third-placed teams advance to the Round of 32, ranked by points, then
+        goal difference, then goals scored — FIFA&apos;s official order. Remaining ties fall to
+        fair-play record, then world ranking (not tracked here); teams yet to kick off are seeded by
+        squad value. <b>The top eight are in</b>; the rest drop out.
+      </p>
+      <div className="third-race">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Team</th>
+              <th>Grp</th>
+              <th className="r">Pl</th>
+              <th className="r">GD</th>
+              <th className="r">GF</th>
+              <th className="r">Pts</th>
+              <th className="r">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {thirdPlace.map((r, i) => {
+              const canPin = knockoutTeams.has(r.team.name);
+              return (
+                <Fragment key={r.team.name}>
+                  {i === 8 && (
+                    <tr className="cutline">
+                      <td colSpan={8}>top 8 qualify ▲ · ▼ out</td>
+                    </tr>
+                  )}
+                  <tr
+                    className={clsx(
+                      "row",
+                      r.qualified ? "in" : "out",
+                      canPin && "pin",
+                      active === r.team.name && "on",
+                    )}
+                    onClick={canPin ? () => pinTeam(r.team.name) : undefined}
+                    {...hover(r.team.name)}
+                  >
+                    <td className="pos">{r.pos}</td>
+                    <td className="tc">
+                      <span className="flag">{r.team.flag}</span>
+                      <span>{r.team.name}</span>
+                      {playerLinks[r.team.name] && (
+                        <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+                      )}
+                    </td>
+                    <td className="grp">{r.group}</td>
+                    <td className="n">{r.predicted ? "—" : r.pl}</td>
+                    <td className="n">{r.predicted ? "—" : r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                    <td className="n">{r.predicted ? "—" : r.gf}</td>
+                    <td className="n pts">{r.predicted ? "—" : r.pts}</td>
+                    <td className="r">
+                      <span className={clsx("tag", r.qualified ? "in" : "out")}>
+                        {r.qualified ? "In" : "Out"}
+                      </span>
+                    </td>
+                  </tr>
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       <div className="wc-foot">

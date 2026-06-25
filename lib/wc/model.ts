@@ -7,6 +7,12 @@ export type Team = { name: string; group: string; mv: number; flag: string; land
 export type TeamLite = { name: string; short: string; flag: string; mv: number };
 
 export type Round = "R32" | "R16" | "QF" | "SF" | "F";
+// What feeds a Round-of-32 slot: a group winner/runner-up, or one of the best
+// third-placed teams. Lets the schedule explain *why* a projected team sits there.
+export type SlotSource =
+  | { kind: "winner"; group: string }
+  | { kind: "runner"; group: string }
+  | { kind: "third" };
 export type Card = {
   id: string;
   round: Round;
@@ -17,6 +23,8 @@ export type Card = {
   x: number;
   y: number;
   isFinal: boolean;
+  homeSrc?: SlotSource; // R32 only: which group slot fills this side
+  awaySrc?: SlotSource;
 };
 export type Edge = { d: string; team: string };
 export type RankRow = {
@@ -119,6 +127,52 @@ const ROUND_NAME: Record<Round, string> = {
   F: "Final",
 };
 const ORDER: Record<Round, number> = { R32: 1, R16: 2, QF: 3, SF: 4, F: 5 };
+
+// Round-of-32 slot provenance (official FIFA 2026 bracket): match number → the
+// [home, away] group slots that feed it. "third" takes the best-third-placed team
+// allocated to that match number. Mirrors the leaf construction in buildModel.
+const R32_SLOTS: Record<number, [SlotSource, SlotSource]> = {
+  1: [
+    { kind: "runner", group: "A" },
+    { kind: "runner", group: "B" },
+  ],
+  2: [{ kind: "winner", group: "E" }, { kind: "third" }],
+  3: [
+    { kind: "winner", group: "F" },
+    { kind: "runner", group: "C" },
+  ],
+  4: [
+    { kind: "winner", group: "C" },
+    { kind: "runner", group: "F" },
+  ],
+  5: [{ kind: "winner", group: "I" }, { kind: "third" }],
+  6: [
+    { kind: "runner", group: "E" },
+    { kind: "runner", group: "I" },
+  ],
+  7: [{ kind: "winner", group: "A" }, { kind: "third" }],
+  8: [{ kind: "winner", group: "L" }, { kind: "third" }],
+  9: [{ kind: "winner", group: "D" }, { kind: "third" }],
+  10: [{ kind: "winner", group: "G" }, { kind: "third" }],
+  11: [
+    { kind: "runner", group: "K" },
+    { kind: "runner", group: "L" },
+  ],
+  12: [
+    { kind: "winner", group: "H" },
+    { kind: "runner", group: "J" },
+  ],
+  13: [{ kind: "winner", group: "B" }, { kind: "third" }],
+  14: [
+    { kind: "winner", group: "J" },
+    { kind: "runner", group: "H" },
+  ],
+  15: [{ kind: "winner", group: "K" }, { kind: "third" }],
+  16: [
+    { kind: "runner", group: "D" },
+    { kind: "runner", group: "G" },
+  ],
+};
 
 // Value-rank → the round a team is seeded to reach (stage 0 groups .. 6 win).
 export const expectedStage = (rank: number) =>
@@ -276,24 +330,14 @@ export function buildModel(
     y: 0,
   });
 
-  const r32: Record<number, MNode> = {
-    1: leaf("R32", runner("A"), runner("B")),
-    2: leaf("R32", winner("E"), thirdAt(2)),
-    3: leaf("R32", winner("F"), runner("C")),
-    4: leaf("R32", winner("C"), runner("F")),
-    5: leaf("R32", winner("I"), thirdAt(5)),
-    6: leaf("R32", runner("E"), runner("I")),
-    7: leaf("R32", winner("A"), thirdAt(7)),
-    8: leaf("R32", winner("L"), thirdAt(8)),
-    9: leaf("R32", winner("D"), thirdAt(9)),
-    10: leaf("R32", winner("G"), thirdAt(10)),
-    11: leaf("R32", runner("K"), runner("L")),
-    12: leaf("R32", winner("H"), runner("J")),
-    13: leaf("R32", winner("B"), thirdAt(13)),
-    14: leaf("R32", winner("J"), runner("H")),
-    15: leaf("R32", winner("K"), thirdAt(15)),
-    16: leaf("R32", runner("D"), runner("G")),
-  };
+  const srcTeam = (num: number, s: SlotSource): Team =>
+    s.kind === "winner" ? winner(s.group) : s.kind === "runner" ? runner(s.group) : thirdAt(num);
+  const r32 = Object.fromEntries(
+    Object.entries(R32_SLOTS).map(([n, [h, a]]) => [
+      +n,
+      leaf("R32", srcTeam(+n, h), srcTeam(+n, a)),
+    ]),
+  ) as Record<number, MNode>;
   const r16 = {
     1: node("R16", r32[2], r32[5]),
     2: node("R16", r32[1], r32[3]),
@@ -406,17 +450,22 @@ export function buildModel(
   };
 
   // ---- Render data ----
-  const cards: Card[] = allNodes.map((n) => ({
-    id: n.id,
-    round: n.round,
-    num: n.num,
-    home: lite(n.home),
-    away: lite(n.away),
-    winner: n.winner.name,
-    x: n.x,
-    y: n.y,
-    isFinal: n.round === "F",
-  }));
+  const cards: Card[] = allNodes.map((n) => {
+    const src = n.round === "R32" ? R32_SLOTS[n.num] : undefined;
+    return {
+      id: n.id,
+      round: n.round,
+      num: n.num,
+      home: lite(n.home),
+      away: lite(n.away),
+      winner: n.winner.name,
+      x: n.x,
+      y: n.y,
+      isFinal: n.round === "F",
+      homeSrc: src?.[0],
+      awaySrc: src?.[1],
+    };
+  });
 
   const edges: Edge[] = allNodes
     .filter((n) => n.kids)

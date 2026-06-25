@@ -1,4 +1,4 @@
-import { shortName, type Round, type Team } from "./model";
+import { shortName, type Round, type SlotSource, type Team } from "./model";
 import type { GroupFixture, Kick } from "./fixtures";
 import type { LiveModel } from "./live";
 
@@ -17,6 +17,10 @@ export type MatchupRow = {
   as: number | null;
   played: boolean;
   projected: boolean; // teams are a value projection, not yet a confirmed matchup
+  homeConfirmed: boolean; // home side locked to its real qualified team (knockout)
+  awayConfirmed: boolean;
+  homeSource: string | null; // why this side sits here: "Winner Group H", "Best 3rd-placed", …
+  awaySource: string | null;
   kickoff: number;
   dow: string;
   dayLabel: string;
@@ -38,6 +42,39 @@ export function buildMatchups(
     return { name: n, short: shortName(n), flag: t?.flag ?? "🏳️", mv: t?.mv ?? 0 };
   };
 
+  const ROUND_NM: Record<Round, string> = {
+    R32: "Round of 32",
+    R16: "Round of 16",
+    QF: "Quarter-final",
+    SF: "Semi-final",
+    F: "Final",
+  };
+  const PREV_ROUND: Record<Round, Round | null> = {
+    R32: null,
+    R16: "R32",
+    QF: "R16",
+    SF: "QF",
+    F: "SF",
+  };
+  // A human label for what fills a knockout slot: the group position for the Round of
+  // 32, "winner of the previous tie" deeper in. Once a real team lands in a best-third
+  // slot, name the group it actually came through.
+  const srcLabel = (
+    round: Round,
+    src: SlotSource | undefined,
+    confirmed: boolean,
+    teamName: string,
+  ): string | null => {
+    if (src) {
+      if (src.kind === "winner") return `Winner Group ${src.group}`;
+      if (src.kind === "runner") return `Runner-up Group ${src.group}`;
+      const g = confirmed ? (byName[teamName]?.group ?? null) : null;
+      return g ? `3rd place · Group ${g}` : "Best 3rd-placed";
+    }
+    const prev = PREV_ROUND[round];
+    return prev ? `Winner · ${ROUND_NM[prev]}` : null;
+  };
+
   const groupRows: MatchupRow[] = fixtures
     .filter((f) => byName[f.home] && byName[f.away])
     .map((f) => {
@@ -56,6 +93,10 @@ export function buildMatchups(
         as: f.as,
         played: f.played,
         projected: false,
+        homeConfirmed: true,
+        awayConfirmed: true,
+        homeSource: null,
+        awaySource: null,
         kickoff: f.kickoff,
         dow: f.dow,
         dayLabel: f.dayLabel,
@@ -74,6 +115,8 @@ export function buildMatchups(
     const lc = live.cardByKey[key];
     const home = lc?.home ?? c.home;
     const away = lc?.away ?? c.away;
+    const homeConfirmed = !!lc?.homeReal;
+    const awayConfirmed = !!lc?.awayReal;
     koRows.push({
       id: key,
       stage: c.round,
@@ -87,6 +130,10 @@ export function buildMatchups(
       as: lc?.as ?? null,
       played: !!lc?.played,
       projected: !lc?.real,
+      homeConfirmed,
+      awayConfirmed,
+      homeSource: srcLabel(c.round, c.homeSrc, homeConfirmed, home.name),
+      awaySource: srcLabel(c.round, c.awaySrc, awayConfirmed, away.name),
       ...date,
     });
   }
@@ -107,6 +154,10 @@ export function buildMatchups(
       as: null,
       played: false,
       projected: true,
+      homeConfirmed: false,
+      awayConfirmed: false,
+      homeSource: "Semi-final loser",
+      awaySource: "Semi-final loser",
       ...thirdDate,
     });
 
