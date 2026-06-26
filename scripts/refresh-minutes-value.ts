@@ -628,11 +628,14 @@ async function main() {
   // goals stand. (e.g. Arévalo's 13 "goals" were LaLiga2 + Stuttgart II, 0 Bundesliga.)
   for (const p of players) {
     if (mvIds.has(p.playerId)) continue;
-    // Only gate when topFlightGoals was actually computed this run. Entries
-    // served from a pre-change cache lack it (undefined) — keep their full goals
-    // rather than zeroing, so a genuine scorer isn't dropped until re-fetched.
-    const tf = cache[p.playerId]?.data.topFlightGoals;
-    if (tf !== undefined) p.goals = tf;
+    // Recompute the gate value from rawGames every run rather than trusting the
+    // stored topFlightGoals — a pre-fix cache entry may have it missing or wrong
+    // (computed before the comp-type whitelist), which would let a cached false
+    // positive slip back in. No rawGames → leave goals as-is (no-MV, filtered below).
+    const entry = cache[p.playerId];
+    if (entry?.data.rawGames?.length) {
+      p.goals = reaggregatePlayerStats(entry.data, clubTypes).topFlightGoals;
+    }
   }
   const withMV = players.filter(
     (p) => p.marketValue > 0 && (mvIds.has(p.playerId) || p.goals >= 1),

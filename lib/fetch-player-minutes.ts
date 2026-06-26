@@ -165,11 +165,13 @@ interface AggregatedStats {
 /** CEAPI competition type IDs */
 const COMP_TYPE_DOMESTIC_LEAGUE = 1;
 
-/** Domestic league tiers below the top flight (2nd–7th division). competitionTypeId
- *  1 = first tier; 8+ = domestic cups / continental / national-team, which all
- *  count. Goals in these lower-tier leagues are discounted for scorer-pool players
- *  (see refresh-minutes-value) so a 2nd-division tally doesn't read as a top-5 record. */
-const LOWER_LEAGUE_TYPES = new Set([2, 3, 4, 5, 6, 7]);
+/** competitionTypeIds that count as a top-flight goal for scorer-pool gating:
+ *  1 = first-tier domestic league, 8 = domestic cup, 9 = domestic super cup,
+ *  10 = continental club competition. Everything else — lower league tiers (2–7),
+ *  playoffs / minor comps (e.g. 12, 14), youth, national team — is discounted, so a
+ *  tally scored in the 2nd/3rd division or playoffs doesn't read as a top-5 record.
+ *  A whitelist (not a blacklist) so unknown lower-tier typeIds can't slip through. */
+const TOP_FLIGHT_COMP_TYPES = new Set([COMP_TYPE_DOMESTIC_LEAGUE, 8, 9, 10]);
 
 /** Source: data/club-types.json */
 export type ClubTypes = Record<string, number>;
@@ -244,7 +246,7 @@ function aggregateSeasonStats(
     const ast = gs.assists ?? 0;
     const pGoals = gs.penaltyShooterGoalsScored ?? 0;
     goals += gls;
-    if (!LOWER_LEAGUE_TYPES.has(g.gameInformation.competitionTypeId)) topFlightGoals += gls;
+    if (TOP_FLIGHT_COMP_TYPES.has(g.gameInformation.competitionTypeId)) topFlightGoals += gls;
     assists += ast;
     penaltyGoals += pGoals;
     penaltyMisses += gs.penaltyShooterMisses ?? 0;
