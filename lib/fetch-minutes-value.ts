@@ -23,8 +23,6 @@ export const EMPTY_PLAYER_STATS: Omit<
   marketValue: 0,
   marketValueDisplay: "-",
   minutes: 0,
-  clubMatches: 0,
-  intlMatches: 0,
   totalMatches: 0,
   goals: 0,
   assists: 0,

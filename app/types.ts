@@ -172,8 +172,6 @@ export interface MinutesValuePlayer {
   marketValue: number;
   marketValueDisplay: string;
   minutes: number;
-  clubMatches: number;
-  intlMatches: number;
   totalMatches: number;
   goals: number;
   assists: number;
