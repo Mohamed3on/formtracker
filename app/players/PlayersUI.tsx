@@ -517,7 +517,9 @@ export function PlayersUI({
     activeCategory && !POSITION_CATEGORIES[positionFilter] ? positionFilter : null;
   const signingFilter = parseSigningFilter(params.get("signing"));
   const includePen = params.get("pen") === "1";
-  const includeIntl = params.get("intl") === "1";
+  // National-team tournament stats (World Cup, Euros, …) are folded in by
+  // default; the toggle is an opt-out, so absence of the param means "on".
+  const includeIntl = params.get("intl") !== "0";
   const excludeCurrentIntl = params.get("xcintl") === "1";
   const minCaps = params.get("mincaps") ? parseInt(params.get("mincaps")!) : null;
   const maxCaps = params.get("maxcaps") ? parseInt(params.get("maxcaps")!) : null;
@@ -533,7 +535,7 @@ export function PlayersUI({
     minAge !== null || maxAge !== null,
     contractYear !== null,
     includePen,
-    includeIntl,
+    params.get("intl") === "0", // only the non-default (opt-out) state is "active"
   ].filter(Boolean).length;
 
   useEffect(() => {
@@ -950,9 +952,9 @@ export function PlayersUI({
                   </FilterButton>
                   <FilterButton
                     active={includeIntl}
-                    onClick={() => fadeUpdate({ intl: includeIntl ? null : "1" })}
+                    onClick={() => fadeUpdate({ intl: includeIntl ? "0" : null })}
                   >
-                    Include national team
+                    Include tournaments
                   </FilterButton>
                 </div>
               </div>

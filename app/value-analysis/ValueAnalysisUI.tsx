@@ -987,7 +987,8 @@ export function ValueAnalysisUI({
   const { params, update, push } = useQueryParams("/value-analysis");
 
   const includePen = params.get("pen") === "1";
-  const includeIntl = params.get("intl") === "1";
+  // Tournament national-team stats are folded in by default; toggle is opt-out.
+  const includeIntl = params.get("intl") !== "0";
 
   const rawPlayerStats = useMemo(() => initialData.map(toPlayerStats), [initialData]);
 
@@ -1200,9 +1201,9 @@ export function ValueAnalysisUI({
         </FilterButton>
         <FilterButton
           active={includeIntl}
-          onClick={() => update({ intl: includeIntl ? null : "1" })}
+          onClick={() => update({ intl: includeIntl ? "0" : null })}
         >
-          Include national team
+          Include tournaments
         </FilterButton>
       </div>
 

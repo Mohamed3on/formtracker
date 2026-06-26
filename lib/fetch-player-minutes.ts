@@ -175,6 +175,15 @@ const COMP_TYPE_DOMESTIC_LEAGUE = 1;
  *  can't slip through. */
 const TOP_FLIGHT_COMP_TYPES = new Set([COMP_TYPE_DOMESTIC_LEAGUE, 8, 9, 10, 13]);
 
+/** competitionIds for the senior major-finals tournaments whose national-team
+ *  stats count as "real tournament" play and are folded into totals by default.
+ *  Friendlies (FS), all qualifiers (WMQ*, EMQ, AFCQ…), the Nations League
+ *  (UNL*), and every youth/Olympic competition are deliberately excluded — only
+ *  the marquee senior finals. FIWC = World Cup, EURO = Euros, COPA = Copa
+ *  América, AFCN = Africa Cup of Nations, AFAC = AFC Asian Cup, GOCU = CONCACAF
+ *  Gold Cup. A whitelist so friendlies/qualifiers can't pad a player's tally. */
+const MAJOR_TOURNAMENTS = new Set(["FIWC", "EURO", "COPA", "AFCN", "AFAC", "GOCU"]);
+
 /** Source: data/club-types.json */
 export type ClubTypes = Record<string, number>;
 
@@ -234,11 +243,16 @@ function aggregateSeasonStats(
     const state = g.statistics.generalStatistics.participationState ?? "";
     const posId = g.statistics.generalStatistics.positionId;
     if (g.gameInformation.isNationalGame) {
-      intlGoals += gs.goalsScoredTotal ?? 0;
-      intlAssists += gs.assists ?? 0;
-      intlPenaltyGoals += gs.penaltyShooterGoalsScored ?? 0;
-      intlMinutes += mins;
-      if (mins > 0) intlAppearances++;
+      // Only senior major finals (World Cup, Euros, …) count — not friendlies,
+      // qualifiers, the Nations League, or youth games. All national games still
+      // `continue` so they never fall into the club aggregation below.
+      if (MAJOR_TOURNAMENTS.has(g.gameInformation.competitionId)) {
+        intlGoals += gs.goalsScoredTotal ?? 0;
+        intlAssists += gs.assists ?? 0;
+        intlPenaltyGoals += gs.penaltyShooterGoalsScored ?? 0;
+        intlMinutes += mins;
+        if (mins > 0) intlAppearances++;
+      }
       continue;
     }
     if (!isFirstTeamGame(g.clubsInformation?.club?.clubId, currentClubId, clubTypes)) continue;
