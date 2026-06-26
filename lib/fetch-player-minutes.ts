@@ -167,11 +167,13 @@ const COMP_TYPE_DOMESTIC_LEAGUE = 1;
 
 /** competitionTypeIds that count as a top-flight goal for scorer-pool gating:
  *  1 = first-tier domestic league, 8 = domestic cup, 9 = domestic super cup,
- *  10 = continental club competition. Everything else — lower league tiers (2–7),
- *  playoffs / minor comps (e.g. 12, 14), youth, national team — is discounted, so a
- *  tally scored in the 2nd/3rd division or playoffs doesn't read as a top-5 record.
- *  A whitelist (not a blacklist) so unknown lower-tier typeIds can't slip through. */
-const TOP_FLIGHT_COMP_TYPES = new Set([COMP_TYPE_DOMESTIC_LEAGUE, 8, 9, 10]);
+ *  10 = continental/international club competition (UCL, Club World Cup, …),
+ *  13 = continental super cup (UEFA Super Cup). Everything else — lower league
+ *  tiers (2–7), league playoffs / minor comps (e.g. 12, 14), youth, national team —
+ *  is discounted, so a tally scored in the 2nd/3rd division or playoffs doesn't read
+ *  as a top-5 record. A whitelist (not a blacklist) so unknown lower-tier typeIds
+ *  can't slip through. */
+const TOP_FLIGHT_COMP_TYPES = new Set([COMP_TYPE_DOMESTIC_LEAGUE, 8, 9, 10, 13]);
 
 /** Source: data/club-types.json */
 export type ClubTypes = Record<string, number>;
