@@ -146,6 +146,27 @@ export function seasonNpga(p: MinutesValuePlayer): number {
   return p.goals - (p.penaltyGoals ?? 0) + p.assists;
 }
 
+/** Fold a player's major-tournament national-team stats into their season totals
+ *  so the profile (headline, ranks, comparisons) matches the /players default.
+ *  Goals/assists/penalties/minutes fold in; the intl* fields are zeroed so no
+ *  downstream toggle can re-add them. Matches (totalMatches) are intentionally
+ *  left club-only — the "played X of Y" availability line counts club fixtures —
+ *  and recentForm is already club-only, so last5/last10 form is unaffected. */
+function includeTournamentStats(p: MinutesValuePlayer): MinutesValuePlayer {
+  if (!p.intlGoals && !p.intlAssists && !p.intlMinutes && !p.intlPenaltyGoals) return p;
+  return {
+    ...p,
+    goals: p.goals + (p.intlGoals ?? 0),
+    assists: p.assists + (p.intlAssists ?? 0),
+    penaltyGoals: (p.penaltyGoals ?? 0) + (p.intlPenaltyGoals ?? 0),
+    minutes: p.minutes + (p.intlMinutes ?? 0),
+    intlGoals: 0,
+    intlAssists: 0,
+    intlPenaltyGoals: 0,
+    intlMinutes: 0,
+  };
+}
+
 function compareByMetric(
   playerId: string,
   players: MinutesValuePlayer[],
@@ -299,11 +320,12 @@ function stripRecentForm({ recentForm: _, ...rest }: MinutesValuePlayer): Minute
 }
 
 async function computePlayerDetailData(playerId: string): Promise<PlayerDetailData | null> {
-  const [players, winners, losers] = await Promise.all([
+  const [rawPlayers, winners, losers] = await Promise.all([
     getMinutesValueData(),
     findRepeatWinners(),
     findRepeatLosers(),
   ]);
+  const players = rawPlayers.map(includeTournamentStats);
 
   const player = findTargetPlayer(players, playerId);
   if (!player) return null;
@@ -466,7 +488,7 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
 }
 
 export const getPlayerDetailData = cache((playerId: string) =>
-  unstable_cache(() => computePlayerDetailData(playerId), [`player-detail-v4-${playerId}`], {
+  unstable_cache(() => computePlayerDetailData(playerId), [`player-detail-v5-${playerId}`], {
     revalidate: 43200,
     tags: ["form-analysis"],
   })(),
