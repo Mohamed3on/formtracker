@@ -697,10 +697,7 @@ async function fetchHomeData(): Promise<{
   const mostOverperformingTeam = mostOverperformingTeams[0] ?? null;
   const mostUnderperformingTeam = mostUnderperformingTeams[0] ?? null;
 
-  const statsNoPen = applyStatsToggles(players.map(toPlayerStats), {
-    includePen: false,
-    includeIntl: false,
-  });
+  const statsNoPen = applyStatsToggles(players.map(toPlayerStats), { includePen: false });
   const underperformerCandidates = findValueCandidates(statsNoPen, {
     candidateOutperforms: false,
     minMinutes: MIN_VALUE_ANALYSIS_MINUTES,

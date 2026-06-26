@@ -118,10 +118,7 @@ async function computeTeamDetailData(clubId: string): Promise<TeamDetailData | n
   }
 
   // Over/underperformers — reuse exact same logic as the value analysis page
-  const comparisonPlayers = applyStatsToggles(players.map(toPlayerStats), {
-    includePen: false,
-    includeIntl: false,
-  });
+  const comparisonPlayers = applyStatsToggles(players.map(toPlayerStats), { includePen: false });
   const clubPlayerIds = new Set(squad.map((p) => p.playerId));
 
   const allOverperformers = findValueCandidates(comparisonPlayers, {

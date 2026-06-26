@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import {
   getMinutesValueData,
+  includeTournamentStats,
   toPlayerStats,
   applyStatsToggles,
   slimForClient,
@@ -40,11 +41,11 @@ export default async function ValueAnalysisPage() {
       injuryMap[m[1]] = { injury: p.injury, returnDate: p.returnDate, injurySince: p.injurySince };
   }
 
-  const rawPlayerStats = mvPlayers.map(toPlayerStats);
-  const defaultPlayers = applyStatsToggles(rawPlayerStats, {
-    includePen: false,
-    includeIntl: false,
-  });
+  // Fold major-tournament national-team stats once; flows to the client via
+  // initialData and into the precomputed candidate lists below.
+  const foldedPlayers = mvPlayers.map(includeTournamentStats);
+  const rawPlayerStats = foldedPlayers.map(toPlayerStats);
+  const defaultPlayers = applyStatsToggles(rawPlayerStats, { includePen: false });
 
   const MIN_DISCOVERY_MINUTES = 260;
   const defaultUnderperformers = findValueCandidates(defaultPlayers, {
@@ -62,7 +63,7 @@ export default async function ValueAnalysisPage() {
       <Suspense>
         <ValueAnalysisUI
           initialAllPlayers={defaultPlayers}
-          initialData={slimForClient(mvPlayers)}
+          initialData={slimForClient(foldedPlayers)}
           injuryMap={injuryMap}
           initialUnderperformers={defaultUnderperformers}
           initialOverperformers={defaultOverperformers}

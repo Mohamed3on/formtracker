@@ -40,7 +40,7 @@ export const EMPTY_PLAYER_STATS: Omit<
 
 export async function getPlayerStatsData(): Promise<PlayerStats[]> {
   const players = await getMinutesValueData();
-  return players.map(toPlayerStats);
+  return players.map(includeTournamentStats).map(toPlayerStats);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

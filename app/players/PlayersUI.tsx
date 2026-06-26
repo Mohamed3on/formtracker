@@ -16,6 +16,7 @@ import { InfoTip } from "@/app/components/InfoTip";
 import { PositionDisplay, POS_ABBREV } from "@/components/PositionDisplay";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
 import { getLeagueUrl } from "@/lib/leagues";
+import { includeTournamentStats } from "@/lib/stats-toggles";
 import {
   filterPlayersByLeagueAndClub,
   getFormMinutes,
@@ -517,9 +518,6 @@ export function PlayersUI({
     activeCategory && !POSITION_CATEGORIES[positionFilter] ? positionFilter : null;
   const signingFilter = parseSigningFilter(params.get("signing"));
   const includePen = params.get("pen") === "1";
-  // National-team tournament stats (World Cup, Euros, …) are folded in by
-  // default; the toggle is an opt-out, so absence of the param means "on".
-  const includeIntl = params.get("intl") !== "0";
   const excludeCurrentIntl = params.get("xcintl") === "1";
   const minCaps = params.get("mincaps") ? parseInt(params.get("mincaps")!) : null;
   const maxCaps = params.get("maxcaps") ? parseInt(params.get("maxcaps")!) : null;
@@ -535,7 +533,6 @@ export function PlayersUI({
     minAge !== null || maxAge !== null,
     contractYear !== null,
     includePen,
-    params.get("intl") === "0", // only the non-default (opt-out) state is "active"
   ].filter(Boolean).length;
 
   useEffect(() => {
@@ -550,17 +547,8 @@ export function PlayersUI({
     [update],
   );
 
-  // Apply intl toggle client-side — adds intl stats when active
-  const players = useMemo(() => {
-    if (!includeIntl) return rawPlayers;
-    return rawPlayers.map((p) => ({
-      ...p,
-      goals: p.goals + (p.intlGoals ?? 0),
-      assists: p.assists + (p.intlAssists ?? 0),
-      minutes: p.minutes + (p.intlMinutes ?? 0),
-      totalMatches: p.totalMatches + (p.intlAppearances ?? 0),
-    }));
-  }, [rawPlayers, includeIntl]);
+  // Fold major-tournament national-team stats into season totals (always on).
+  const players = useMemo(() => rawPlayers.map(includeTournamentStats), [rawPlayers]);
 
   const nationalityOptions = useMemo(
     () => uniqueFilterOptions(players, (p) => p.nationality, "All nationalities"),
@@ -949,12 +937,6 @@ export function PlayersUI({
                     onClick={() => fadeUpdate({ pen: includePen ? null : "1" })}
                   >
                     Include penalties
-                  </FilterButton>
-                  <FilterButton
-                    active={includeIntl}
-                    onClick={() => fadeUpdate({ intl: includeIntl ? "0" : null })}
-                  >
-                    Include tournaments
                   </FilterButton>
                 </div>
               </div>

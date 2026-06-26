@@ -334,10 +334,7 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
   }
 
   const playerStats = toPlayerStats(player);
-  const comparisonPlayers = applyStatsToggles(players.map(toPlayerStats), {
-    includePen: false,
-    includeIntl: false,
-  });
+  const comparisonPlayers = applyStatsToggles(players.map(toPlayerStats), { includePen: false });
   const comparisonTarget =
     comparisonPlayers.find((candidate) => candidate.playerId === player.playerId) ?? playerStats;
   const targetPosition = effectivePosition(comparisonTarget);

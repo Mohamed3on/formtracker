@@ -37,7 +37,6 @@ export async function GET(request: Request) {
   const playerId = searchParams.get("id");
   const playerName = searchParams.get("name");
   const includePen = searchParams.get("pen") === "1";
-  const includeIntl = searchParams.get("intl") === "1";
 
   if (!playerId && !playerName) {
     return NextResponse.json({ error: "Player id or name is required" }, { status: 400 });
@@ -45,7 +44,7 @@ export async function GET(request: Request) {
 
   try {
     const rawPlayers = await getPlayerStatsData();
-    const allPlayers = applyStatsToggles(rawPlayers, { includePen, includeIntl });
+    const allPlayers = applyStatsToggles(rawPlayers, { includePen });
 
     const targetPlayer =
       (playerId && allPlayers.find((p) => p.playerId === playerId)) ||

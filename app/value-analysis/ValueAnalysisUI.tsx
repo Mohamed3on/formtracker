@@ -987,13 +987,11 @@ export function ValueAnalysisUI({
   const { params, update, push } = useQueryParams("/value-analysis");
 
   const includePen = params.get("pen") === "1";
-  // Tournament national-team stats are folded in by default; toggle is opt-out.
-  const includeIntl = params.get("intl") !== "0";
 
   const rawPlayerStats = useMemo(() => initialData.map(toPlayerStats), [initialData]);
 
   const { allPlayers, rawUnderCandidates, rawOverCandidates } = useMemo(() => {
-    if (!includePen && !includeIntl) {
+    if (!includePen) {
       return {
         allPlayers: initialAllPlayers,
         rawUnderCandidates: initialUnderperformers.map((p) => ({
@@ -1006,7 +1004,7 @@ export function ValueAnalysisUI({
         })),
       };
     }
-    const players = applyStatsToggles(rawPlayerStats, { includePen, includeIntl });
+    const players = applyStatsToggles(rawPlayerStats, { includePen });
     return {
       allPlayers: players,
       rawUnderCandidates: findValueCandidates(players, {
@@ -1022,7 +1020,6 @@ export function ValueAnalysisUI({
   }, [
     rawPlayerStats,
     includePen,
-    includeIntl,
     initialAllPlayers,
     initialUnderperformers,
     initialOverperformers,
@@ -1198,12 +1195,6 @@ export function ValueAnalysisUI({
         <div className="w-px h-6 bg-border-subtle" />
         <FilterButton active={includePen} onClick={() => update({ pen: includePen ? null : "1" })}>
           Include penalties
-        </FilterButton>
-        <FilterButton
-          active={includeIntl}
-          onClick={() => update({ intl: includeIntl ? "0" : null })}
-        >
-          Include tournaments
         </FilterButton>
       </div>
 
