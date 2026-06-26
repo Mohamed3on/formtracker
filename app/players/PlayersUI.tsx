@@ -18,6 +18,7 @@ import { useQueryParams } from "@/lib/hooks/use-query-params";
 import { getLeagueUrl } from "@/lib/leagues";
 import { includeTournamentStats } from "@/lib/stats-toggles";
 import {
+  displayMatches,
   filterPlayersByLeagueAndClub,
   getFormMinutes,
   uniqueFilterOptions,
@@ -392,7 +393,7 @@ function PlayerCard({
           <div className="w-px h-7 bg-border-subtle" />
           <div className="flex items-center gap-2.5 text-right">
             <div>
-              <div className="text-sm font-value text-text-primary">{player.totalMatches}</div>
+              <div className="text-sm font-value text-text-primary">{displayMatches(player)}</div>
               <div className="text-xs text-text-secondary">games</div>
             </div>
             <div>
@@ -427,7 +428,9 @@ function PlayerCard({
         </span>
         <span className="text-sm text-accent-blue">{player.marketValueDisplay}</span>
         <span className="text-xs text-text-muted">{player.age}y</span>
-        {!recentGA && <span className="text-xs text-text-muted">{player.totalMatches} games</span>}
+        {!recentGA && (
+          <span className="text-xs text-text-muted">{displayMatches(player)} games</span>
+        )}
         <span className="text-xs text-text-muted">{displayMinutes.toLocaleString()}&apos;</span>
         {showCaps && (player.intlCareerCaps ?? 0) > 0 && (
           <span className="text-xs text-text-muted">{player.intlCareerCaps} caps</span>
@@ -610,7 +613,7 @@ export function PlayersUI({
           diff = b.minutes - a.minutes;
           break;
         case "games":
-          diff = b.totalMatches - a.totalMatches;
+          diff = displayMatches(b) - displayMatches(a);
           break;
         case "ga":
           diff =

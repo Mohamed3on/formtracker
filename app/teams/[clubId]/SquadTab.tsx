@@ -6,6 +6,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { NationalityFlag } from "@/components/NationalityFlag";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerDetailHref } from "@/lib/format";
+import { displayMatches } from "@/lib/filter-players";
 import type { MinutesValuePlayer } from "@/app/types";
 
 type SortKey = "value" | "mins" | "games" | "ga" | "pen";
@@ -133,7 +134,7 @@ export function SquadTab({
           diff = b.minutes - a.minutes;
           break;
         case "games":
-          diff = b.totalMatches - a.totalMatches;
+          diff = displayMatches(b) - displayMatches(a);
           break;
         case "ga":
           diff = npga(b) - npga(a) || a.minutes - b.minutes;

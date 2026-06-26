@@ -138,6 +138,14 @@ export function gamesAvailable(p: {
   return gamesScheduled(p) - (p.gamesMissed ?? 0);
 }
 
+/** Match count including major-tournament national-team games. totalMatches stays
+ *  club-only (so % missed stays club-based); intlAppearances are the played
+ *  World Cup/Euros/… games. Availability "played X of Y" lines add intlAppearances
+ *  to both sides so a tournament game counts as available-and-played. */
+export function displayMatches(p: { totalMatches: number; intlAppearances?: number }): number {
+  return p.totalMatches + (p.intlAppearances ?? 0);
+}
+
 /** Split players into those playing less and more minutes than the target, sorted for display.
  *  "Playing less" = same-or-higher value, available for same-or-more games yet fewer minutes (had opportunity but didn't play).
  *  "Playing more" = same-or-lower value, available for same-or-fewer games yet more minutes (played more despite less opportunity/value).

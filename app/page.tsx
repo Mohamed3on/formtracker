@@ -25,7 +25,7 @@ import {
 } from "@/lib/fetch-minutes-value";
 import { findValueCandidates } from "@/lib/value-analysis";
 import { getInjuredPlayers } from "@/lib/injured";
-import { missedPct, getFormMinutes, getFormNpga } from "@/lib/filter-players";
+import { displayMatches, missedPct, getFormMinutes, getFormNpga } from "@/lib/filter-players";
 import {
   extractClubIdFromLogoUrl,
   formatMarketValue,
@@ -927,7 +927,7 @@ async function fetchHomeData(): Promise<{
             {
               metrics: [
                 `${formatMinutes(fitButBenched.minutes)} mins`,
-                `${fitButBenched.totalMatches} games`,
+                `${displayMatches(fitButBenched)} games`,
                 `available for 50%+ of games`,
               ],
               tone: "red",
