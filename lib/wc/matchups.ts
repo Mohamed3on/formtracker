@@ -42,37 +42,20 @@ export function buildMatchups(
     return { name: n, short: shortName(n), flag: t?.flag ?? "🏳️", mv: t?.mv ?? 0 };
   };
 
-  const ROUND_NM: Record<Round, string> = {
-    R32: "Round of 32",
-    R16: "Round of 16",
-    QF: "Quarter-final",
-    SF: "Semi-final",
-    F: "Final",
-  };
-  const PREV_ROUND: Record<Round, Round | null> = {
-    R32: null,
-    R16: "R32",
-    QF: "R16",
-    SF: "QF",
-    F: "SF",
-  };
-  // A human label for what fills a knockout slot: the group position for the Round of
-  // 32, "winner of the previous tie" deeper in. Once a real team lands in a best-third
-  // slot, name the group it actually came through.
+  // Why a knockout side sits where it does — but only for the Round of 32, whose slots
+  // map to specific group positions (not obvious). Deeper rounds are always "winner of
+  // the previous tie", which the bracket already makes plain, so we label nothing there.
+  // Once a real team lands in a best-third slot, name the group it actually came through.
   const srcLabel = (
-    round: Round,
     src: SlotSource | undefined,
     confirmed: boolean,
     teamName: string,
   ): string | null => {
-    if (src) {
-      if (src.kind === "winner") return `Winner Group ${src.group}`;
-      if (src.kind === "runner") return `Runner-up Group ${src.group}`;
-      const g = confirmed ? (byName[teamName]?.group ?? null) : null;
-      return g ? `3rd place · Group ${g}` : "Best 3rd-placed";
-    }
-    const prev = PREV_ROUND[round];
-    return prev ? `Winner · ${ROUND_NM[prev]}` : null;
+    if (!src) return null;
+    if (src.kind === "winner") return `Winner Group ${src.group}`;
+    if (src.kind === "runner") return `Runner-up Group ${src.group}`;
+    const g = confirmed ? (byName[teamName]?.group ?? null) : null;
+    return g ? `3rd place · Group ${g}` : "Best 3rd-placed";
   };
 
   const groupRows: MatchupRow[] = fixtures
@@ -132,8 +115,8 @@ export function buildMatchups(
       projected: !lc?.real,
       homeConfirmed,
       awayConfirmed,
-      homeSource: srcLabel(c.round, c.homeSrc, homeConfirmed, home.name),
-      awaySource: srcLabel(c.round, c.awaySrc, awayConfirmed, away.name),
+      homeSource: srcLabel(c.homeSrc, homeConfirmed, home.name),
+      awaySource: srcLabel(c.awaySrc, awayConfirmed, away.name),
       ...date,
     });
   }

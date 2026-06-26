@@ -209,9 +209,11 @@ function TeamName({
   );
 }
 
-// The chip under a knockout team: green when it's confirmed into the slot, dashed
-// amber when it's only a squad-value projection — and either way, why it sits there.
-function SourceChip({ source, confirmed }: { source: string; confirmed: boolean }) {
+// The chip under a knockout team: green when it's confirmed into the slot, dashed amber
+// when it's only a squad-value projection. The Round of 32 also names the group spot it
+// came from; deeper rounds (winner of the previous tie) are obvious, so it shows just the
+// status.
+function SourceChip({ source, confirmed }: { source: string | null; confirmed: boolean }) {
   return (
     <span
       title={
@@ -226,7 +228,7 @@ function SourceChip({ source, confirmed }: { source: string; confirmed: boolean 
           : "border-dashed border-amber-500/40 bg-amber-500/10 text-amber-400",
       )}
     >
-      {confirmed ? `✓ ${source}` : `Proj · ${source}`}
+      {confirmed ? (source ? `✓ ${source}` : "✓ Confirmed") : source ? `Proj · ${source}` : "Proj"}
     </span>
   );
 }
@@ -248,7 +250,7 @@ function KoSlot({
   return (
     <span className="inline-flex flex-col items-start gap-1">
       <TeamName t={t} win={win} fav={fav} confirmed={confirmed} />
-      {source && <SourceChip source={source} confirmed={confirmed} />}
+      <SourceChip source={source} confirmed={confirmed} />
     </span>
   );
 }
