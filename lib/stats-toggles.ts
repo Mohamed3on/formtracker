@@ -57,3 +57,24 @@ export function applyStatsToggles(
     };
   });
 }
+
+/** Fold a player's major-tournament national-team stats into their season totals
+ *  so leaderboards and the player profile match the /players default. Goals/
+ *  assists/penalties/minutes fold in and the intl* fields are zeroed so nothing
+ *  can re-add them. Matches stay club-only (availability counts club fixtures),
+ *  and recentForm already carries major-tournament games from the aggregator, so
+ *  recent-form windows are unaffected here. */
+export function includeTournamentStats(p: MinutesValuePlayer): MinutesValuePlayer {
+  if (!p.intlGoals && !p.intlAssists && !p.intlMinutes && !p.intlPenaltyGoals) return p;
+  return {
+    ...p,
+    goals: p.goals + (p.intlGoals ?? 0),
+    assists: p.assists + (p.intlAssists ?? 0),
+    penaltyGoals: (p.penaltyGoals ?? 0) + (p.intlPenaltyGoals ?? 0),
+    minutes: p.minutes + (p.intlMinutes ?? 0),
+    intlGoals: 0,
+    intlAssists: 0,
+    intlPenaltyGoals: 0,
+    intlMinutes: 0,
+  };
+}

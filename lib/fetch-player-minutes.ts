@@ -108,6 +108,13 @@ export const LEAGUE_NAMES: Record<string, string> = {
   MLS1: "MLS",
   GB2: "Championship",
   ES2: "LaLiga2",
+  // Senior major-tournament names (see MAJOR_TOURNAMENTS) for recent-form rows.
+  FIWC: "World Cup",
+  EURO: "Euros",
+  COPA: "Copa América",
+  AFCN: "Africa Cup of Nations",
+  AFAC: "Asian Cup",
+  GOCU: "Gold Cup",
 };
 
 /** Current Transfermarkt season ID (e.g. 2025 = the 25/26 season). */
@@ -231,11 +238,50 @@ function aggregateSeasonStats(
   let gamesMissed = 0;
   let totalGames = 0;
   let league = "";
-  const recentDomestic: RecentGameStats[] = [];
+  const recentGames: RecentGameStats[] = [];
   const byPos: Record<
     number,
     { minutes: number; goals: number; assists: number; appearances: number }
   > = {};
+  // Record a played game into the position breakdown and the recent-form list.
+  // Shared by club games and major-tournament national games so a World Cup
+  // outing shows up in recent form and counts toward the position the player
+  // lined up in — exactly like a club appearance.
+  const recordPlayedGame = (
+    g: CeapiGame,
+    gls: number,
+    ast: number,
+    pGoals: number,
+    mins: number,
+    posId: number | null | undefined,
+  ) => {
+    if (posId) {
+      const ps = (byPos[posId] ??= { minutes: 0, goals: 0, assists: 0, appearances: 0 });
+      ps.minutes += mins;
+      ps.goals += gls;
+      ps.assists += ast;
+      ps.appearances++;
+    }
+    recentGames.push({
+      goals: gls,
+      assists: ast,
+      penaltyGoals: pGoals,
+      minutes: mins,
+      date: g.gameInformation.date?.dateTimeUTC?.slice(0, 10) ?? "",
+      gameId: g.gameInformation.gameId,
+      gameDay: g.gameInformation.gameDay,
+      competitionId: g.gameInformation.competitionId,
+      positionId: posId ?? undefined,
+      competitionName: LEAGUE_NAMES[g.gameInformation.competitionId],
+      venue: g.clubsInformation?.club?.venue,
+      teamGoals: g.clubsInformation?.club?.goalsTotal ?? undefined,
+      opponentGoals: g.clubsInformation?.club?.opponentGoalsTotal ?? undefined,
+      opponentClubId: g.clubsInformation?.opponent?.clubId,
+      matchReportUrl: g.gameInformation.gameId
+        ? `${BASE_URL}/spielbericht/index/spielbericht/${g.gameInformation.gameId}`
+        : undefined,
+    });
+  };
   for (const g of games) {
     if (g.gameInformation.seasonId !== seasonId) continue;
     const gs = g.statistics.goalStatistics;
@@ -244,14 +290,21 @@ function aggregateSeasonStats(
     const posId = g.statistics.generalStatistics.positionId;
     if (g.gameInformation.isNationalGame) {
       // Only senior major finals (World Cup, Euros, …) count — not friendlies,
-      // qualifiers, the Nations League, or youth games. All national games still
-      // `continue` so they never fall into the club aggregation below.
+      // qualifiers, the Nations League, or youth games. They feed the intl*
+      // tallies and, when played, the recent-form list and position breakdown,
+      // but never the club totals / availability below (so we `continue`).
       if (MAJOR_TOURNAMENTS.has(g.gameInformation.competitionId)) {
-        intlGoals += gs.goalsScoredTotal ?? 0;
-        intlAssists += gs.assists ?? 0;
-        intlPenaltyGoals += gs.penaltyShooterGoalsScored ?? 0;
+        const gls = gs.goalsScoredTotal ?? 0;
+        const ast = gs.assists ?? 0;
+        const pGoals = gs.penaltyShooterGoalsScored ?? 0;
+        intlGoals += gls;
+        intlAssists += ast;
+        intlPenaltyGoals += pGoals;
         intlMinutes += mins;
-        if (mins > 0) intlAppearances++;
+        if (mins > 0) {
+          intlAppearances++;
+          recordPlayedGame(g, gls, ast, pGoals, mins, posId);
+        }
       }
       continue;
     }
@@ -269,40 +322,15 @@ function aggregateSeasonStats(
     minutes += mins;
     if (mins > 0) {
       appearances++;
-      if (posId) {
-        const ps = (byPos[posId] ??= { minutes: 0, goals: 0, assists: 0, appearances: 0 });
-        ps.minutes += mins;
-        ps.goals += gls;
-        ps.assists += ast;
-        ps.appearances++;
-      }
-      recentDomestic.push({
-        goals: gls,
-        assists: ast,
-        penaltyGoals: pGoals,
-        minutes: mins,
-        date: g.gameInformation.date?.dateTimeUTC?.slice(0, 10) ?? "",
-        gameId: g.gameInformation.gameId,
-        gameDay: g.gameInformation.gameDay,
-        competitionId: g.gameInformation.competitionId,
-        positionId: posId ?? undefined,
-        competitionName: LEAGUE_NAMES[g.gameInformation.competitionId],
-        venue: g.clubsInformation?.club?.venue,
-        teamGoals: g.clubsInformation?.club?.goalsTotal ?? undefined,
-        opponentGoals: g.clubsInformation?.club?.opponentGoalsTotal ?? undefined,
-        opponentClubId: g.clubsInformation?.opponent?.clubId,
-        matchReportUrl: g.gameInformation.gameId
-          ? `${BASE_URL}/spielbericht/index/spielbericht/${g.gameInformation.gameId}`
-          : undefined,
-      });
+      recordPlayedGame(g, gls, ast, pGoals, mins, posId);
     }
     if (!league && g.gameInformation.competitionTypeId === COMP_TYPE_DOMESTIC_LEAGUE) {
       league = LEAGUE_NAMES[g.gameInformation.competitionId] ?? "";
     }
   }
   // ceapi returns games newest-first; sort to ensure that, then keep last 10
-  recentDomestic.sort((a, b) => b.date.localeCompare(a.date));
-  const recentForm = recentDomestic.slice(0, 10);
+  recentGames.sort((a, b) => b.date.localeCompare(a.date));
+  const recentForm = recentGames.slice(0, 10);
   const positionStats = Object.entries(byPos)
     .map(([id, ps]) => ({
       positionId: Number(id),

@@ -5,8 +5,8 @@ import type { MinutesValuePlayer, PlayerStats } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
-import { toPlayerStats, applyStatsToggles } from "./stats-toggles";
-export { toPlayerStats, applyStatsToggles };
+import { toPlayerStats, applyStatsToggles, includeTournamentStats } from "./stats-toggles";
+export { toPlayerStats, applyStatsToggles, includeTournamentStats };
 
 const MV_BASE = `${BASE_URL}/spieler-statistik/wertvollstespieler/marktwertetop`;
 

@@ -17,7 +17,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAnalysis } from "@/lib/form-analysis";
 import { getTeamFormData, splitPerformers } from "@/lib/team-form";
-import { applyStatsToggles, getMinutesValueData, toPlayerStats } from "@/lib/fetch-minutes-value";
+import {
+  applyStatsToggles,
+  getMinutesValueData,
+  includeTournamentStats,
+  toPlayerStats,
+} from "@/lib/fetch-minutes-value";
 import { findValueCandidates } from "@/lib/value-analysis";
 import { getInjuredPlayers } from "@/lib/injured";
 import { missedPct, getFormMinutes, getFormNpga } from "@/lib/filter-players";
@@ -622,7 +627,12 @@ async function fetchHomeData(): Promise<{
   const teamFormData = teamFormResult.status === "fulfilled" ? teamFormResult.value : null;
   if (teamFormResult.status === "rejected")
     console.error("[Home] getTeamFormData failed:", teamFormResult.reason);
-  const players = playersResult.status === "fulfilled" ? playersResult.value : [];
+  // Fold major-tournament national-team stats into season totals so every
+  // homepage leaderboard (top scorers, npGA, bargains) counts World Cup/Euros/…
+  // play, matching the /players and profile defaults.
+  const players = (playersResult.status === "fulfilled" ? playersResult.value : []).map(
+    includeTournamentStats,
+  );
   if (playersResult.status === "rejected")
     console.error("[Home] getMinutesValueData failed:", playersResult.reason);
   const injuredPlayers = injuredResult.status === "fulfilled" ? injuredResult.value.players : [];
@@ -687,16 +697,16 @@ async function fetchHomeData(): Promise<{
   const mostOverperformingTeam = mostOverperformingTeams[0] ?? null;
   const mostUnderperformingTeam = mostUnderperformingTeams[0] ?? null;
 
-  const statsNoPenNoIntl = applyStatsToggles(players.map(toPlayerStats), {
+  const statsNoPen = applyStatsToggles(players.map(toPlayerStats), {
     includePen: false,
     includeIntl: false,
   });
-  const underperformerCandidates = findValueCandidates(statsNoPenNoIntl, {
+  const underperformerCandidates = findValueCandidates(statsNoPen, {
     candidateOutperforms: false,
     minMinutes: MIN_VALUE_ANALYSIS_MINUTES,
     sortAsc: false,
   });
-  const overperformerCandidates = findValueCandidates(statsNoPenNoIntl, {
+  const overperformerCandidates = findValueCandidates(statsNoPen, {
     candidateOutperforms: true,
     sortAsc: true,
   });

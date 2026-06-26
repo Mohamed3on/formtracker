@@ -1,6 +1,11 @@
 import { cache } from "react";
 import type { AggregatedTeam, MinutesValuePlayer, TeamFormEntry, TeamStats } from "@/app/types";
-import { getMinutesValueData, applyStatsToggles, toPlayerStats } from "@/lib/fetch-minutes-value";
+import {
+  getMinutesValueData,
+  applyStatsToggles,
+  includeTournamentStats,
+  toPlayerStats,
+} from "@/lib/fetch-minutes-value";
 import { getTeamFormData } from "@/lib/team-form";
 import { getAnalysis } from "@/lib/form-analysis";
 import { findRepeatWinners, findRepeatLosers } from "@/lib/biggest-movers";
@@ -44,7 +49,11 @@ async function computeTeamDetailData(clubId: string): Promise<TeamDetailData | n
     ]);
 
   const teamFormData = teamFormResult.status === "fulfilled" ? teamFormResult.value : null;
-  const players = playersResult.status === "fulfilled" ? playersResult.value : [];
+  // Fold major-tournament national-team stats so the squad and its
+  // over/underperformer comparison count World Cup/Euros/… play by default.
+  const players = (playersResult.status === "fulfilled" ? playersResult.value : []).map(
+    includeTournamentStats,
+  );
   const analysisData = analysisResult.status === "fulfilled" ? analysisResult.value : null;
   const winners = winnersResult.status === "fulfilled" ? winnersResult.value : null;
   const losers = losersResult.status === "fulfilled" ? losersResult.value : null;

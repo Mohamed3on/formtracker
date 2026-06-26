@@ -2,7 +2,12 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { MarketValueMover, MinutesValuePlayer, PlayerStats } from "@/app/types";
 import { findRepeatLosers, findRepeatWinners } from "@/lib/biggest-movers";
-import { applyStatsToggles, getMinutesValueData, toPlayerStats } from "@/lib/fetch-minutes-value";
+import {
+  applyStatsToggles,
+  getMinutesValueData,
+  includeTournamentStats,
+  toPlayerStats,
+} from "@/lib/fetch-minutes-value";
 import {
   buildLeagueValues,
   filterMinutesBenchmark,
@@ -144,27 +149,6 @@ export interface PlayerDetailData {
 
 export function seasonNpga(p: MinutesValuePlayer): number {
   return p.goals - (p.penaltyGoals ?? 0) + p.assists;
-}
-
-/** Fold a player's major-tournament national-team stats into their season totals
- *  so the profile (headline, ranks, comparisons) matches the /players default.
- *  Goals/assists/penalties/minutes fold in; the intl* fields are zeroed so no
- *  downstream toggle can re-add them. Matches (totalMatches) are intentionally
- *  left club-only — the "played X of Y" availability line counts club fixtures —
- *  and recentForm is already club-only, so last5/last10 form is unaffected. */
-function includeTournamentStats(p: MinutesValuePlayer): MinutesValuePlayer {
-  if (!p.intlGoals && !p.intlAssists && !p.intlMinutes && !p.intlPenaltyGoals) return p;
-  return {
-    ...p,
-    goals: p.goals + (p.intlGoals ?? 0),
-    assists: p.assists + (p.intlAssists ?? 0),
-    penaltyGoals: (p.penaltyGoals ?? 0) + (p.intlPenaltyGoals ?? 0),
-    minutes: p.minutes + (p.intlMinutes ?? 0),
-    intlGoals: 0,
-    intlAssists: 0,
-    intlPenaltyGoals: 0,
-    intlMinutes: 0,
-  };
 }
 
 function compareByMetric(
