@@ -6,6 +6,7 @@ import {
   buildModel,
   STAGE_LABEL,
   type Round,
+  type SlotSource,
   type Team,
   type TeamLite,
   type WcModel,
@@ -152,15 +153,25 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
 
   // ---- Overlay knockout cards ----
   const koByKey = new Map(results.ko.map((m) => [`${m.round}-${m.num}`, m]));
+  // A group's winner / runner-up is settled the moment that group completes. TM is slow
+  // to wire those names into its knockout bracket, so confirm such a slot straight from
+  // the finished standings (the model has already re-seeded the real team into it) rather
+  // than waiting on TM. Best-third slots stay projected until the actual draw resolves them.
+  const groupLocked = (src: SlotSource | undefined) =>
+    !!src &&
+    (src.kind === "winner" || src.kind === "runner") &&
+    !!results.groups[src.group]?.complete;
   const cardByKey: Record<string, LiveCard> = {};
   for (const c of model.bracket.cards) {
     const key = `${c.round}-${c.num}`;
     const m = koByKey.get(key);
-    // Use whichever side TM has already locked in (e.g. Germany once it tops its
-    // group); the other side stays the value projection until it's decided too.
+    // Use whichever side TM has already locked in (e.g. Germany once it tops its group),
+    // or one we can confirm from a completed group; the rest stay the value projection.
+    const homeReal = !!m?.home || groupLocked(c.homeSrc);
+    const awayReal = !!m?.away || groupLocked(c.awaySrc);
     const home = m?.home ? lite(m.home) : c.home;
     const away = m?.away ? lite(m.away) : c.away;
-    const real = !!(m && m.home && m.away); // both sides confirmed → a real matchup
+    const real = homeReal && awayReal; // both sides confirmed → a real matchup
     const played = !!(m && m.hs !== null && m.as !== null);
     let winner: string | null;
     if (real && m) {
@@ -181,8 +192,8 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
       hs: m?.hs ?? null,
       as: m?.as ?? null,
       real,
-      homeReal: !!m?.home,
-      awayReal: !!m?.away,
+      homeReal,
+      awayReal,
       played,
     };
   }
