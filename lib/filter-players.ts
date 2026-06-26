@@ -138,12 +138,18 @@ export function gamesAvailable(p: {
   return gamesScheduled(p) - (p.gamesMissed ?? 0);
 }
 
-/** Match count including major-tournament national-team games. totalMatches stays
- *  club-only (so % missed stays club-based); intlAppearances are the played
- *  World Cup/Euros/… games. Availability "played X of Y" lines add intlAppearances
- *  to both sides so a tournament game counts as available-and-played. */
-export function displayMatches(p: { totalMatches: number; intlAppearances?: number }): number {
-  return p.totalMatches + (p.intlAppearances ?? 0);
+/** Games available including major-tournament games, for the "played X of Y"
+ *  lines. totalMatches already folds in tournament games (see
+ *  includeTournamentStats), so this folds intlAppearances into the available
+ *  count too — a tournament game counts as available-and-played. % missed stays
+ *  club-based (gamesAvailable derives from club totalGames, not totalMatches). */
+export function displayAvailable(p: {
+  totalMatches: number;
+  gamesMissed?: number;
+  totalGames?: number;
+  intlAppearances?: number;
+}): number {
+  return gamesAvailable(p) + (p.intlAppearances ?? 0);
 }
 
 /** Split players into those playing less and more minutes than the target, sorted for display.

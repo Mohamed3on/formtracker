@@ -288,15 +288,15 @@ function aggregateSeasonStats(
     const mins = g.statistics.playingTimeStatistics.playedMinutes ?? 0;
     const state = g.statistics.generalStatistics.participationState ?? "";
     const posId = g.statistics.generalStatistics.positionId;
+    const gls = gs.goalsScoredTotal ?? 0;
+    const ast = gs.assists ?? 0;
+    const pGoals = gs.penaltyShooterGoalsScored ?? 0;
     if (g.gameInformation.isNationalGame) {
       // Only senior major finals (World Cup, Euros, …) count — not friendlies,
       // qualifiers, the Nations League, or youth games. They feed the intl*
       // tallies and, when played, the recent-form list and position breakdown,
       // but never the club totals / availability below (so we `continue`).
       if (MAJOR_TOURNAMENTS.has(g.gameInformation.competitionId)) {
-        const gls = gs.goalsScoredTotal ?? 0;
-        const ast = gs.assists ?? 0;
-        const pGoals = gs.penaltyShooterGoalsScored ?? 0;
         intlGoals += gls;
         intlAssists += ast;
         intlPenaltyGoals += pGoals;
@@ -311,9 +311,6 @@ function aggregateSeasonStats(
     if (!isFirstTeamGame(g.clubsInformation?.club?.clubId, currentClubId, clubTypes)) continue;
     totalGames++;
     if (MISSED_STATES.has(state)) gamesMissed++;
-    const gls = gs.goalsScoredTotal ?? 0;
-    const ast = gs.assists ?? 0;
-    const pGoals = gs.penaltyShooterGoalsScored ?? 0;
     goals += gls;
     if (TOP_FLIGHT_COMP_TYPES.has(g.gameInformation.competitionTypeId)) topFlightGoals += gls;
     assists += ast;

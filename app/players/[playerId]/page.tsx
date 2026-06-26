@@ -8,7 +8,7 @@ import { getLeistungsdatenUrl, getPlayerDetailHref } from "@/lib/format";
 import { getPlayerDetailData, seasonNpga, type PlayerRankings } from "@/lib/player-detail";
 import { paramsToScope } from "@/lib/comparison-scope";
 import { getPlayerRecentMatches } from "@/lib/player-recent-matches";
-import { displayMatches } from "@/lib/filter-players";
+import { displayAvailable } from "@/lib/filter-players";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -711,7 +711,7 @@ export default async function PlayerDetailPage({
           <HeroMetric
             label="Minutes"
             value={`${player.minutes.toLocaleString()}'`}
-            subline={`Played ${displayMatches(player)} of ${signalSummary.gamesScheduled - signalSummary.gamesMissed + (player.intlAppearances ?? 0)}${signalSummary.availablePct < 100 ? ` · ${100 - signalSummary.availablePct}% missed` : ""}`}
+            subline={`Played ${player.totalMatches} of ${displayAvailable(player)}${signalSummary.availablePct < 100 ? ` · ${100 - signalSummary.availablePct}% missed` : ""}`}
             accentClass="text-accent-blue"
           />
         </div>

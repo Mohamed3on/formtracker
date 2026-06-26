@@ -49,11 +49,12 @@ export function applyStatsToggles(
 }
 
 /** Fold a player's major-tournament national-team stats into their season totals
- *  so leaderboards and the player profile match the /players default. Goals/
- *  assists/penalties/minutes fold in and the intl* fields are zeroed so nothing
- *  can re-add them. Matches stay club-only (availability counts club fixtures),
- *  and recentForm already carries major-tournament games from the aggregator, so
- *  recent-form windows are unaffected here. */
+ *  so leaderboards, tables and the profile all count World Cup/Euros/… play.
+ *  Goals/assists/penalties/minutes/matches fold in and those intl* scalars are
+ *  zeroed so nothing can re-add them. intlAppearances is left in place (it's now
+ *  part of totalMatches) because the "played X of Y" availability denominator
+ *  still needs it via displayAvailable(); recentForm/positionStats already carry
+ *  tournament games from the aggregator. */
 export function includeTournamentStats(p: MinutesValuePlayer): MinutesValuePlayer {
   if (!p.intlGoals && !p.intlAssists && !p.intlMinutes && !p.intlPenaltyGoals) return p;
   return {
@@ -62,6 +63,7 @@ export function includeTournamentStats(p: MinutesValuePlayer): MinutesValuePlaye
     assists: p.assists + (p.intlAssists ?? 0),
     penaltyGoals: (p.penaltyGoals ?? 0) + (p.intlPenaltyGoals ?? 0),
     minutes: p.minutes + (p.intlMinutes ?? 0),
+    totalMatches: p.totalMatches + (p.intlAppearances ?? 0),
     intlGoals: 0,
     intlAssists: 0,
     intlPenaltyGoals: 0,

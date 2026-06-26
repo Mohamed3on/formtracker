@@ -21,9 +21,8 @@ import {
   TOP_5_LEAGUES,
   buildLeagueValues,
   isSameOrStrongerLeague,
-  displayMatches,
+  displayAvailable,
   filterMinutesBenchmark,
-  gamesAvailable,
   missedPct,
   uniqueFilterOptions,
 } from "@/lib/filter-players";
@@ -760,7 +759,7 @@ function DiscoverySection({
 
 function MvBenchmarkCard({ player }: { player: MinutesValuePlayer }) {
   const ga = player.goals + player.assists;
-  const available = gamesAvailable(player) + (player.intlAppearances ?? 0);
+  const available = displayAvailable(player);
   const missedPctVal = Math.round(missedPct(player) * 100);
   return (
     <BenchmarkCard
@@ -771,7 +770,7 @@ function MvBenchmarkCard({ player }: { player: MinutesValuePlayer }) {
       desktopStats={
         <>
           <span className="tabular-nums">
-            Played {displayMatches(player)} of {available}
+            Played {player.totalMatches} of {available}
           </span>
           <span className="text-text-secondary">Age {player.age}</span>
         </>
@@ -779,7 +778,7 @@ function MvBenchmarkCard({ player }: { player: MinutesValuePlayer }) {
       mobileStats={
         <>
           <span className="tabular-nums">
-            Played {displayMatches(player)} of {available}
+            Played {player.totalMatches} of {available}
           </span>
           <span className="text-text-secondary">Age {player.age}</span>
         </>
@@ -794,7 +793,7 @@ function MvBenchmarkCard({ player }: { player: MinutesValuePlayer }) {
             color="var(--accent-blue)"
           />
           <BigNumber
-            value={String(displayMatches(player))}
+            value={String(player.totalMatches)}
             label="Games"
             color="var(--text-primary)"
           />
@@ -813,7 +812,7 @@ function MvBenchmarkCard({ player }: { player: MinutesValuePlayer }) {
             {player.minutes.toLocaleString()}&apos;
           </div>
           <div className="text-lg font-medium font-value text-text-primary">
-            {displayMatches(player)}
+            {player.totalMatches}
           </div>
           {missedPctVal > 0 && (
             <div className="text-lg font-medium font-value text-accent-cold-soft">
@@ -846,7 +845,7 @@ function MvPlayerCard({
   const valueDiffDisplay =
     valueDiff > 0 ? `+${formatMarketValue(valueDiff)}` : formatMarketValue(valueDiff);
   const minsDiff = target ? player.minutes - target.minutes : 0;
-  const available = gamesAvailable(player) + (player.intlAppearances ?? 0);
+  const available = displayAvailable(player);
   const missedPctVal = Math.round(missedPct(player) * 100);
 
   return (
@@ -929,7 +928,7 @@ function MvPlayerCard({
           <div className="flex items-center gap-2.5 text-right">
             <div>
               <div className="text-sm font-medium font-value text-text-primary">
-                {displayMatches(player)}
+                {player.totalMatches}
               </div>
               <div className="text-xs text-text-secondary">played</div>
             </div>
@@ -953,7 +952,7 @@ function MvPlayerCard({
       footer={
         <>
           <span className="tabular-nums text-text-secondary">
-            Played {displayMatches(player)} of {available}
+            Played {player.totalMatches} of {available}
           </span>
           {missedPctVal > 0 && (
             <span className="tabular-nums text-accent-cold-soft">{missedPctVal}% missed</span>
