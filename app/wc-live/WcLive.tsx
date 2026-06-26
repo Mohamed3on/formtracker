@@ -109,20 +109,37 @@ export function WcLive({
     onMouseLeave: () => setHovered(null),
   });
 
+  // A bracket side: a played tie shows its score; an unplayed side is either confirmed
+  // (its real team has qualified into the slot, ✓) or still a squad-value projection
+  // (dashed). A projected winner is gold (predicted to advance) vs green for a real one.
   const chip = (
     team: TeamLite,
     win: boolean,
     lose: boolean,
-    pred: boolean,
+    decided: boolean,
+    confirmed: boolean,
+    played: boolean,
     score: string | null,
   ) => (
     <div
-      className={clsx("bt", win && "w", lose && "l", pred && "pred", active === team.name && "on")}
+      className={clsx(
+        "bt",
+        win && (decided ? "w" : "wp"),
+        lose && "l",
+        confirmed && !played && "conf",
+        !confirmed && !played && "proj",
+        active === team.name && "on",
+      )}
       onClick={() => pinTeam(team.name)}
       {...hover(team.name)}
     >
       <span className="bf">{team.flag}</span>
       <span className="bn">{team.short}</span>
+      {confirmed && !played && (
+        <span className="bok" title="Confirmed — this team has qualified into the slot">
+          ✓
+        </span>
+      )}
       <span className="bv">{score ?? fmtS(team.mv)}</span>
     </div>
   );
@@ -132,29 +149,33 @@ export function WcLive({
     const home = lc?.home ?? c.home;
     const away = lc?.away ?? c.away;
     const winner = lc ? lc.winner : c.winner;
-    const pred = !lc?.real;
     const played = !!lc?.played;
+    const decided = !!(lc?.real && lc.winner); // real teams + a settled result (vs a value pick)
     // A card is on the active team's route when it's one of the two sides — its
     // opponent then lights up alongside it for the whole run.
     const onRoute = !!active && (home.name === active || away.name === active);
     return (
       <div
         key={c.id}
-        className={clsx("bcard", c.isFinal && "isfinal", pred && "predcard", onRoute && "onroute")}
+        className={clsx("bcard", c.isFinal && "isfinal", onRoute && "onroute")}
         style={{ left: c.x, top: c.y - cardH / 2, width: cardW }}
       >
         {chip(
           home,
           winner === home.name,
           !!winner && winner !== home.name,
-          pred,
+          decided,
+          !!lc?.homeReal,
+          played,
           played ? String(lc!.hs) : null,
         )}
         {chip(
           away,
           winner === away.name,
           !!winner && winner !== away.name,
-          pred,
+          decided,
+          !!lc?.awayReal,
+          played,
           played ? String(lc!.as) : null,
         )}
       </div>
@@ -289,7 +310,8 @@ export function WcLive({
 
       <div className="section-title">The Bracket {started ? "· live" : "· predicted"}</div>
       <p className="hint">
-        Solid cards are real results; faded cards are the value prediction awaiting kickoff.{" "}
+        Each side turns <b>confirmed</b> the moment its real team qualifies in — dashed sides are
+        the squad-value projection until then, and a played tie shows its score.{" "}
         <b>Hover or click</b> a team to trace its run.
         {pinned && (
           <>
@@ -298,6 +320,17 @@ export function WcLive({
           </>
         )}
       </p>
+      <div className="bkey">
+        <span className="item">
+          <span className="sw conf">✓</span> Confirmed — qualified into the slot
+        </span>
+        <span className="item">
+          <span className="sw proj" /> Projected by squad value
+        </span>
+        <span className="item">
+          <span className="sw adv" /> Projected to advance
+        </span>
+      </div>
       <div ref={scrollRef} className="full-bleed wc-bracket-scroll" style={{ scrollMarginTop: 72 }}>
         <div
           className={clsx("bracket", activeInBracket && "lit")}
@@ -332,7 +365,7 @@ export function WcLive({
         {Object.entries(liveGroups).map(([g, grp]) => (
           <div key={g} className={clsx("group-card", !grp.live && "predcard")}>
             <div className="ghead">
-              Group {g} {grp.live ? <span className="glive">live</span> : ""}
+              Group {g} {grp.live && !grp.complete && <span className="glive">live</span>}
             </div>
             <table>
               <thead>
@@ -474,7 +507,7 @@ export function WcLive({
               <div className="tip-group">
                 <div className="tip-ghead">
                   Group {tipGroupLetter}
-                  {tipGroup.live && <span className="glive"> live</span>}
+                  {tipGroup.live && !tipGroup.complete && <span className="glive"> live</span>}
                 </div>
                 <table>
                   <tbody>

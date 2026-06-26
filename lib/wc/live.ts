@@ -68,7 +68,7 @@ export type LiveModel = {
   fetchedAt: number;
   tracker: TrackerRow[];
   cardByKey: Record<string, LiveCard>;
-  liveGroups: Record<string, { live: boolean; rows: LiveGroupRow[] }>;
+  liveGroups: Record<string, { live: boolean; complete: boolean; rows: LiveGroupRow[] }>;
   thirdPlace: ThirdPlaceRow[]; // all 12 third-placed teams, ranked; top 8 advance
 };
 
@@ -318,7 +318,7 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     rows.forEach((r, i) => (expPosByGroup[g][r.team.name] = i + 1));
   }
 
-  const liveGroups: Record<string, { live: boolean; rows: LiveGroupRow[] }> = {};
+  const liveGroups: Record<string, { live: boolean; complete: boolean; rows: LiveGroupRow[] }> = {};
   for (const g of GROUPS) {
     const rd = results.groups[g];
     if (rd?.anyPlayed && rd.rows.length) {
@@ -328,6 +328,7 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
       const sorted = [...rd.rows].sort(byStanding);
       liveGroups[g] = {
         live: true,
+        complete: !!rd.complete,
         rows: sorted.map((r, i) => {
           const pos = i + 1;
           const expPos = expPosByGroup[g]?.[r.name] ?? i + 1;
@@ -348,6 +349,7 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     } else {
       liveGroups[g] = {
         live: false,
+        complete: false,
         rows: (predGroups.get(g) ?? []).map((r, i) => ({
           team: r.team,
           pos: i + 1,

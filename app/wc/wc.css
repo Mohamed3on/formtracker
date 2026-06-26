@@ -141,6 +141,44 @@
   color: var(--wc-txt);
   font-weight: 600;
 }
+/* bracket confirmed / projected key (live page) */
+.wc-root .bkey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 8px 2px 2px;
+  color: var(--wc-muted);
+  font-size: 12px;
+}
+.wc-root .bkey .item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.wc-root .bkey .sw {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid var(--wc-line);
+  background: var(--wc-panel);
+  font-size: 10px;
+  font-weight: 800;
+}
+.wc-root .bkey .sw.conf {
+  color: var(--wc-win);
+  border-color: rgba(63, 185, 80, 0.4);
+}
+.wc-root .bkey .sw.proj {
+  border-style: dashed;
+  border-color: rgba(255, 210, 74, 0.5);
+}
+.wc-root .bkey .sw.adv {
+  box-shadow: inset 2px 0 0 var(--wc-gold);
+}
 
 /* bracket */
 .wc-root .wc-bracket-scroll {
@@ -232,6 +270,30 @@
 }
 .wc-root .bt.l {
   opacity: 0.42;
+}
+
+/* live page (/wc-live): per-side confirmed vs value-projected slots */
+.wc-root .bt.conf {
+  border-color: rgba(63, 185, 80, 0.4);
+}
+.wc-root .bt.proj {
+  border-style: dashed;
+  border-color: rgba(255, 210, 74, 0.4);
+}
+/* a value-projected winner is gold (predicted to advance), not the green of a real result */
+.wc-root .bt.wp {
+  background: linear-gradient(90deg, rgba(255, 210, 74, 0.16), transparent);
+  box-shadow: inset 2px 0 0 var(--wc-gold);
+}
+.wc-root .bt.wp .bn {
+  color: #fff3cf;
+}
+/* ✓ on a side whose real team has qualified into the slot but not yet played */
+.wc-root .bt .bok {
+  color: var(--wc-win);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .wc-root .bcard.isfinal .bt {
@@ -781,17 +843,6 @@
 }
 
 /* predicted (not-yet-real) styling on the live page */
-.wc-root .bcard.predcard .bt {
-  border-style: dashed;
-  opacity: 0.82;
-}
-.wc-root .bcard.predcard .bt.w {
-  background: linear-gradient(90deg, rgba(125, 145, 170, 0.12), transparent);
-  box-shadow: inset 2px 0 0 var(--wc-muted);
-}
-.wc-root .bcard.predcard .bt.w .bn {
-  color: var(--wc-txt);
-}
 .wc-root .crown.pred {
   opacity: 0.6;
 }
