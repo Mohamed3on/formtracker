@@ -3,6 +3,8 @@
 // expectations from a roster + market values. Fed either the static snapshot
 // (fallback) or daily-refreshed values from Transfermarkt.
 
+import { THIRD_ALLOCATION, THIRD_SLOT_ORDER } from "./third-allocation";
+
 export type Team = { name: string; group: string; mv: number; flag: string; landId: number };
 export type TeamLite = { name: string; short: string; flag: string; mv: number };
 
@@ -251,39 +253,20 @@ export function buildModel(
   const third = (g: string) => standings[g][2];
 
   // ---- Slot the 8 best third-placed teams into the Round of 32 ----
-  const SLOT_ALLOWED: Record<number, string[]> = {
-    2: ["A", "B", "C", "D", "F"],
-    5: ["C", "D", "F", "G", "H"],
-    7: ["C", "E", "F", "H", "I"],
-    8: ["E", "H", "I", "J", "K"],
-    9: ["B", "E", "F", "I", "J"],
-    10: ["A", "E", "H", "I", "J"],
-    13: ["E", "F", "G", "I", "J"],
-    15: ["D", "E", "I", "J", "L"],
-  };
-  const SLOTS = [2, 5, 7, 8, 9, 10, 13, 15];
-  // Match the qualifying groups to slots; fall back to the MV thirds if a live
-  // combination has no valid slotting (the simplified allocation table cannot
-  // place every 8-of-12 combination).
-  const solveSlots = (qual: Set<string>): Record<number, string> | null => {
-    const assign: Record<number, string> = {};
-    const ok = (function solve(i: number, used: Set<string>): boolean {
-      if (i === SLOTS.length) return true;
-      const slot = SLOTS[i];
-      for (const g of SLOT_ALLOWED[slot].filter((x) => qual.has(x)).sort()) {
-        if (used.has(g)) continue;
-        assign[slot] = g;
-        used.add(g);
-        if (solve(i + 1, used)) return true;
-        used.delete(g);
-        delete assign[slot];
-      }
-      return false;
-    })(0, new Set());
-    return ok ? assign : null;
+  // FIFA publishes a fixed table: which eight groups' thirds advance determines
+  // exactly which third faces each group winner. Look it up by the sorted
+  // combination rather than solving the constraints ourselves — multiple valid
+  // matchings exist, but only one is FIFA's (e.g. 3rd-place E goes to the Group A
+  // winner, not the Group L winner).
+  const officialSlots = (qual: Set<string>): Record<number, string> | null => {
+    const v = THIRD_ALLOCATION[[...qual].sort().join("")];
+    if (!v) return null;
+    const out: Record<number, string> = {};
+    THIRD_SLOT_ORDER.forEach((slot, i) => (out[slot] = v[i]));
+    return out;
   };
   const qualSet = live?.qualGroups ?? mvQualSet;
-  const assign = solveSlots(qualSet) ?? solveSlots(mvQualSet)!;
+  const assign = officialSlots(qualSet) ?? officialSlots(mvQualSet)!;
   const thirdAt = (slot: number) => third(assign[slot]);
 
   // ---- Knockout tree (higher MV advances) ----
