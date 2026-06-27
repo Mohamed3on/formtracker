@@ -257,16 +257,15 @@ export function buildModel(
   // exactly which third faces each group winner. Look it up by the sorted
   // combination rather than solving the constraints ourselves — multiple valid
   // matchings exist, but only one is FIFA's (e.g. 3rd-place E goes to the Group A
-  // winner, not the Group L winner).
-  const officialSlots = (qual: Set<string>): Record<number, string> | null => {
-    const v = THIRD_ALLOCATION[[...qual].sort().join("")];
-    if (!v) return null;
-    const out: Record<number, string> = {};
-    THIRD_SLOT_ORDER.forEach((slot, i) => (out[slot] = v[i]));
-    return out;
-  };
+  // winner, not the Group L winner). A qualifying set is always 8 distinct groups,
+  // so it is always one of the table's 495 rows; a miss means the data is broken.
   const qualSet = live?.qualGroups ?? mvQualSet;
-  const assign = officialSlots(qualSet) ?? officialSlots(mvQualSet)!;
+  const key = [...qualSet].sort().join("");
+  const row = THIRD_ALLOCATION[key];
+  if (!row) throw new Error(`no FIFA third-place allocation for qualifying groups: ${key}`);
+  const assign: Record<number, string> = Object.fromEntries(
+    THIRD_SLOT_ORDER.map((slot, i) => [slot, row[i]]),
+  );
   const thirdAt = (slot: number) => third(assign[slot]);
 
   // ---- Knockout tree (higher MV advances) ----
