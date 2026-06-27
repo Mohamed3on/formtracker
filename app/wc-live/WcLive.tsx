@@ -3,7 +3,9 @@
 import { clsx } from "clsx";
 import Link from "next/link";
 import { Fragment, useRef, useState } from "react";
-import { fmtS, ordinal, type Card, type TeamLite } from "@/lib/wc/model";
+import { ordinal } from "@/lib/format";
+import { fmtS } from "@/lib/wc/format";
+import type { Card, TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
 import { TeamCell } from "../wc/TeamCell";
 import { PlayersLink } from "../wc/PlayersLink";

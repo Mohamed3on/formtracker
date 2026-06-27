@@ -4,7 +4,7 @@ import { type Ref, useEffect, useLayoutEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
-import { fmt } from "@/lib/wc/model";
+import { fmt } from "@/lib/wc/format";
 import { wcTeamTmUrl } from "@/lib/wc/tm-team-links";
 import type { MatchupRow, MatchupTeam, Stage } from "@/lib/wc/matchups";
 

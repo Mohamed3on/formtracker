@@ -3,6 +3,7 @@
 // expectations from a roster + market values. Fed either the static snapshot
 // (fallback) or daily-refreshed values from Transfermarkt.
 
+import { ordinal } from "@/lib/format";
 import { THIRD_ALLOCATION, THIRD_SLOT_ORDER } from "./third-allocation";
 
 export type Team = { name: string; group: string; mv: number; flag: string; landId: number };
@@ -115,11 +116,6 @@ export const normName = (raw: string) => {
   return NAME_ALIAS[s] ?? s;
 };
 
-export const fmt = (mv: number) =>
-  mv >= 1000 ? `€${(mv / 1000).toFixed(2)}bn` : `€${mv.toFixed(2)}m`;
-export const fmtS = (mv: number) =>
-  mv >= 1000 ? `€${(mv / 1000).toFixed(2)}bn` : `€${Math.round(mv)}m`;
-
 const GROUPS = "ABCDEFGHIJKL".split("");
 const ROUND_NAME: Record<Round, string> = {
   R32: "Round of 32",
@@ -200,11 +196,6 @@ export const STAGE_LABEL = [
   "Final",
   "Champions",
 ];
-export const ordinal = (n: number) => {
-  const s = ["th", "st", "nd", "rd"],
-    v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-};
 
 // Bracket geometry (two-sided, Final in the centre)
 const ROW = 82,

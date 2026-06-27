@@ -2,7 +2,8 @@
 
 import { clsx } from "clsx";
 import { useRef, useState } from "react";
-import { fmt, fmtS, type Card, type RankRow, type TeamLite, type WcModel } from "@/lib/wc/model";
+import { fmt, fmtS } from "@/lib/wc/format";
+import type { Card, RankRow, TeamLite, WcModel } from "@/lib/wc/model";
 import { TeamCell } from "./TeamCell";
 import "./wc.css";
 
