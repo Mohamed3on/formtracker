@@ -10,6 +10,7 @@ import type { MatchupRow, MatchupTeam, Stage } from "@/lib/wc/matchups";
 
 type Mode = "date" | "value";
 type Status = "played" | "live" | "next" | "upcoming";
+type Outcome = "through" | "out" | null; // a settled knockout slot: advanced / eliminated
 
 const ROUND_LABEL: Record<Exclude<Stage, "group">, string> = {
   R32: "Round of 32",
@@ -72,6 +73,8 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
   }, []);
 
   const max = Math.max(1, ...rows.map((r) => r.sum));
+  // Surface the advanced/knocked-out legend only once a knockout tie has actually settled.
+  const anyDecided = rows.some((r) => r.stage !== "group" && r.played && r.winner != null);
   const sorted = [...rows].sort((a, b) =>
     mode === "value" ? b.sum - a.sum : a.kickoff - b.kickoff,
   );
@@ -132,6 +135,22 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
             </span>
             squad-value pick — chip shows why (group spot, best third…)
           </span>
+          {anyDecided && (
+            <>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-400">
+                  ✓ Advanced
+                </span>
+                won its tie — through to the next round
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="rounded-full border border-accent-cold/40 bg-accent-cold/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-cold">
+                  Knocked out
+                </span>
+                lost and is eliminated
+              </span>
+            </>
+          )}
         </div>
       </header>
 
@@ -170,20 +189,24 @@ function TeamName({
   win,
   fav,
   confirmed,
+  out,
 }: {
   t: MatchupTeam;
   win: boolean;
   fav?: boolean;
   confirmed?: boolean;
+  out?: boolean;
 }) {
   const tmUrl = wcTeamTmUrl(t.name);
   return (
     <span
       className={clsx(
         "inline-flex items-center gap-2 text-[15px]",
-        win || fav || confirmed
-          ? "font-bold text-text-primary"
-          : "font-semibold text-text-secondary",
+        out
+          ? "font-semibold text-text-muted"
+          : win || fav || confirmed
+            ? "font-bold text-text-primary"
+            : "font-semibold text-text-secondary",
       )}
     >
       <span className="text-xl leading-none">{t.flag}</span>
@@ -193,12 +216,12 @@ function TeamName({
           target="_blank"
           rel="noopener noreferrer"
           title={`${t.name} on Transfermarkt`}
-          className="hover:text-amber-400 hover:underline"
+          className={clsx("hover:text-amber-400 hover:underline", out && "line-through")}
         >
           {t.short}
         </a>
       ) : (
-        t.short
+        <span className={clsx(out && "line-through")}>{t.short}</span>
       )}
       {fav && (
         <span title="Projected to win on squad value" className="text-xs text-amber-400">
@@ -233,24 +256,66 @@ function SourceChip({ source, confirmed }: { source: string | null; confirmed: b
   );
 }
 
-// A knockout slot: team name stacked over its confirmed/projected provenance chip.
+// Once a knockout tie settles, the slot shows the outcome instead of provenance:
+// green "Advanced" for the side that went through, red "Knocked out" for the side
+// that's eliminated — with the Final reading "Champions" / "Runner-up".
+function OutcomeChip({ outcome, stage }: { outcome: "through" | "out"; stage: Stage }) {
+  const final = stage === "F";
+  const through = outcome === "through";
+  return (
+    <span
+      title={
+        through
+          ? final
+            ? "World Cup winners"
+            : "Won this tie — through to the next round"
+          : final
+            ? "Lost the final — World Cup runners-up"
+            : "Lost this tie — eliminated"
+      }
+      className={clsx(
+        "w-fit rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+        through
+          ? final
+            ? "border-amber-400/50 bg-amber-400/10 text-amber-300"
+            : "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+          : final
+            ? "border-border-subtle bg-card text-text-secondary"
+            : "border-accent-cold/40 bg-accent-cold/10 text-accent-cold",
+      )}
+    >
+      {final ? (through ? "🏆 Champions" : "Runner-up") : through ? "✓ Advanced" : "Knocked out"}
+    </span>
+  );
+}
+
+// A knockout slot: the team stacked over a status chip — its confirmed/projected
+// provenance before kickoff, then the settled outcome (advanced / out) afterwards.
 function KoSlot({
   t,
   win,
   fav,
   confirmed,
   source,
+  outcome,
+  stage,
 }: {
   t: MatchupTeam;
   win: boolean;
   fav?: boolean;
   confirmed: boolean;
   source: string | null;
+  outcome: Outcome;
+  stage: Stage;
 }) {
   return (
     <span className="inline-flex flex-col items-start gap-1">
-      <TeamName t={t} win={win} fav={fav} confirmed={confirmed} />
-      <SourceChip source={source} confirmed={confirmed} />
+      <TeamName t={t} win={win} fav={fav} confirmed={confirmed} out={outcome === "out"} />
+      {outcome ? (
+        <OutcomeChip outcome={outcome} stage={stage} />
+      ) : (
+        <SourceChip source={source} confirmed={confirmed} />
+      )}
     </span>
   );
 }
@@ -269,8 +334,9 @@ function MatchCard({
   cardRef?: Ref<HTMLDivElement>;
 }) {
   const accent = "text-amber-400";
-  const winner =
-    row.played && row.hs !== row.as ? ((row.hs ?? 0) > (row.as ?? 0) ? "home" : "away") : null;
+  const winner = row.winner;
+  // A knockout tie with a settled result: one side advanced, the other is out.
+  const decided = row.stage !== "group" && row.played && winner != null;
   // Before kickoff, flag the higher-value side as the value-model favourite.
   const fav = row.played ? null : row.home.mv >= row.away.mv ? "home" : "away";
 
@@ -342,6 +408,8 @@ function MatchCard({
               fav={fav === "home"}
               confirmed={row.homeConfirmed}
               source={row.homeSource}
+              outcome={decided ? (winner === "home" ? "through" : "out") : null}
+              stage={row.stage}
             />
             <span className="self-start pt-1">{sep}</span>
             <KoSlot
@@ -350,6 +418,8 @@ function MatchCard({
               fav={fav === "away"}
               confirmed={row.awayConfirmed}
               source={row.awaySource}
+              outcome={decided ? (winner === "away" ? "through" : "out") : null}
+              stage={row.stage}
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
