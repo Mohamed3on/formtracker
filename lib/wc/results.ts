@@ -22,6 +22,7 @@ export type KoMatch = {
   away: string | null;
   hs: number | null; // scores once played
   as: number | null;
+  pens: boolean; // tie decided by a penalty shootout (score shown is the shootout tally)
 };
 export type WcResults = {
   started: boolean;
@@ -115,15 +116,17 @@ async function fetchResults(): Promise<WcResults> {
     // parse, and so the "9:00 PM" kickoff-time cell is never mistaken for a score.
     let hs: number | null = null;
     let as: number | null = null;
-    const score = tds
+    let pens = false;
+    const resultText = tds
       .filter((_, td) => $(td).find("a[href*='/spielbericht/']").length > 0)
       .first()
       .text()
-      .trim()
-      .match(/^(\d+):(\d+)/);
+      .trim();
+    const score = resultText.match(/^(\d+):(\d+)/);
     if (score) {
       hs = parseInt(score[1], 10);
       as = parseInt(score[2], 10);
+      pens = /pen/i.test(resultText); // "4:5 on pens" → shootout; "2:1 a.e.t." → not flagged
       started = true;
     }
     ko.push({
@@ -133,6 +136,7 @@ async function fetchResults(): Promise<WcResults> {
       away: teamIn(tds.eq(tds.length - 1)),
       hs,
       as,
+      pens,
     });
   });
 

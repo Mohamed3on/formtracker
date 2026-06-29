@@ -5,10 +5,12 @@ import Link from "next/link";
 import { Fragment, useRef, useState } from "react";
 import { ordinal } from "@/lib/format";
 import { fmtS } from "@/lib/wc/format";
+import type { ManagerInfo } from "@/app/types";
 import type { Card, TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
 import { TeamCell } from "../wc/TeamCell";
 import { PlayersLink } from "../wc/PlayersLink";
+import { ManagerSection } from "../components/ManagerPPGBadge";
 import "../wc/wc.css";
 
 // `decided` (value table only): a settled result reads solid, a projection reads dashed.
@@ -46,9 +48,11 @@ const vsExpDelta = (r: TrackerRow) => r.projStage - r.expStage;
 export function WcLive({
   live,
   playerLinks,
+  managers,
 }: {
   live: LiveModel;
   playerLinks: Record<string, string>;
+  managers: Record<string, ManagerInfo>;
 }) {
   const { model, tracker, cardByKey, liveGroups, thirdPlace, started } = live;
   const { bracket, cardH, cardW } = model;
@@ -217,6 +221,7 @@ export function WcLive({
   const trackRow = (r: TrackerRow, kind: "over" | "under") => {
     const d = r.projStage - r.expStage;
     const decided = r.delta !== null; // settled result reads solid; a projection reads dashed
+    const manager = managers[r.team.name];
     return (
       <div
         key={r.team.name}
@@ -224,18 +229,25 @@ export function WcLive({
         onClick={() => pinTeam(r.team.name)}
         {...hover(r.team.name)}
       >
-        <span className="flag">{r.team.flag}</span>
-        <span className="tn">{r.team.name}</span>
-        {playerLinks[r.team.name] && (
-          <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+        <div className="trow-top">
+          <span className="flag">{r.team.flag}</span>
+          <span className="tn">{r.team.name}</span>
+          {playerLinks[r.team.name] && (
+            <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+          )}
+          <span className="ts">
+            <span className={clsx("tround", decided ? "real" : "proj")}>{r.projLabel}</span>
+            <span className="tmut"> · exp {r.expLabel}</span>
+          </span>
+          <span className={clsx("delta", kind, decided ? "real" : "proj")}>
+            {kind === "over" ? "▲" : "▼"} {Math.abs(d)}
+          </span>
+        </div>
+        {manager && (
+          <div className="tmgr" onClick={(e) => e.stopPropagation()}>
+            <ManagerSection manager={manager} />
+          </div>
         )}
-        <span className="ts">
-          <span className={clsx("tround", decided ? "real" : "proj")}>{r.projLabel}</span>
-          <span className="tmut"> · exp {r.expLabel}</span>
-        </span>
-        <span className={clsx("delta", kind, decided ? "real" : "proj")}>
-          {kind === "over" ? "▲" : "▼"} {Math.abs(d)}
-        </span>
       </div>
     );
   };

@@ -830,11 +830,19 @@
 }
 .wc-root .trow {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 5px;
   padding: 8px 14px;
   border-top: 1px solid rgba(125, 145, 170, 0.12);
   cursor: pointer;
+}
+.wc-root .trow-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wc-root .trow .tmgr {
+  font-size: 12px;
 }
 .wc-root .track-col .trow:first-of-type {
   border-top: none;

@@ -16,6 +16,7 @@ export type MatchupRow = {
   hs: number | null;
   as: number | null;
   played: boolean;
+  pens: boolean; // knockout tie decided by a penalty shootout
   projected: boolean; // teams are a value projection, not yet a confirmed matchup
   homeConfirmed: boolean; // home side locked to its real qualified team (knockout)
   awayConfirmed: boolean;
@@ -76,6 +77,7 @@ export function buildMatchups(
         hs: f.hs,
         as: f.as,
         played: f.played,
+        pens: false,
         projected: false,
         homeConfirmed: true,
         awayConfirmed: true,
@@ -130,6 +132,7 @@ export function buildMatchups(
       hs: lc?.hs ?? null,
       as: lc?.as ?? null,
       played: !!lc?.played,
+      pens: !!lc?.pens,
       projected: !lc?.real,
       homeConfirmed,
       awayConfirmed,
@@ -155,6 +158,7 @@ export function buildMatchups(
       hs: null,
       as: null,
       played: false,
+      pens: false,
       projected: true,
       homeConfirmed: false,
       awayConfirmed: false,

@@ -341,10 +341,17 @@ function MatchCard({
   const fav = row.played ? null : row.home.mv >= row.away.mv ? "home" : "away";
 
   const sep = row.played ? (
-    <span className="font-value px-1 text-base">
-      {row.hs}
-      <span className="px-0.5 text-text-muted">–</span>
-      {row.as}
+    <span className="inline-flex items-baseline px-1">
+      <span className="font-value text-base">
+        {row.hs}
+        <span className="px-0.5 text-text-muted">–</span>
+        {row.as}
+      </span>
+      {row.pens && (
+        <span className="ml-1 text-xs text-text-muted" title="Decided on penalties">
+          (pens)
+        </span>
+      )}
     </span>
   ) : (
     <span className="px-1 text-xs italic text-text-muted">v</span>

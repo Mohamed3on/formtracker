@@ -40,6 +40,7 @@ export type LiveCard = {
   homeReal: boolean; // this side locked to its real qualified team
   awayReal: boolean;
   played: boolean;
+  pens: boolean; // decided by a penalty shootout
 };
 export type ThirdPlaceRow = {
   team: TeamLite;
@@ -195,6 +196,7 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
       homeReal,
       awayReal,
       played,
+      pens: !!m?.pens,
     };
   }
 

@@ -55,8 +55,11 @@ const TM_TEAM_ID: Record<string, number> = {
   Panama: 3577,
 };
 
+/** That nation's Transfermarkt "verein" id, or undefined if we don't have it. */
+export const wcTeamTmId = (name: string): number | undefined => TM_TEAM_ID[name];
+
 /** That nation's Transfermarkt team page, or undefined if we don't have its id. */
 export const wcTeamTmUrl = (name: string): string | undefined => {
-  const id = TM_TEAM_ID[name];
+  const id = wcTeamTmId(name);
   return id ? `${BASE_URL}/x/startseite/verein/${id}` : undefined;
 };
