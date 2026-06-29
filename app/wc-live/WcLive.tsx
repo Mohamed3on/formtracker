@@ -216,6 +216,7 @@ export function WcLive({
 
   const trackRow = (r: TrackerRow, kind: "over" | "under") => {
     const d = r.projStage - r.expStage;
+    const decided = r.delta !== null; // settled result reads solid; a projection reads dashed
     return (
       <div
         key={r.team.name}
@@ -229,10 +230,10 @@ export function WcLive({
           <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
         )}
         <span className="ts">
-          {r.projLabel}
-          {projSuffix(r)} <span className="tmut">· exp {r.expLabel}</span>
+          <span className={clsx("tround", decided ? "real" : "proj")}>{r.projLabel}</span>
+          <span className="tmut"> · exp {r.expLabel}</span>
         </span>
-        <span className={clsx("delta", kind)}>
+        <span className={clsx("delta", kind, decided ? "real" : "proj")}>
           {kind === "over" ? "▲" : "▼"} {Math.abs(d)}
         </span>
       </div>

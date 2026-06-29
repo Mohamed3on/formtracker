@@ -645,6 +645,11 @@
   padding-bottom: 1px;
   opacity: 0.85;
 }
+/* same language in the over/under tracker: projected round dashed, decided round solid */
+.wc-root .trow .tround.proj {
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.85;
+}
 
 /* value-table certainty key: real reached pills sit inline with their description */
 .wc-root .mv-key {
