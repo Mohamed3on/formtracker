@@ -110,19 +110,22 @@ async function fetchResults(): Promise<WcResults> {
       }
     }
     if (!info || labelIdx < 0) return;
+    // The score lives in the result cell — the one linking to the match report/preview.
+    // Match a prefix so extra-time / penalty suffixes ("4:5 on pens", "2:1 a.e.t.") still
+    // parse, and so the "9:00 PM" kickoff-time cell is never mistaken for a score.
     let hs: number | null = null;
     let as: number | null = null;
-    tds.each((_, td) => {
-      const m = $(td)
-        .text()
-        .trim()
-        .match(/^(\d+):(\d+)$/);
-      if (m) {
-        hs = parseInt(m[1], 10);
-        as = parseInt(m[2], 10);
-      }
-    });
-    if (hs !== null) started = true;
+    const score = tds
+      .filter((_, td) => $(td).find("a[href*='/spielbericht/']").length > 0)
+      .first()
+      .text()
+      .trim()
+      .match(/^(\d+):(\d+)/);
+    if (score) {
+      hs = parseInt(score[1], 10);
+      as = parseInt(score[2], 10);
+      started = true;
+    }
     ko.push({
       round: info.round,
       num: info.num,
