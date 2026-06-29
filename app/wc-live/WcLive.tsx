@@ -11,11 +11,13 @@ import { TeamCell } from "../wc/TeamCell";
 import { PlayersLink } from "../wc/PlayersLink";
 import "../wc/wc.css";
 
-function groupDelta(delta: number | null) {
-  if (delta === null) return <span className="delta met">—</span>;
-  if (delta === 0) return <span className="delta met">met</span>;
-  if (delta > 0) return <span className="delta over">▲ {delta}</span>;
-  return <span className="delta under">▼ {-delta}</span>;
+// `decided` (value table only): a settled result reads solid, a projection reads dashed.
+function groupDelta(delta: number | null, decided?: boolean) {
+  const cert = decided === undefined ? false : decided ? "real" : "proj";
+  if (delta === null) return <span className={clsx("delta met", cert)}>—</span>;
+  if (delta === 0) return <span className={clsx("delta met", cert)}>met</span>;
+  if (delta > 0) return <span className={clsx("delta over", cert)}>▲ {delta}</span>;
+  return <span className={clsx("delta under", cert)}>▼ {-delta}</span>;
 }
 
 // Colour the projected pill by the round reached (index = projStage 0..6); the
@@ -25,12 +27,19 @@ const STAGE_PILL = ["p-group", "p-r32", "p-r16", "p-qf", "p-qf", "p-runner", "p-
 // projected (not yet achieved), nothing once the stage is actually reached/decided.
 const projSuffix = (r: TrackerRow) =>
   r.projState === "out" ? " · out" : r.projState === "proj" ? " · proj" : "";
-const projPill = (r: TrackerRow) => (
-  <span className={clsx("pill", STAGE_PILL[r.projStage])}>
-    {r.projLabel}
-    {projSuffix(r)}
-  </span>
-);
+const projPill = (r: TrackerRow) => {
+  // Decided (champion or knocked out) → the round reached is real, so the pill is solid;
+  // still alive / not started → it's a squad-value projection, shown as a dashed ghost.
+  const decided = r.delta !== null;
+  return (
+    <span
+      className={clsx("pill", STAGE_PILL[r.projStage], decided ? "real" : "proj")}
+      title={decided ? "Reached — result is final" : "Projected by squad value"}
+    >
+      {r.projLabel}
+    </span>
+  );
+};
 // vs Exp: projected stage minus the round its squad value seeds it into.
 const vsExpDelta = (r: TrackerRow) => r.projStage - r.expStage;
 
@@ -289,6 +298,14 @@ export function WcLive({
         results first, then value — against the <b>Exp</b> round its value seeds it into.{" "}
         <b>Click a knockout team</b> to trace its run below.
       </p>
+      <div className="bkey mv-key">
+        <span className="item">
+          <span className="pill p-r32 real">Reached</span> result is final
+        </span>
+        <span className="item">
+          <span className="pill p-r32 proj">Projected</span> by squad value
+        </span>
+      </div>
       <div className="mv-grid">
         <LiveTable
           rows={tracker.slice(0, 24)}
@@ -585,7 +602,7 @@ function LiveTable({
               <td className="mv-val r">{fmtS(r.team.mv)}</td>
               <td>{projPill(r)}</td>
               <td className="mv-exp">{r.expLabel}</td>
-              <td className="r">{groupDelta(vsExpDelta(r))}</td>
+              <td className="r">{groupDelta(vsExpDelta(r), r.delta !== null)}</td>
             </tr>
           );
         })}

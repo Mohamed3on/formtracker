@@ -575,7 +575,8 @@
 }
 .wc-root .pill {
   display: inline-block;
-  padding: 2px 9px;
+  padding: 1px 8px;
+  border: 1px solid transparent;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
@@ -613,6 +614,15 @@
   background: rgba(125, 135, 150, 0.12);
   color: #8696a8;
 }
+/* certainty: a round already reached reads solid (filled); a value projection is a
+   dashed, ghosted outline in the same stage colour — mirroring the bracket's confirmed
+   vs projected language. `.real` keeps the filled `.p-*` background as-is. */
+.wc-root .pill.proj {
+  background: transparent;
+  border-color: currentColor;
+  border-style: dashed;
+  opacity: 0.8;
+}
 
 /* over / under achievement vs market value */
 .wc-root .delta {
@@ -628,6 +638,17 @@
 }
 .wc-root .delta.met {
   color: var(--wc-muted);
+}
+/* a still-projected verdict gets a dashed underline; a decided one stays solid */
+.wc-root .delta.proj {
+  border-bottom: 1px dashed currentColor;
+  padding-bottom: 1px;
+  opacity: 0.85;
+}
+
+/* value-table certainty key: real reached pills sit inline with their description */
+.wc-root .mv-key {
+  margin: 6px 2px 12px;
 }
 
 /* groups */
