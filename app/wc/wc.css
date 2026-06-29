@@ -414,83 +414,6 @@
   background: rgba(255, 210, 74, 0.1);
 }
 
-/* round-reached tooltip */
-.wc-root .tip {
-  position: fixed;
-  z-index: 60;
-  pointer-events: none;
-  display: none;
-  flex-direction: column;
-  gap: 7px;
-  background: #0b121d;
-  border: 1px solid var(--wc-line);
-  border-radius: 10px;
-  padding: 7px 11px;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
-}
-.wc-root .tip.show {
-  display: flex;
-}
-.wc-root .tip-line {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-}
-.wc-root .tip .tf {
-  font-size: 15px;
-}
-.wc-root .tip .td {
-  color: var(--wc-muted);
-}
-.wc-root .tip .tr {
-  color: var(--wc-gold);
-  font-weight: 700;
-}
-.wc-root .tip-group {
-  border-top: 1px solid var(--wc-line);
-  padding-top: 6px;
-}
-.wc-root .tip-ghead {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--wc-muted);
-  margin-bottom: 4px;
-}
-.wc-root .tip-ghead .glive {
-  color: var(--wc-under);
-  font-weight: 700;
-}
-.wc-root .tip-group table {
-  border-collapse: collapse;
-}
-.wc-root .tip-group td {
-  padding: 2px 0;
-  font-size: 12px;
-  font-weight: 600;
-}
-.wc-root .tip-group .pos {
-  color: var(--wc-muted);
-  text-align: right;
-  padding-right: 8px;
-}
-.wc-root .tip-group .tgn .flag {
-  margin-right: 6px;
-  font-size: 13px;
-}
-.wc-root .tip-group .pts {
-  text-align: right;
-  padding-left: 16px;
-  color: var(--wc-txt);
-}
-.wc-root .tip-group tr.on .tgn,
-.wc-root .tip-group tr.on .pts {
-  color: var(--wc-gold);
-}
-
 /* value-sorted placement table */
 .wc-root .mv-grid {
   display: grid;
@@ -830,11 +753,19 @@
 }
 .wc-root .trow {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 5px;
   padding: 8px 14px;
   border-top: 1px solid rgba(125, 145, 170, 0.12);
   cursor: pointer;
+}
+.wc-root .trow-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wc-root .trow .tmgr {
+  font-size: 12px;
 }
 .wc-root .track-col .trow:first-of-type {
   border-top: none;
@@ -1018,12 +949,5 @@
   .wc-root .mv-table td {
     padding-left: 6px;
     padding-right: 6px;
-  }
-}
-
-/* the mouse-following tooltip is meaningless on touch and gets stuck after a tap */
-@media (hover: none) {
-  .wc-root .tip {
-    display: none !important;
   }
 }

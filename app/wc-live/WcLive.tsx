@@ -5,10 +5,12 @@ import Link from "next/link";
 import { Fragment, useRef, useState } from "react";
 import { ordinal } from "@/lib/format";
 import { fmtS } from "@/lib/wc/format";
+import type { ManagerInfo } from "@/app/types";
 import type { Card, TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
 import { TeamCell } from "../wc/TeamCell";
 import { PlayersLink } from "../wc/PlayersLink";
+import { ManagerSection } from "../components/ManagerPPGBadge";
 import "../wc/wc.css";
 
 // `decided` (value table only): a settled result reads solid, a projection reads dashed.
@@ -23,10 +25,6 @@ function groupDelta(delta: number | null, decided?: boolean) {
 // Colour the projected pill by the round reached (index = projStage 0..6); the
 // semi-final reuses the quarter-final colour, as there's no dedicated pill class.
 const STAGE_PILL = ["p-group", "p-r32", "p-r16", "p-qf", "p-qf", "p-runner", "p-champ"];
-// Suffix: "· out" when projected out in the groups, "· proj" while the run is still
-// projected (not yet achieved), nothing once the stage is actually reached/decided.
-const projSuffix = (r: TrackerRow) =>
-  r.projState === "out" ? " · out" : r.projState === "proj" ? " · proj" : "";
 const projPill = (r: TrackerRow) => {
   // Decided (champion or knocked out) → the round reached is real, so the pill is solid;
   // still alive / not started → it's a squad-value projection, shown as a dashed ghost.
@@ -46,9 +44,11 @@ const vsExpDelta = (r: TrackerRow) => r.projStage - r.expStage;
 export function WcLive({
   live,
   playerLinks,
+  managers,
 }: {
   live: LiveModel;
   playerLinks: Record<string, string>;
+  managers: Record<string, ManagerInfo>;
 }) {
   const { model, tracker, cardByKey, liveGroups, thirdPlace, started } = live;
   const { bracket, cardH, cardW } = model;
@@ -67,26 +67,7 @@ export function WcLive({
   // Only dim the bracket when the active team is actually in it; group-stage teams
   // projected out aren't, yet we still highlight them in the tables and groups.
   const activeInBracket = !!active && knockoutTeams.has(active);
-  const tipRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const trackerByName: Record<string, TrackerRow> = Object.fromEntries(
-    tracker.map((r) => [r.team.name, r]),
-  );
-
-  // Which group each nation came through — for the bracket hover popup.
-  const groupByTeam: Record<string, string> = {};
-  for (const [g, grp] of Object.entries(liveGroups))
-    for (const r of grp.rows) groupByTeam[r.team.name] = g;
-
-  function onMove(e: React.MouseEvent) {
-    const t = tipRef.current;
-    if (!t) return;
-    let x = e.clientX + 16;
-    if (x + t.offsetWidth + 12 > window.innerWidth) x = e.clientX - t.offsetWidth - 16;
-    t.style.left = `${x}px`;
-    t.style.top = `${e.clientY + 18}px`;
-  }
 
   function pinTeam(name: string) {
     setPinned(name);
@@ -208,15 +189,10 @@ export function WcLive({
     .filter((r) => r.projStage < r.expStage)
     .sort((a, b) => a.projStage - a.expStage - (b.projStage - b.expStage));
 
-  const info = hovered ? trackerByName[hovered] : null;
-  // For nations shown in the bracket, reveal the group they came through.
-  const tipGroupLetter =
-    info && knockoutTeams.has(info.team.name) ? groupByTeam[info.team.name] : null;
-  const tipGroup = tipGroupLetter ? liveGroups[tipGroupLetter] : null;
-
   const trackRow = (r: TrackerRow, kind: "over" | "under") => {
     const d = r.projStage - r.expStage;
     const decided = r.delta !== null; // settled result reads solid; a projection reads dashed
+    const manager = managers[r.team.name];
     return (
       <div
         key={r.team.name}
@@ -224,24 +200,31 @@ export function WcLive({
         onClick={() => pinTeam(r.team.name)}
         {...hover(r.team.name)}
       >
-        <span className="flag">{r.team.flag}</span>
-        <span className="tn">{r.team.name}</span>
-        {playerLinks[r.team.name] && (
-          <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+        <div className="trow-top">
+          <span className="flag">{r.team.flag}</span>
+          <span className="tn">{r.team.name}</span>
+          {playerLinks[r.team.name] && (
+            <PlayersLink href={playerLinks[r.team.name]} team={r.team.name} />
+          )}
+          <span className="ts">
+            <span className={clsx("tround", decided ? "real" : "proj")}>{r.projLabel}</span>
+            <span className="tmut"> · exp {r.expLabel}</span>
+          </span>
+          <span className={clsx("delta", kind, decided ? "real" : "proj")}>
+            {kind === "over" ? "▲" : "▼"} {Math.abs(d)}
+          </span>
+        </div>
+        {manager && (
+          <div className="tmgr" onClick={(e) => e.stopPropagation()}>
+            <ManagerSection manager={manager} />
+          </div>
         )}
-        <span className="ts">
-          <span className={clsx("tround", decided ? "real" : "proj")}>{r.projLabel}</span>
-          <span className="tmut"> · exp {r.expLabel}</span>
-        </span>
-        <span className={clsx("delta", kind, decided ? "real" : "proj")}>
-          {kind === "over" ? "▲" : "▼"} {Math.abs(d)}
-        </span>
       </div>
     );
   };
 
   return (
-    <div className="wc-root" onMouseMove={onMove} onClick={onCanvasClick}>
+    <div className="wc-root" onClick={onCanvasClick}>
       <header className="wc-hero">
         <div className="kicker">FIFA World Cup 2026 · Live vs the value model</div>
         <h1 className="wc-title">Expectations vs Reality</h1>
@@ -508,48 +491,6 @@ export function WcLive({
       <div className="wc-foot">
         Live data from Transfermarkt · value seeding from current squad market values · refreshed
         every hour.
-      </div>
-
-      <div ref={tipRef} className={clsx("tip", info && "show")}>
-        {info && (
-          <>
-            <div className="tip-line">
-              <span className="tf">{info.team.flag}</span>
-              {info.team.name}
-              <span className="td">·</span>
-              <span className="tr">
-                {info.projLabel}
-                {projSuffix(info)}
-              </span>
-              <span className="td">exp {info.expLabel}</span>
-            </div>
-            {tipGroup && (
-              <div className="tip-group">
-                <div className="tip-ghead">
-                  Group {tipGroupLetter}
-                  {tipGroup.live && !tipGroup.complete && <span className="glive"> live</span>}
-                </div>
-                <table>
-                  <tbody>
-                    {tipGroup.rows.map((r) => (
-                      <tr
-                        key={r.team.name}
-                        className={clsx(r.team.name === info.team.name && "on")}
-                      >
-                        <td className="pos">{r.pos}</td>
-                        <td className="tgn">
-                          <span className="flag">{r.team.flag}</span>
-                          {r.team.short}
-                        </td>
-                        <td className="pts">{r.pts}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        )}
       </div>
     </div>
   );
