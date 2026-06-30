@@ -13,7 +13,7 @@ interface ManagerPPGBadgeProps {
 export function ManagerSackedBadge({ manager }: ManagerPPGBadgeProps) {
   if (manager.isCurrentManager) return null;
   return (
-    <span className="shrink-0 px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-red-500/15 text-red-500 border border-red-500/30">
+    <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-red-500">
       Sacked
     </span>
   );
@@ -24,8 +24,7 @@ export function ManagerSkeleton() {
     <div className="flex items-center gap-2">
       <span className="text-text-muted">Manager:</span>
       <Skeleton className="h-4 w-24 rounded" />
-      <Skeleton className="h-4 w-16 rounded" />
-      <Skeleton className="h-5 w-20 rounded" />
+      <Skeleton className="h-5 w-14 rounded" />
     </div>
   );
 }
@@ -40,7 +39,7 @@ export function ManagerSection({ manager }: ManagerPPGBadgeProps) {
           target="_blank"
           rel="noopener noreferrer"
           title="Open manager profile on Transfermarkt"
-          className={`min-w-0 font-semibold hover:underline transition-colors truncate ${manager.isCurrentManager ? "text-accent-blue" : "text-text-muted"}`}
+          className={`min-w-0 truncate font-semibold transition-colors hover:underline ${manager.isCurrentManager ? "text-accent-blue" : "text-text-muted"}`}
         >
           {manager.name}
         </a>
@@ -56,7 +55,7 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
 
   if (manager.matches === 0) {
     return (
-      <span className="inline-flex shrink-0 px-2 py-0.5 rounded text-[10px] @md:text-xs font-medium bg-elevated text-text-muted border border-border-subtle">
+      <span className="shrink-0 text-[10px] @md:text-xs text-text-muted">
         <span className="@md:hidden">New</span>
         <span className="hidden @md:inline">New manager</span>
       </span>
@@ -70,8 +69,9 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
 
   if (!hasRanking) {
     return (
-      <span className="inline-flex text-[10px] sm:text-xs text-text-secondary">
-        ({manager.matches} {manager.matches === 1 ? "game" : "games"})
+      <span className="shrink-0 text-[10px] @md:text-xs text-text-secondary">
+        <span className="font-value">{manager.matches}</span>{" "}
+        {manager.matches === 1 ? "game" : "games"}
       </span>
     );
   }
@@ -80,44 +80,51 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
   const isBest = manager.ppgRank === 1 && !isOnly;
   const isWorst = manager.ppgRank === manager.totalComparableManagers && !isBest && !isOnly;
 
-  const badgeColors = isBest
-    ? "bg-green-600/15 text-green-500 border-green-600/30"
+  // Quiet, uniform token by default; a low-chroma tint flags only the best/worst.
+  // The row's own ▲/▼ delta stays the loud signal — this is a secondary annotation.
+  const tone = isBest
+    ? "bg-green-600/10 text-green-500"
     : isWorst
-      ? "bg-red-600/15 text-red-500 border-red-600/30"
-      : isOnly
-        ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
-        : "bg-elevated text-text-secondary border-border-subtle";
+      ? "bg-red-600/10 text-red-500"
+      : "bg-elevated text-text-secondary";
 
   const badge = (
     <span
-      className={`inline-flex max-w-full items-center gap-0.5 px-1 py-0.5 @md:px-1.5 rounded text-[9px] @md:text-xs cursor-help transition-opacity hover:opacity-80 border ${badgeColors} ${isBest || isWorst || isOnly ? "font-semibold" : ""}`}
+      className={`inline-flex shrink-0 cursor-help items-center gap-1 rounded px-1.5 py-0.5 text-[10px] @md:text-xs transition-opacity hover:opacity-80 ${tone}`}
     >
-      {isBest && <span className="hidden @md:inline">🏆</span>}
-      {isWorst && <span className="hidden @md:inline">⚠️</span>}
-      {isOnly && <span className="hidden @md:inline">👑</span>}
-      <span className="@md:hidden">{manager.ppg!.toFixed(2)}</span>
-      <span className="hidden @md:inline">{manager.ppg!.toFixed(2)} PPG</span>
-      <span className="text-text-secondary">
-        ({manager.ppgRank}/{manager.totalComparableManagers})
-      </span>
+      {isOnly && (
+        <span aria-hidden title="Only manager with this many games since 1995">
+          👑
+        </span>
+      )}
+      <span className="font-value">{manager.ppg!.toFixed(2)}</span>
+      <span className="hidden @md:inline">PPG</span>
+      {!isOnly && (
+        <span className="font-value opacity-70">
+          {manager.ppgRank}/{manager.totalComparableManagers}
+        </span>
+      )}
     </span>
   );
 
   const tooltipContent = (
     <div className="space-y-2 text-xs sm:text-sm">
       <div className="text-text-secondary">
+        <span className="font-value text-text-primary">{manager.ppg!.toFixed(2)}</span> PPG over{" "}
+        <span className="font-value text-text-primary">{manager.matches}</span> games
         {isOnly ? (
-          <>Only manager with {manager.matches}+ games since 1995</>
+          <> — only manager with that many since 1995</>
         ) : (
           <>
-            {isBest ? "Best" : isWorst ? "Worst" : `#${manager.ppgRank}`} PPG among{" "}
-            <span className="text-text-primary">{manager.totalComparableManagers}</span> managers
-            with {manager.matches}+ games since 1995
+            {" "}
+            — {isBest ? "best" : isWorst ? "worst" : `#${manager.ppgRank}`} of{" "}
+            <span className="font-value text-text-primary">{manager.totalComparableManagers}</span>{" "}
+            since 1995
           </>
         )}
       </div>
       {!isOnly && manager.bestManager && manager.worstManager && (
-        <div className="pt-2 space-y-1.5 border-t border-t-border-subtle">
+        <div className="space-y-1.5 border-t border-t-border-subtle pt-2">
           <div className="flex items-start gap-1.5">
             <span>🏆</span>
             <div>
@@ -125,12 +132,13 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
                 href={manager.bestManager.profileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium hover:underline text-accent-green"
+                className="font-medium text-accent-green hover:underline"
               >
                 {manager.bestManager.name}
               </a>
               <span className="ml-1 text-text-muted">
-                {manager.bestManager.ppg.toFixed(2)} PPG · {manager.bestManager.years}
+                <span className="font-value">{manager.bestManager.ppg.toFixed(2)}</span> PPG ·{" "}
+                {manager.bestManager.years}
               </span>
             </div>
           </div>
@@ -141,12 +149,13 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
                 href={manager.worstManager.profileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium hover:underline text-red-500"
+                className="font-medium text-red-500 hover:underline"
               >
                 {manager.worstManager.name}
               </a>
               <span className="ml-1 text-text-muted">
-                {manager.worstManager.ppg.toFixed(2)} PPG · {manager.worstManager.years}
+                <span className="font-value">{manager.worstManager.ppg.toFixed(2)}</span> PPG ·{" "}
+                {manager.worstManager.years}
               </span>
             </div>
           </div>
@@ -158,40 +167,33 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
   const contentClass =
     "max-w-[280px] sm:max-w-xs p-3 bg-card text-text-primary border border-border-subtle shadow-[0_8px_32px_rgba(0,0,0,0.4)]";
 
-  return (
-    <span className="inline-flex shrink-0 items-center gap-1">
-      <span className="hidden @sm:inline text-[10px] @md:text-xs text-text-secondary">
-        ({manager.matches} {manager.matches === 1 ? "game" : "games"})
-      </span>
-      {isTouchDevice ? (
-        <Popover>
-          <PopoverTrigger asChild>{badge}</PopoverTrigger>
-          <PopoverContent
-            side="bottom"
-            align="center"
-            sideOffset={8}
-            avoidCollisions={true}
-            collisionPadding={16}
-            className={contentClass}
-          >
-            {tooltipContent}
-          </PopoverContent>
-        </Popover>
-      ) : (
-        <Tooltip>
-          <TooltipTrigger asChild>{badge}</TooltipTrigger>
-          <TooltipContent
-            side="bottom"
-            align="center"
-            sideOffset={8}
-            avoidCollisions={true}
-            collisionPadding={16}
-            className={contentClass}
-          >
-            {tooltipContent}
-          </TooltipContent>
-        </Tooltip>
-      )}
-    </span>
+  return isTouchDevice ? (
+    <Popover>
+      <PopoverTrigger asChild>{badge}</PopoverTrigger>
+      <PopoverContent
+        side="bottom"
+        align="center"
+        sideOffset={8}
+        avoidCollisions={true}
+        collisionPadding={16}
+        className={contentClass}
+      >
+        {tooltipContent}
+      </PopoverContent>
+    </Popover>
+  ) : (
+    <Tooltip>
+      <TooltipTrigger asChild>{badge}</TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        align="center"
+        sideOffset={8}
+        avoidCollisions={true}
+        collisionPadding={16}
+        className={contentClass}
+      >
+        {tooltipContent}
+      </TooltipContent>
+    </Tooltip>
   );
 }
