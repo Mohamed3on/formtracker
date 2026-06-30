@@ -112,6 +112,7 @@ export function WcLive({
     confirmed: boolean,
     played: boolean,
     score: string | null,
+    pens: boolean,
   ) => (
     <div
       className={clsx(
@@ -132,7 +133,10 @@ export function WcLive({
           ✓
         </span>
       )}
-      <span className="bv">{score ?? fmtS(team.mv)}</span>
+      <span className="bv">
+        {score ?? fmtS(team.mv)}
+        {played && pens && <sup title="Decided on penalties">p</sup>}
+      </span>
     </div>
   );
 
@@ -160,6 +164,7 @@ export function WcLive({
           !!lc?.homeReal,
           played,
           played ? String(lc!.hs) : null,
+          !!lc?.pens,
         )}
         {chip(
           away,
@@ -169,6 +174,7 @@ export function WcLive({
           !!lc?.awayReal,
           played,
           played ? String(lc!.as) : null,
+          !!lc?.pens,
         )}
       </div>
     );
