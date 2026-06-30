@@ -9,6 +9,10 @@ const ratio = (r: MatchupRow) => {
   return hi > 0 ? Math.min(r.home.mv, r.away.mv) / hi : 1;
 };
 
+// Coin-flip score: evenness × combined value, so a tight clash of heavyweights
+// outranks two equally-matched minnows.
+const evenStakes = (r: MatchupRow) => ratio(r) * r.sum;
+
 // "58×" for a runaway gap, "3.5×" when it's closer.
 const mult = (x: number) => (x >= 10 ? `${Math.round(x)}×` : `${x.toFixed(1)}×`);
 
@@ -43,7 +47,7 @@ const STAGE_LABEL: Record<Exclude<Stage, "group">, string> = {
 };
 
 // The three value storylines, drawn from the full schedule:
-//   • tight    — the most evenly valued matchup (a coin flip on paper)
+//   • tight    — the most evenly valued high-stakes matchup (a coin flip that matters)
 //   • mismatch — the most lopsided matchup (David v Goliath)
 //   • shock    — the biggest upset already played (a cheaper squad that won)
 // Knockout slots still projected by value are skipped: their teams aren't real yet.
@@ -51,10 +55,9 @@ function pickCards(rows: MatchupRow[]): Card[] {
   const real = rows.filter((r) => !r.projected && r.home.mv > 0 && r.away.mv > 0);
   if (!real.length) return [];
 
-  const byEven = [...real].sort((a, b) => ratio(b) - ratio(a));
   const cards: Card[] = [
-    { kind: "tight", row: byEven[0] },
-    { kind: "mismatch", row: byEven[byEven.length - 1] },
+    { kind: "tight", row: real.reduce((a, b) => (evenStakes(b) > evenStakes(a) ? b : a)) },
+    { kind: "mismatch", row: real.reduce((a, b) => (ratio(b) < ratio(a) ? b : a)) },
   ];
 
   const shock = real
