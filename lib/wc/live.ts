@@ -222,6 +222,22 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     const [h, a] = parts(key);
     return (winMemo[key] = mvOf(h) >= mvOf(a) ? h : a);
   }
+
+  // Re-project every not-yet-drawn card off the real bracket below it: fill each
+  // unconfirmed side from the projected winner of its feeder tie (which already folds
+  // in real results) instead of buildModel's static value seeding. Otherwise a team
+  // that just lost its tie keeps haunting later rounds (e.g. Netherlands, knocked out
+  // by Morocco on penalties, still shown in the projected quarter-final).
+  for (const c of model.bracket.cards) {
+    const key = `${c.round}-${c.num}`;
+    const ch = childrenOf[key];
+    if (!ch) continue; // Round-of-32 leaves are seeded from groups, not a feeder tie
+    const lc = cardByKey[key];
+    if (!lc.homeReal) lc.home = lite(win(ch[0]));
+    if (!lc.awayReal) lc.away = lite(win(ch[1]));
+    if (!lc.real) lc.winner = lc.home.mv >= lc.away.mv ? lc.home.name : lc.away.name;
+  }
+
   const projStage: Record<string, number> = {};
   for (const t of teams) projStage[t.name] = 0;
   for (const c of model.bracket.cards) {
