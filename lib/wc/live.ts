@@ -72,6 +72,7 @@ export type LiveModel = {
   cardByKey: Record<string, LiveCard>;
   liveGroups: Record<string, { live: boolean; complete: boolean; rows: LiveGroupRow[] }>;
   thirdPlace: ThirdPlaceRow[]; // all 12 third-placed teams, ranked; top 8 advance
+  projChampion: string; // deepest-value winner of the final, real results folded in
 };
 
 const GROUPS = "ABCDEFGHIJKL".split("");
@@ -174,17 +175,15 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     const away = m?.away ? lite(m.away) : c.away;
     const real = homeReal && awayReal; // both sides confirmed → a real matchup
     const played = !!(m && m.hs !== null && m.as !== null);
-    let winner: string | null;
+    // Only a settled real tie has a decided winner here; a real-but-unplayed tie stays
+    // null, and value projections are filled by the re-projection pass below (one place).
+    let winner: string | null = null;
     if (real && m) {
       const r = ORD[c.round];
       if (m.home && appearsDeeperThan(m.home, r)) winner = m.home;
       else if (m.away && appearsDeeperThan(m.away, r)) winner = m.away;
       else if (played && m.hs !== m.as)
         winner = (m.hs as number) > (m.as as number) ? m.home : m.away;
-      else winner = null; // real teams set, outcome not yet decided
-    } else {
-      // Project the winner by value off whatever teams we have (real or predicted).
-      winner = home.mv >= away.mv ? home.name : away.name;
     }
     cardByKey[key] = {
       home,
@@ -223,18 +222,18 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     return (winMemo[key] = mvOf(h) >= mvOf(a) ? h : a);
   }
 
-  // Re-project every not-yet-drawn card off the real bracket below it: fill each
-  // unconfirmed side from the projected winner of its feeder tie (which already folds
-  // in real results) instead of buildModel's static value seeding. Otherwise a team
-  // that just lost its tie keeps haunting later rounds (e.g. Netherlands, knocked out
-  // by Morocco on penalties, still shown in the projected quarter-final).
+  // Re-project every not-yet-drawn card off the real bracket below it, then pick the
+  // value favourite. Each unconfirmed side is filled from the projected winner of its
+  // feeder tie (which already folds in real results) instead of buildModel's static
+  // value seeding — otherwise a team that just lost its tie keeps haunting later rounds
+  // (e.g. Netherlands, knocked out by Morocco on penalties, still shown in the projected
+  // quarter-final). Round-of-32 leaves have no feeder tie, so only their winner is set.
   for (const c of model.bracket.cards) {
     const key = `${c.round}-${c.num}`;
     const ch = childrenOf[key];
-    if (!ch) continue; // Round-of-32 leaves are seeded from groups, not a feeder tie
     const lc = cardByKey[key];
-    if (!lc.homeReal) lc.home = lite(win(ch[0]));
-    if (!lc.awayReal) lc.away = lite(win(ch[1]));
+    if (ch && !lc.homeReal) lc.home = lite(win(ch[0]));
+    if (ch && !lc.awayReal) lc.away = lite(win(ch[1]));
     if (!lc.real) lc.winner = lc.home.mv >= lc.away.mv ? lc.home.name : lc.away.name;
   }
 
@@ -402,5 +401,6 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     cardByKey,
     liveGroups,
     thirdPlace,
+    projChampion,
   };
 }
