@@ -48,17 +48,22 @@ const STAGE_LABEL: Record<Exclude<Stage, "group">, string> = {
 
 // The three value storylines, drawn from the full schedule:
 //   • tight    — the most evenly valued high-stakes matchup (a coin flip that matters)
-//   • mismatch — the most lopsided matchup (David v Goliath)
+//   • mismatch — the most lopsided knockout tie (a projected elimination blowout)
 //   • shock    — the biggest upset already played (a cheaper squad that won)
-// Knockout slots still projected by value are skipped: their teams aren't real yet.
+// tight/shock only count confirmed matchups (their teams are real); mismatch is a
+// knockout story, so it includes value-projected ties — a lopsided group game is just a
+// giant swatting a minnow, whereas a lopsided knockout tie ends someone's tournament.
 function pickCards(rows: MatchupRow[]): Card[] {
-  const real = rows.filter((r) => !r.projected && r.home.mv > 0 && r.away.mv > 0);
+  const valued = rows.filter((r) => r.home.mv > 0 && r.away.mv > 0);
+  const real = valued.filter((r) => !r.projected);
   if (!real.length) return [];
 
+  const ko = valued.filter((r) => r.stage !== "group");
   const cards: Card[] = [
     { kind: "tight", row: real.reduce((a, b) => (evenStakes(b) > evenStakes(a) ? b : a)) },
-    { kind: "mismatch", row: real.reduce((a, b) => (ratio(b) < ratio(a) ? b : a)) },
   ];
+  if (ko.length)
+    cards.push({ kind: "mismatch", row: ko.reduce((a, b) => (ratio(b) < ratio(a) ? b : a)) });
 
   const shock = real
     .filter((r) => r.played && r.winner)
