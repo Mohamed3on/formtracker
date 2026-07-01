@@ -86,10 +86,15 @@ async function fetchManagerInfoUncached(clubId: string): Promise<ManagerInfo | n
   }
 
   const now = new Date();
+  // The current manager is the row whose tenure is open now: appointed in the past
+  // with no end date (or one still in the future). Skipping ended stints keeps a past
+  // interim caretaker sitting atop the list (e.g. Egypt's) from masking the incumbent.
   const firstManager =
     allManagers.find((m) => {
       const appointed = parseDate(m.appointedDate);
-      return appointed && appointed <= now;
+      if (!appointed || appointed > now) return false;
+      const end = m.endDate ? parseDate(m.endDate) : null;
+      return !end || end > now;
     }) ?? allManagers[0];
   const endDate = firstManager.endDate ? parseDate(firstManager.endDate) : null;
   const isCurrentManager = !endDate || endDate > now;
