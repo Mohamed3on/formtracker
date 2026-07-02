@@ -50,7 +50,7 @@ export function WcLive({
   playerLinks: Record<string, string>;
   managers: Record<string, ManagerInfo>;
 }) {
-  const { model, tracker, cardByKey, liveGroups, thirdPlace, started, projChampion } = live;
+  const { model, tracker, cardByKey, liveGroups, thirdPlace, started } = live;
   const { bracket, cardH, cardW } = model;
 
   // Teams currently shown in the bracket (real or predicted) are clickable to trace.
@@ -146,7 +146,7 @@ export function WcLive({
     const away = lc?.away ?? c.away;
     const winner = lc ? lc.winner : c.winner;
     const played = !!lc?.played;
-    const decided = !!(lc?.real && lc.winner); // real teams + a settled result (vs a value pick)
+    const decided = !!lc?.decided; // real tie with a known outcome (vs a value pick)
     // A card is on the active team's route when it's one of the two sides — its
     // opponent then lights up alongside it for the whole run.
     const onRoute = !!active && (home.name === active || away.name === active);
@@ -180,14 +180,11 @@ export function WcLive({
     );
   };
 
-  // champion: real once the final is decided, else the results-aware projection (faded).
-  // projChampion folds in real knockout results, so an upset winner shows here instead of
-  // the static market-value favourite (which could be a team already knocked out).
-  const finalLc = cardByKey["F-1"];
-  const decidedChampion = finalLc?.played ? finalLc.winner : null;
-  const championName = decidedChampion ?? projChampion;
-  const crownTeam = model.byName[championName] ?? bracket.crown.team;
-  const crownDecided = !!decidedChampion;
+  // The projected/real champion. bracket.crown now folds in real results, so it tracks an
+  // upset winner instead of the static market-value favourite; solid once the final is
+  // settled, a faded projection until then.
+  const crownTeam = bracket.crown.team;
+  const crownDecided = !!cardByKey["F-1"]?.decided;
 
   const overRows = tracker
     .filter((r) => r.projStage > r.expStage)

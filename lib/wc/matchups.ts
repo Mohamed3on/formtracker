@@ -109,11 +109,11 @@ export function buildMatchups(
     const away = lc?.away ?? c.away;
     const homeConfirmed = !!lc?.homeReal;
     const awayConfirmed = !!lc?.awayReal;
-    // Only a real, settled tie has a winner (the live model resolves it from the real
-    // result — including penalty shootouts, where the score is level and the advancing
-    // side is read off the next round). Value projections never read as advanced/out.
+    // Only a real, settled tie reads as advanced/out (the live model resolves the winner
+    // from the real result — including penalty shootouts, where the score is level and the
+    // advancing side is read off the next round). Value projections never read as decided.
     const koWinner: MatchupRow["winner"] =
-      lc?.real && lc.winner
+      lc?.decided && lc.winner
         ? lc.winner === home.name
           ? "home"
           : lc.winner === away.name

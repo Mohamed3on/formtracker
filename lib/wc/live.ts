@@ -33,13 +33,14 @@ export type TrackerRow = {
 export type LiveCard = {
   home: TeamLite;
   away: TeamLite;
-  winner: string | null;
+  winner: string | null; // real winner once settled; the value favourite while projected
   hs: number | null;
   as: number | null;
   real: boolean; // both teams confirmed (vs a value projection)
   homeReal: boolean; // this side locked to its real qualified team
   awayReal: boolean;
   played: boolean;
+  decided: boolean; // a real tie whose winner is known (advanced/out, not just projected)
   pens: boolean; // decided by a penalty shootout
 };
 export type ThirdPlaceRow = {
@@ -72,7 +73,6 @@ export type LiveModel = {
   cardByKey: Record<string, LiveCard>;
   liveGroups: Record<string, { live: boolean; complete: boolean; rows: LiveGroupRow[] }>;
   thirdPlace: ThirdPlaceRow[]; // all 12 third-placed teams, ranked; top 8 advance
-  projChampion: string; // deepest-value winner of the final, real results folded in
 };
 
 const GROUPS = "ABCDEFGHIJKL".split("");
@@ -135,11 +135,6 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   );
   const qualGroups = officialThirds ?? new Set(thirdRanked.slice(0, 8).map((t) => t.g));
 
-  const model = buildModel(teams, { order: liveOrder, qualGroups });
-  const lite = (name: string): TeamLite =>
-    model.byName[name] ?? { name, short: name, flag: "🏳️", mv: 0 };
-  const predGroups = new Map(model.groups.map((x) => [x.g, x.rows]));
-
   // Teams appearing in real KO matches at each round depth — used to infer who advanced.
   const realAtRound: Record<number, Set<string>> = {};
   for (const m of results.ko) {
@@ -153,7 +148,34 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     return false;
   };
 
-  // ---- Overlay knockout cards ----
+  // Resolve each knockout tie: TM's drawn sides, plus the settled winner (a team shown a
+  // round deeper has advanced; else a decisive score — incl. the shootout tally for a
+  // penalty tie). Feeds the results-aware bracket so real outcomes propagate upward.
+  const koResolved: Record<
+    string,
+    { home: string | null; away: string | null; winner: string | null }
+  > = {};
+  for (const m of results.ko) {
+    const r = ORD[m.round];
+    const played = m.hs !== null && m.as !== null;
+    let winner: string | null = null;
+    if (m.home && appearsDeeperThan(m.home, r)) winner = m.home;
+    else if (m.away && appearsDeeperThan(m.away, r)) winner = m.away;
+    else if (m.home && m.away && played && m.hs !== m.as)
+      winner = (m.hs as number) > (m.as as number) ? m.home : m.away;
+    koResolved[`${m.round}-${m.num}`] = { home: m.home, away: m.away, winner };
+  }
+
+  const model = buildModel(teams, { order: liveOrder, qualGroups, ko: koResolved });
+  const lite = (name: string): TeamLite =>
+    model.byName[name] ?? { name, short: name, flag: "🏳️", mv: 0 };
+  const predGroups = new Map(model.groups.map((x) => [x.g, x.rows]));
+
+  // ---- Overlay live presentation onto the results-aware model cards ----
+  // Teams and the projected/real winner already come from the model (which folded in
+  // koResolved), so nothing is re-projected here: an eliminated team can no longer haunt
+  // a later round. We only add live presentation — confirmed flags, scores, and whether
+  // the tie is settled.
   const koByKey = new Map(results.ko.map((m) => [`${m.round}-${m.num}`, m]));
   // A group's winner / runner-up is settled the moment that group completes. TM is slow
   // to wire those names into its knockout bracket, so confirm such a slot straight from
@@ -167,85 +189,30 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
   for (const c of model.bracket.cards) {
     const key = `${c.round}-${c.num}`;
     const m = koByKey.get(key);
-    // Use whichever side TM has already locked in (e.g. Germany once it tops its group),
-    // or one we can confirm from a completed group; the rest stay the value projection.
     const homeReal = !!m?.home || groupLocked(c.homeSrc);
     const awayReal = !!m?.away || groupLocked(c.awaySrc);
-    const home = m?.home ? lite(m.home) : c.home;
-    const away = m?.away ? lite(m.away) : c.away;
     const real = homeReal && awayReal; // both sides confirmed → a real matchup
     const played = !!(m && m.hs !== null && m.as !== null);
-    // Only a settled real tie has a decided winner here; a real-but-unplayed tie stays
-    // null, and value projections are filled by the re-projection pass below (one place).
-    let winner: string | null = null;
-    if (real && m) {
-      const r = ORD[c.round];
-      if (m.home && appearsDeeperThan(m.home, r)) winner = m.home;
-      else if (m.away && appearsDeeperThan(m.away, r)) winner = m.away;
-      else if (played && m.hs !== m.as)
-        winner = (m.hs as number) > (m.as as number) ? m.home : m.away;
-    }
+    const decided = real && !!koResolved[key]?.winner; // real tie with a known outcome
     cardByKey[key] = {
-      home,
-      away,
-      winner,
+      home: c.home,
+      away: c.away,
+      // a real-but-unsettled tie shows no winner yet; otherwise the model's real/value pick
+      winner: real && !decided ? null : c.winner,
       hs: m?.hs ?? null,
       as: m?.as ?? null,
       real,
       homeReal,
       awayReal,
       played,
+      decided,
       pens: !!m?.pens,
     };
   }
 
-  // ---- Projected deepest stage: real results first, then higher value wins ----
-  const childrenOf = model.bracket.childrenOf;
-  const partsMemo: Record<string, [string, string]> = {};
-  const winMemo: Record<string, string> = {};
-  function parts(key: string): [string, string] {
-    if (partsMemo[key]) return partsMemo[key];
-    const lc = cardByKey[key];
-    let pair: [string, string];
-    if (lc.real) pair = [lc.home.name, lc.away.name];
-    else {
-      const ch = childrenOf[key];
-      pair = ch ? [win(ch[0]), win(ch[1])] : [lc.home.name, lc.away.name];
-    }
-    return (partsMemo[key] = pair);
-  }
-  function win(key: string): string {
-    if (winMemo[key]) return winMemo[key];
-    const lc = cardByKey[key];
-    if (lc.real && lc.winner) return (winMemo[key] = lc.winner);
-    const [h, a] = parts(key);
-    return (winMemo[key] = mvOf(h) >= mvOf(a) ? h : a);
-  }
-
-  // Re-project every not-yet-drawn card off the real bracket below it, then pick the
-  // value favourite. Each unconfirmed side is filled from the projected winner of its
-  // feeder tie (which already folds in real results) instead of buildModel's static
-  // value seeding — otherwise a team that just lost its tie keeps haunting later rounds
-  // (e.g. Netherlands, knocked out by Morocco on penalties, still shown in the projected
-  // quarter-final). Round-of-32 leaves have no feeder tie, so only their winner is set.
-  for (const c of model.bracket.cards) {
-    const key = `${c.round}-${c.num}`;
-    const ch = childrenOf[key];
-    const lc = cardByKey[key];
-    if (ch && !lc.homeReal) lc.home = lite(win(ch[0]));
-    if (ch && !lc.awayReal) lc.away = lite(win(ch[1]));
-    if (!lc.real) lc.winner = lc.home.mv >= lc.away.mv ? lc.home.name : lc.away.name;
-  }
-
-  const projStage: Record<string, number> = {};
-  for (const t of teams) projStage[t.name] = 0;
-  for (const c of model.bracket.cards) {
-    const depth = ORD[c.round];
-    for (const name of parts(`${c.round}-${c.num}`))
-      if (name in projStage) projStage[name] = Math.max(projStage[name], depth);
-  }
-  const projChampion = win("F-1");
-  if (projChampion in projStage) projStage[projChampion] = 6;
+  // Deepest round each team is projected to reach (real results first, then value) —
+  // straight from the results-aware model tree.
+  const projStage = model.reached;
 
   // ---- Over/under tracker ----
   const tracker: TrackerRow[] = [...teams]
@@ -401,6 +368,5 @@ export function buildLiveModel(teams: Team[], results: WcResults): LiveModel {
     cardByKey,
     liveGroups,
     thirdPlace,
-    projChampion,
   };
 }

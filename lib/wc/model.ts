@@ -208,7 +208,13 @@ export type WcModel = ReturnType<typeof buildModel>;
 
 export function buildModel(
   teams: Team[],
-  live?: { order?: Record<string, string[]>; qualGroups?: Set<string> },
+  live?: {
+    order?: Record<string, string[]>;
+    qualGroups?: Set<string>;
+    // Real knockout results per card key (`${round}-${num}`): TM's drawn sides and the
+    // settled winner. Absent (the /wc prediction) → the tree is pure market value.
+    ko?: Record<string, { home: string | null; away: string | null; winner: string | null }>;
+  },
 ) {
   const lite = (t: Team): TeamLite => ({
     name: t.name,
@@ -276,61 +282,79 @@ export function buildModel(
     x: number;
     y: number;
   };
+  // Fold real results into the tree: a card's sides come from TM's draw when present
+  // (else the feeder winners / group slots), and a settled tie's real winner overrides
+  // the value pick. With no `live.ko` (the /wc prediction) this stays pure market value.
+  const ko = live?.ko;
+  const koTeam = (round: Round, num: number, side: "home" | "away"): Team | undefined => {
+    const name = ko?.[`${round}-${num}`]?.[side];
+    return name ? byNameTeam[name] : undefined;
+  };
+  const decide = (round: Round, num: number, home: Team, away: Team) => {
+    const w = ko?.[`${round}-${num}`]?.winner;
+    if (w === home.name) return { winner: home, loser: away };
+    if (w === away.name) return { winner: away, loser: home };
+    return { winner: beat(home, away), loser: loseT(home, away) };
+  };
   let idc = 0;
-  const leaf = (round: Round, home: Team, away: Team): MNode => ({
-    id: `m${idc++}`,
-    round,
-    num: 0,
-    home,
-    away,
-    winner: beat(home, away),
-    loser: loseT(home, away),
-    col: 0,
-    x: 0,
-    y: 0,
-  });
-  const node = (round: Round, a: MNode, b: MNode): MNode => ({
-    id: `m${idc++}`,
-    round,
-    num: 0,
-    home: a.winner,
-    away: b.winner,
-    winner: beat(a.winner, b.winner),
-    loser: loseT(a.winner, b.winner),
-    kids: [a, b],
-    col: 0,
-    x: 0,
-    y: 0,
-  });
+  const leaf = (round: Round, num: number, hSlot: Team, aSlot: Team): MNode => {
+    const home = koTeam(round, num, "home") ?? hSlot;
+    const away = koTeam(round, num, "away") ?? aSlot;
+    return {
+      id: `m${idc++}`,
+      round,
+      num,
+      home,
+      away,
+      ...decide(round, num, home, away),
+      col: 0,
+      x: 0,
+      y: 0,
+    };
+  };
+  const node = (round: Round, num: number, a: MNode, b: MNode): MNode => {
+    const home = koTeam(round, num, "home") ?? a.winner;
+    const away = koTeam(round, num, "away") ?? b.winner;
+    return {
+      id: `m${idc++}`,
+      round,
+      num,
+      home,
+      away,
+      ...decide(round, num, home, away),
+      kids: [a, b],
+      col: 0,
+      x: 0,
+      y: 0,
+    };
+  };
 
   const srcTeam = (num: number, s: SlotSource): Team =>
     s.kind === "winner" ? winner(s.group) : s.kind === "runner" ? runner(s.group) : thirdAt(num);
   const r32 = Object.fromEntries(
     Object.entries(R32_SLOTS).map(([n, [h, a]]) => [
       +n,
-      leaf("R32", srcTeam(+n, h), srcTeam(+n, a)),
+      leaf("R32", +n, srcTeam(+n, h), srcTeam(+n, a)),
     ]),
   ) as Record<number, MNode>;
   const r16 = {
-    1: node("R16", r32[2], r32[5]),
-    2: node("R16", r32[1], r32[3]),
-    3: node("R16", r32[4], r32[6]),
-    4: node("R16", r32[7], r32[8]),
-    5: node("R16", r32[11], r32[12]),
-    6: node("R16", r32[9], r32[10]),
-    7: node("R16", r32[14], r32[16]),
-    8: node("R16", r32[13], r32[15]),
+    1: node("R16", 1, r32[2], r32[5]),
+    2: node("R16", 2, r32[1], r32[3]),
+    3: node("R16", 3, r32[4], r32[6]),
+    4: node("R16", 4, r32[7], r32[8]),
+    5: node("R16", 5, r32[11], r32[12]),
+    6: node("R16", 6, r32[9], r32[10]),
+    7: node("R16", 7, r32[14], r32[16]),
+    8: node("R16", 8, r32[13], r32[15]),
   };
   const qf = {
-    1: node("QF", r16[1], r16[2]),
-    2: node("QF", r16[5], r16[6]),
-    3: node("QF", r16[7], r16[8]),
-    4: node("QF", r16[3], r16[4]),
+    1: node("QF", 1, r16[1], r16[2]),
+    2: node("QF", 2, r16[5], r16[6]),
+    3: node("QF", 3, r16[7], r16[8]),
+    4: node("QF", 4, r16[3], r16[4]),
   };
-  const sf = { 1: node("SF", qf[1], qf[2]), 2: node("SF", qf[4], qf[3]) };
-  const final = node("F", sf[1], sf[2]);
-  for (const rec of [r32, r16, qf, sf]) for (const [k, v] of Object.entries(rec)) v.num = +k;
-  final.num = 1;
+  const sf = { 1: node("SF", 1, qf[1], qf[2]), 2: node("SF", 2, qf[4], qf[3]) };
+  const final = node("F", 1, sf[1], sf[2]);
 
   const champion = final.winner;
   const runnerUp = final.loser;
@@ -367,16 +391,6 @@ export function buildModel(
     allNodes.push(n);
     n.kids?.forEach(collect);
   })(final);
-
-  // Child match keys for each parent card, so live results can be propagated up
-  // the bracket (`${round}-${num}` → its two feeder cards).
-  const childrenOf: Record<string, [string, string]> = {};
-  for (const n of allNodes)
-    if (n.kids)
-      childrenOf[`${n.round}-${n.num}`] = [
-        `${n.kids[0].round}-${n.kids[0].num}`,
-        `${n.kids[1].round}-${n.kids[1].num}`,
-      ];
 
   // ---- Round reached (predicted) + value-tier expectation, per team ----
   const reachRank: Record<string, number> = {};
@@ -503,7 +517,6 @@ export function buildModel(
       labels,
       edges,
       cards,
-      childrenOf,
       crown: { x: final.x + CARD_W / 2 - 90, y: final.y - CARD_H / 2 - 128, team: lite(champion) },
       third: {
         x: final.x + CARD_W / 2 - 90,
@@ -531,5 +544,11 @@ export function buildModel(
     ) as Record<string, { flag: string; round: string }>,
     expected,
     byName: Object.fromEntries(teams.map((t) => [t.name, lite(t)])) as Record<string, TeamLite>,
+    // Deepest round each team reaches in this (results-aware) tree, 0..6 — the live
+    // tracker's projection. Champion is 6; pure market value when no `live.ko` is given.
+    reached: Object.fromEntries(teams.map((t) => [t.name, predictedStage(t)])) as Record<
+      string,
+      number
+    >,
   };
 }
