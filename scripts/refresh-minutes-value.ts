@@ -412,12 +412,22 @@ function seedClubMapFromPlayers(players: MinutesValuePlayer[], clubs: ClubMap): 
   }
 }
 
-async function scrapeClubName(clubId: string): Promise<string | null> {
+function flagLogoUrl(landId: string): string {
+  return `https://tmssl.akamaized.net/images/flagge/head/${landId}.png`;
+}
+
+async function scrapeClub(clubId: string): Promise<{ name: string; logoUrl: string } | null> {
   try {
     const html = await fetchPage(`${BASE_URL}/x/datenfakten/verein/${clubId}`);
-    const match = html.match(/<title>([^<]+)/);
-    if (!match) return null;
-    return match[1].replace(/ - .*/, "").trim() || null;
+    const name = html
+      .match(/<title>([^<]+)/)?.[1]
+      .replace(/ - .*/, "")
+      .trim();
+    if (!name) return null;
+    // National teams render a flag header (flagge/begegnungslider/{landId}); their
+    // wappen/head crest is an empty image, so use the country flag instead.
+    const landId = html.match(/flagge\/begegnungslider\/(\d+)\.png/)?.[1];
+    return { name, logoUrl: landId ? flagLogoUrl(landId) : clubLogoUrl(clubId) };
   } catch {
     return null;
   }
@@ -439,12 +449,12 @@ async function resolveUnknownClubs(players: MinutesValuePlayer[], clubs: ClubMap
   let resolved = 0;
   for (let i = 0; i < ids.length; i += BATCH) {
     const batch = ids.slice(i, i + BATCH);
-    const results = await Promise.allSettled(batch.map((id) => scrapeClubName(id)));
+    const results = await Promise.allSettled(batch.map((id) => scrapeClub(id)));
     for (let j = 0; j < batch.length; j++) {
       const r = results[j];
-      const name = r.status === "fulfilled" ? r.value : null;
-      clubs[batch[j]] = { name: name ?? `Club ${batch[j]}`, logoUrl: clubLogoUrl(batch[j]) };
-      if (name) resolved++;
+      const club = r.status === "fulfilled" ? r.value : null;
+      clubs[batch[j]] = club ?? { name: `Club ${batch[j]}`, logoUrl: clubLogoUrl(batch[j]) };
+      if (club) resolved++;
     }
     if (i + BATCH < ids.length) {
       await new Promise((r) => setTimeout(r, 300));

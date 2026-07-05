@@ -28,6 +28,7 @@ import { DetailDeck } from "@/components/DetailDeck";
 import { HeroMetric } from "@/components/HeroMetric";
 import { SectionPanel } from "@/components/SectionPanel";
 import { SignalBadge } from "@/components/SignalBadge";
+import { TeamLogo } from "@/components/TeamLogo";
 import type { MinutesValuePlayer, RecentGameStats } from "@/app/types";
 import { POSITION_NAMES } from "@/lib/fetch-player-minutes";
 import { PlayerInjuryBadge } from "./PlayerInjuryBadge";
@@ -296,17 +297,7 @@ function RecentMatchCard({ match }: { match: RecentGameStats }) {
         </div>
 
         <div className="mt-3 flex items-center gap-2.5">
-          {match.opponentLogoUrl ? (
-            <img
-              src={match.opponentLogoUrl}
-              alt={match.opponentName || ""}
-              className="h-7 w-7 shrink-0 rounded-lg bg-white object-contain p-0.5"
-            />
-          ) : (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-black/20 text-[10px] text-text-muted">
-              ?
-            </div>
-          )}
+          <TeamLogo src={match.opponentLogoUrl} alt={match.opponentName} />
           <div className="min-w-0">
             <p className="truncate text-sm text-text-primary">
               {match.opponentName ? (
