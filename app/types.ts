@@ -94,6 +94,7 @@ export interface ManagerInfo {
   totalComparableManagers?: number; // how many managers qualify for comparison
   bestManager?: ManagerTrivia; // best PPG among comparable managers
   worstManager?: ManagerTrivia; // worst PPG among comparable managers
+  officialOnly?: boolean; // PPG/matches count competitive games only (friendlies stripped)
 }
 
 export interface InjuredPlayer {

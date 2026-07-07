@@ -111,7 +111,8 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
     <div className="space-y-2 text-xs sm:text-sm">
       <div className="text-text-secondary">
         <span className="font-value text-text-primary">{manager.ppg!.toFixed(2)}</span> PPG over{" "}
-        <span className="font-value text-text-primary">{manager.matches}</span> games
+        <span className="font-value text-text-primary">{manager.matches}</span>{" "}
+        {manager.officialOnly ? "competitive games" : "games"}
         {isOnly ? (
           <> — only manager with that many since 1995</>
         ) : (
@@ -159,6 +160,11 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
               </span>
             </div>
           </div>
+        </div>
+      )}
+      {manager.officialOnly && (
+        <div className="border-t border-t-border-subtle pt-2 text-[11px] text-text-muted">
+          Competitive matches only — friendlies excluded
         </div>
       )}
     </div>

@@ -203,6 +203,7 @@ async function fetchManagerInfoUncached(
     totalComparableManagers: since1995.length > 0 ? since1995.length : undefined,
     bestManager,
     worstManager,
+    officialOnly,
   };
 }
 
