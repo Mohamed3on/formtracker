@@ -115,7 +115,7 @@ const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: strin
   unstable_cache(
     async () => {
       const from = toIsoDate(appointed);
-      const to = end ? toIsoDate(end) : null;
+      const to = toIsoDate(end); // toIsoDate("") → null, so an open stint drops the upper bound
       const url =
         `${BASE_URL}/x/leistungsdatenDetail/trainer/${trainerId}/plus/0` +
         `?verein_id=${vereinId}&wettbewerb_id=FS` +
@@ -166,28 +166,29 @@ async function fetchManagerInfoUncached(
   // blends friendlies into its PPG. Points are additive, so official = total − friendlies,
   // reusing TM's own points to avoid re-deriving knockout/penalty results. The history
   // table already gives exact total matches + PPG, so this is one extra fetch per manager
-  // (the FS page). Ranking, best/worst and the current manager's badge all follow, since
-  // everything downstream reads .ppg / .matches. firstManager is a member of `since1995`,
-  // so mutating in place updates the returned incumbent too.
-  if (officialOnly) {
-    await Promise.all(
-      since1995.map(async (m) => {
-        if (m.ppg === null || !m.trainerId) return;
-        const totalPoints = Math.round(m.ppg * m.matches);
-        const fs = await getFriendlyRecord(m.trainerId, clubId, m.appointedDate, m.endDate);
-        const officialMatches = m.matches - fs.matches;
-        if (officialMatches <= 0) return; // only ever managed friendlies here — keep all-comps
-        m.ppg = (totalPoints - fs.points) / officialMatches;
-        m.matches = officialMatches;
-      }),
-    );
-  }
+  // (the FS page). Restated rows are fresh objects; the parsed entries stay untouched.
+  const comparable: ManagerHistoryEntry[] = officialOnly
+    ? await Promise.all(
+        since1995.map(async (m) => {
+          if (m.ppg === null || !m.trainerId) return m;
+          const totalPoints = Math.round(m.ppg * m.matches);
+          const fs = await getFriendlyRecord(m.trainerId, clubId, m.appointedDate, m.endDate);
+          const officialMatches = m.matches - fs.matches;
+          if (officialMatches <= 0) return m; // only ever managed friendlies here — keep all-comps
+          return {
+            ...m,
+            ppg: (totalPoints - fs.points) / officialMatches,
+            matches: officialMatches,
+          };
+        }),
+      )
+    : since1995;
 
-  const sorted = [...since1995].sort((a, b) => (b.ppg ?? 0) - (a.ppg ?? 0));
-  const rank =
-    sorted.findIndex(
-      (m) => m.name === firstManager.name && m.appointedDate === firstManager.appointedDate,
-    ) + 1;
+  const isIncumbent = (m: ManagerHistoryEntry) =>
+    m.name === firstManager.name && m.appointedDate === firstManager.appointedDate;
+  const incumbent = comparable.find(isIncumbent) ?? firstManager;
+  const sorted = [...comparable].sort((a, b) => (b.ppg ?? 0) - (a.ppg ?? 0));
+  const rank = sorted.indexOf(incumbent) + 1;
 
   const bestManager = sorted.length > 0 ? toTrivia(sorted[0]) : undefined;
   const worstManager = sorted.length > 0 ? toTrivia(sorted[sorted.length - 1]) : undefined;
@@ -196,8 +197,8 @@ async function fetchManagerInfoUncached(
     name: firstManager.name,
     profileUrl: firstManager.profileUrl,
     appointedDate: firstManager.appointedDate,
-    matches: firstManager.matches,
-    ppg: firstManager.ppg,
+    matches: incumbent.matches,
+    ppg: incumbent.ppg,
     isCurrentManager,
     ppgRank: rank > 0 ? rank : undefined,
     totalComparableManagers: since1995.length > 0 ? since1995.length : undefined,
