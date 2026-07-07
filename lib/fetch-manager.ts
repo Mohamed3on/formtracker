@@ -100,15 +100,30 @@ function parseSummary($: cheerio.CheerioAPI): {
   return { matches, points };
 }
 
-/** A manager's friendly-only record for one national team, from Transfermarkt's detailed
- *  performance page filtered to the Friendlies (FS) competition. Cached 6h. */
-const getFriendlyRecord = (trainerId: string, vereinId: string) =>
+/** DD/MM/YYYY → YYYY-MM-DD for Transfermarkt's datum_zu / datum_ab range filters. */
+function toIsoDate(d: string): string | null {
+  const [day, month, year] = d.split("/");
+  return day && month && year ? `${year}-${month}-${day}` : null;
+}
+
+/** A manager's friendly-only record for one national-team stint, from Transfermarkt's
+ *  detailed-performance page filtered to Friendlies (FS) and scoped to the stint's dates.
+ *  Managers who coached the same nation twice (e.g. Leekens/Belgium) otherwise double-count
+ *  friendlies across stints, wrecking the subtraction. datum_zu is the lower bound
+ *  (appointed), datum_ab the upper (end); an open stint omits the upper bound. Cached 6h. */
+const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: string, end: string) =>
   unstable_cache(
     async () => {
-      const url = `${BASE_URL}/x/leistungsdatenDetail/trainer/${trainerId}/plus/0?verein_id=${vereinId}&wettbewerb_id=FS`;
+      const from = toIsoDate(appointed);
+      const to = end ? toIsoDate(end) : null;
+      const url =
+        `${BASE_URL}/x/leistungsdatenDetail/trainer/${trainerId}/plus/0` +
+        `?verein_id=${vereinId}&wettbewerb_id=FS` +
+        (from ? `&datum_zu=${from}` : "") +
+        (to ? `&datum_ab=${to}` : "");
       return parseSummary(cheerio.load(await fetchPage(url)));
     },
-    [`friendlies-${trainerId}-${vereinId}`],
+    [`friendlies-${trainerId}-${vereinId}-${appointed}`],
     { revalidate: 21600, tags: ["manager"] },
   )();
 
@@ -159,7 +174,7 @@ async function fetchManagerInfoUncached(
       since1995.map(async (m) => {
         if (m.ppg === null || !m.trainerId) return;
         const totalPoints = Math.round(m.ppg * m.matches);
-        const fs = await getFriendlyRecord(m.trainerId, clubId);
+        const fs = await getFriendlyRecord(m.trainerId, clubId, m.appointedDate, m.endDate);
         const officialMatches = m.matches - fs.matches;
         if (officialMatches <= 0) return; // only ever managed friendlies here — keep all-comps
         m.ppg = (totalPoints - fs.points) / officialMatches;
