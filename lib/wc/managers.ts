@@ -6,8 +6,10 @@ import { wcTeamTmId } from "./tm-team-links";
 /**
  * Managers for the nations in the over/under table (those off their value seeding),
  * keyed by team name. National-team pages expose the same `mitarbeiterhistorie` table
- * as clubs, so `getManagerInfo` works unchanged — each scrape is cached 6h. allSettled
- * keeps one nation's failure from breaking the page.
+ * as clubs, so `getManagerInfo` works unchanged — each scrape is cached 6h. We pass
+ * `officialOnly` so PPG counts competitive games only (friendlies stripped out), which
+ * matters far more for national teams than clubs. allSettled keeps one nation's failure
+ * from breaking the page.
  */
 export async function getWcManagers(tracker: TrackerRow[]): Promise<Record<string, ManagerInfo>> {
   const names = tracker.filter((r) => r.projStage !== r.expStage).map((r) => r.team.name);
@@ -15,7 +17,7 @@ export async function getWcManagers(tracker: TrackerRow[]): Promise<Record<strin
   const results = await Promise.allSettled(
     names.map(async (name) => {
       const id = wcTeamTmId(name);
-      return id ? ([name, await getManagerInfo(String(id))] as const) : null;
+      return id ? ([name, await getManagerInfo(String(id), true)] as const) : null;
     }),
   );
 

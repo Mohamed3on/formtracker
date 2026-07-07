@@ -7,6 +7,7 @@ import { fetchPage } from "./fetch";
 interface ManagerHistoryEntry {
   name: string;
   profileUrl: string;
+  trainerId: string | null;
   appointedDate: string;
   endDate: string;
   matches: number;
@@ -50,6 +51,7 @@ function parseManagerTable($: cheerio.CheerioAPI): ManagerHistoryEntry[] {
     const link = inlineTable.find(".hauptlink a");
     const name = link.attr("title") || link.text().trim();
     const profileUrl = link.attr("href") || "";
+    const trainerId = profileUrl.match(/\/trainer\/(\d+)/)?.[1] ?? null;
 
     if (!name) return;
 
@@ -65,6 +67,7 @@ function parseManagerTable($: cheerio.CheerioAPI): ManagerHistoryEntry[] {
     managers.push({
       name,
       profileUrl: profileUrl.startsWith("/") ? BASE_URL + profileUrl : profileUrl,
+      trainerId,
       appointedDate,
       endDate,
       matches,
@@ -75,7 +78,44 @@ function parseManagerTable($: cheerio.CheerioAPI): ManagerHistoryEntry[] {
   return managers;
 }
 
-async function fetchManagerInfoUncached(clubId: string): Promise<ManagerInfo | null> {
+/** Read the compact totals table (Matches|W|D|L|Goals|Points|PPM) on a trainer's
+ *  leistungsdatenDetail page. Returns zeros when the filter matched no games (no table). */
+function parseSummary($: cheerio.CheerioAPI): {
+  matches: number;
+  points: number;
+} {
+  let matches = 0;
+  let points = 0;
+  $("table").each((_, t) => {
+    const heads = $(t)
+      .find("thead th")
+      .map((_, th) => $(th).text().trim())
+      .get();
+    const ptIdx = heads.indexOf("Points");
+    if (heads[0] !== "Matches" || ptIdx < 0) return; // skip the match-list table (starts "Date")
+    const cells = $(t).find("tbody tr").first().find("td");
+    matches = parseInt($(cells[0]).text().trim(), 10) || 0;
+    points = parseInt($(cells[ptIdx]).text().trim(), 10) || 0;
+  });
+  return { matches, points };
+}
+
+/** A manager's friendly-only record for one national team, from Transfermarkt's detailed
+ *  performance page filtered to the Friendlies (FS) competition. Cached 6h. */
+const getFriendlyRecord = (trainerId: string, vereinId: string) =>
+  unstable_cache(
+    async () => {
+      const url = `${BASE_URL}/x/leistungsdatenDetail/trainer/${trainerId}/plus/0?verein_id=${vereinId}&wettbewerb_id=FS`;
+      return parseSummary(cheerio.load(await fetchPage(url)));
+    },
+    [`friendlies-${trainerId}-${vereinId}`],
+    { revalidate: 21600, tags: ["manager"] },
+  )();
+
+async function fetchManagerInfoUncached(
+  clubId: string,
+  officialOnly: boolean,
+): Promise<ManagerInfo | null> {
   const historyUrl = `${BASE_URL}/placeholder/mitarbeiterhistorie/verein/${clubId}`;
   const html = await fetchPage(historyUrl);
   const $ = cheerio.load(html);
@@ -107,6 +147,27 @@ async function fetchManagerInfoUncached(clubId: string): Promise<ManagerInfo | n
     );
   });
 
+  // Restate every comparable manager's PPG on competitive games only — Transfermarkt
+  // blends friendlies into its PPG. Points are additive, so official = total − friendlies,
+  // reusing TM's own points to avoid re-deriving knockout/penalty results. The history
+  // table already gives exact total matches + PPG, so this is one extra fetch per manager
+  // (the FS page). Ranking, best/worst and the current manager's badge all follow, since
+  // everything downstream reads .ppg / .matches. firstManager is a member of `since1995`,
+  // so mutating in place updates the returned incumbent too.
+  if (officialOnly) {
+    await Promise.all(
+      since1995.map(async (m) => {
+        if (m.ppg === null || !m.trainerId) return;
+        const totalPoints = Math.round(m.ppg * m.matches);
+        const fs = await getFriendlyRecord(m.trainerId, clubId);
+        const officialMatches = m.matches - fs.matches;
+        if (officialMatches <= 0) return; // only ever managed friendlies here — keep all-comps
+        m.ppg = (totalPoints - fs.points) / officialMatches;
+        m.matches = officialMatches;
+      }),
+    );
+  }
+
   const sorted = [...since1995].sort((a, b) => (b.ppg ?? 0) - (a.ppg ?? 0));
   const rank =
     sorted.findIndex(
@@ -130,8 +191,9 @@ async function fetchManagerInfoUncached(clubId: string): Promise<ManagerInfo | n
   };
 }
 
-export const getManagerInfo = (clubId: string) =>
-  unstable_cache(() => fetchManagerInfoUncached(clubId), [`manager-${clubId}`], {
-    revalidate: 21600,
-    tags: ["manager"],
-  })();
+export const getManagerInfo = (clubId: string, officialOnly = false) =>
+  unstable_cache(
+    () => fetchManagerInfoUncached(clubId, officialOnly),
+    [`manager-${clubId}${officialOnly ? "-official" : ""}`],
+    { revalidate: 21600, tags: ["manager"] },
+  )();
