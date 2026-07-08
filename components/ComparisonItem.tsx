@@ -29,6 +29,12 @@ export function ComparisonItem({
         <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-text-secondary">
           {player.clubLogoUrl && <ClubLogo src={player.clubLogoUrl} />}
           <span className="truncate">{player.club}</span>
+          {player.age > 0 && (
+            <>
+              <span className="shrink-0 opacity-40">·</span>
+              <span className="shrink-0">{player.age}y</span>
+            </>
+          )}
           <span className="shrink-0 opacity-40">·</span>
           <span className="shrink-0">{player.marketValueDisplay}</span>
         </p>
