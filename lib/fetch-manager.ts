@@ -110,9 +110,19 @@ function toIsoDate(d: string): string | null {
  *  detailed-performance page filtered to Friendlies (FS) and scoped to the stint's dates.
  *  Managers who coached the same nation twice (e.g. Leekens/Belgium) otherwise double-count
  *  friendlies across stints, wrecking the subtraction. datum_zu is the lower bound
- *  (appointed), datum_ab the upper (end); an open stint omits the upper bound. Cached 6h. */
-const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: string, end: string) =>
-  unstable_cache(
+ *  (appointed), datum_ab the upper (end); an open stint omits the upper bound.
+ *
+ *  A stint that has already ended can never gain another friendly, so it is cached for 30d
+ *  while an open stint stays on the 6h cycle. Without that split every one of the ~130
+ *  manager fetches behind /wc-live expired on the same 6h boundary, and the first build
+ *  after each boundary refetched all of them — blowing the page's prerender budget. */
+const ENDED_STINT_TTL = 2_592_000; // 30d — immutable history
+const OPEN_STINT_TTL = 21_600; // 6h — the incumbent is still playing games
+
+const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: string, end: string) => {
+  const endDate = end ? parseDate(end) : null;
+  const ended = !!endDate && endDate < new Date();
+  return unstable_cache(
     async () => {
       const from = toIsoDate(appointed);
       const to = toIsoDate(end); // toIsoDate("") → null, so an open stint drops the upper bound
@@ -124,8 +134,9 @@ const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: strin
       return parseSummary(cheerio.load(await fetchPage(url)));
     },
     [`friendlies-${trainerId}-${vereinId}-${appointed}`],
-    { revalidate: 21600, tags: ["manager"] },
+    { revalidate: ended ? ENDED_STINT_TTL : OPEN_STINT_TTL, tags: ["manager"] },
   )();
+};
 
 async function fetchManagerInfoUncached(
   clubId: string,
