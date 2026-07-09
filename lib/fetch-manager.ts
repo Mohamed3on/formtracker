@@ -106,19 +106,38 @@ function toIsoDate(d: string): string | null {
   return day && month && year ? `${year}-${month}-${day}` : null;
 }
 
+const HISTORY_TTL = 21_600; // 6h — a manager change should surface the same day
+const ENDED_STINT_TTL = 2_592_000; // 30d — immutable history
+const OPEN_STINT_TTL = 21_600; // 6h — the incumbent is still playing games
+
+/** Every cache here wraps a single scrape rather than the assembled ManagerInfo, because
+ *  `unstable_cache` bypasses *reads* whenever it runs nested inside another `unstable_cache`
+ *  (see next/dist/server/web/spec-extension/unstable-cache.js: "when we are nested inside of
+ *  other unstable_cache's we should bypass cache similar to fetches"). Caching the assembled
+ *  result instead made every friendlies page refetch on each expiry — ~130 scrapes at once,
+ *  which is what blew /wc-live's prerender budget. Assembly below is pure CPU, so re-running
+ *  it per call costs nothing. */
+const getManagerHistory = (clubId: string) =>
+  unstable_cache(
+    async () => {
+      const html = await fetchPage(`${BASE_URL}/placeholder/mitarbeiterhistorie/verein/${clubId}`);
+      const managers = parseManagerTable(cheerio.load(html));
+      // Throw rather than return [] so a bad scrape isn't cached for 6h.
+      if (managers.length === 0) throw new Error(`No manager data found for club ${clubId}`);
+      return managers;
+    },
+    [`manager-history-${clubId}`],
+    { revalidate: HISTORY_TTL, tags: ["manager"] },
+  )();
+
 /** A manager's friendly-only record for one national-team stint, from Transfermarkt's
  *  detailed-performance page filtered to Friendlies (FS) and scoped to the stint's dates.
  *  Managers who coached the same nation twice (e.g. Leekens/Belgium) otherwise double-count
  *  friendlies across stints, wrecking the subtraction. datum_zu is the lower bound
  *  (appointed), datum_ab the upper (end); an open stint omits the upper bound.
  *
- *  A stint that has already ended can never gain another friendly, so it is cached for 30d
- *  while an open stint stays on the 6h cycle. Without that split every one of the ~130
- *  manager fetches behind /wc-live expired on the same 6h boundary, and the first build
- *  after each boundary refetched all of them — blowing the page's prerender budget. */
-const ENDED_STINT_TTL = 2_592_000; // 30d — immutable history
-const OPEN_STINT_TTL = 21_600; // 6h — the incumbent is still playing games
-
+ *  A stint that has already ended can never gain another friendly, so it caches for 30d;
+ *  only the incumbent's open stint stays on the 6h cycle. */
 const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: string, end: string) => {
   const endDate = end ? parseDate(end) : null;
   const ended = !!endDate && endDate < new Date();
@@ -138,18 +157,11 @@ const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: strin
   )();
 };
 
-async function fetchManagerInfoUncached(
+export async function getManagerInfo(
   clubId: string,
-  officialOnly: boolean,
+  officialOnly = false,
 ): Promise<ManagerInfo | null> {
-  const historyUrl = `${BASE_URL}/placeholder/mitarbeiterhistorie/verein/${clubId}`;
-  const html = await fetchPage(historyUrl);
-  const $ = cheerio.load(html);
-
-  const allManagers = parseManagerTable($);
-  if (allManagers.length === 0) {
-    throw new Error(`No manager data found for club ${clubId}`);
-  }
+  const allManagers = await getManagerHistory(clubId);
 
   const now = new Date();
   // The current manager is the row whose tenure is open now: appointed in the past
@@ -218,10 +230,3 @@ async function fetchManagerInfoUncached(
     officialOnly,
   };
 }
-
-export const getManagerInfo = (clubId: string, officialOnly = false) =>
-  unstable_cache(
-    () => fetchManagerInfoUncached(clubId, officialOnly),
-    [`manager-${clubId}${officialOnly ? "-official" : ""}`],
-    { revalidate: 21600, tags: ["manager"] },
-  )();
