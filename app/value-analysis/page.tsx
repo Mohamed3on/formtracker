@@ -9,6 +9,7 @@ import {
 import { getInjuredPlayers } from "@/lib/injured";
 import { buildInjuryMap } from "@/lib/injury-utils";
 import { findValueCandidates } from "@/lib/value-analysis";
+import type { PlayerStats } from "@/app/types";
 import { DataLastUpdated } from "@/app/components/DataLastUpdated";
 import { ValueAnalysisUI } from "./ValueAnalysisUI";
 import { createPageMetadata } from "@/lib/metadata";
@@ -39,28 +40,34 @@ export default async function ValueAnalysisPage() {
   // initialData and into the precomputed candidate lists below.
   const foldedPlayers = mvPlayers.map(includeTournamentStats);
   const rawPlayerStats = foldedPlayers.map(toPlayerStats);
-  const defaultPlayers = applyStatsToggles(rawPlayerStats, { includePen: false });
 
+  // Precompute discovery candidates for both penalty-toggle states so the client
+  // never runs the findValueCandidates domination pass. (Comparison counts still
+  // recompute client-side when the league scope narrows.)
   const MIN_DISCOVERY_MINUTES = 260;
-  const defaultUnderperformers = findValueCandidates(defaultPlayers, {
-    candidateOutperforms: false,
-    minMinutes: MIN_DISCOVERY_MINUTES,
-    sortAsc: false,
-  }).map(({ count, ...p }) => ({ ...p, outperformedByCount: count }));
-  const defaultOverperformers = findValueCandidates(defaultPlayers, {
-    candidateOutperforms: true,
-    sortAsc: true,
-  }).map(({ count, ...p }) => ({ ...p, outperformsCount: count }));
+  const candidatesFor = (players: PlayerStats[]) => ({
+    under: findValueCandidates(players, {
+      candidateOutperforms: false,
+      minMinutes: MIN_DISCOVERY_MINUTES,
+      sortAsc: false,
+    }).map(({ count, ...p }) => ({ ...p, comparisonCount: count })),
+    over: findValueCandidates(players, {
+      candidateOutperforms: true,
+      sortAsc: true,
+    }).map(({ count, ...p }) => ({ ...p, comparisonCount: count })),
+  });
+  const discovery = {
+    off: candidatesFor(applyStatsToggles(rawPlayerStats, { includePen: false })),
+    on: candidatesFor(applyStatsToggles(rawPlayerStats, { includePen: true })),
+  };
 
   return (
     <>
       <Suspense>
         <ValueAnalysisUI
-          initialAllPlayers={defaultPlayers}
           initialData={slimForClient(foldedPlayers)}
           injuryMap={injuryMap}
-          initialUnderperformers={defaultUnderperformers}
-          initialOverperformers={defaultOverperformers}
+          discovery={discovery}
         />
       </Suspense>
       <DiscoveryLinkGrid

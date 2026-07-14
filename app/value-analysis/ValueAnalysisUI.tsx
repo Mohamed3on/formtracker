@@ -26,7 +26,7 @@ import {
   missedPct,
   uniqueFilterOptions,
 } from "@/lib/filter-players";
-import { countComparisons, findValueCandidates, MIN_COMPARISON_COUNT } from "@/lib/value-analysis";
+import { countComparisons, MIN_COMPARISON_COUNT } from "@/lib/value-analysis";
 import { applyStatsToggles, toPlayerStats } from "@/lib/stats-toggles";
 import {
   formatReturnInfo,
@@ -967,63 +967,32 @@ function MvPlayerCard({
 
 /* ── Main Component ── */
 
-interface ValueAnalysisUIProps {
-  initialAllPlayers: PlayerStats[];
-  initialData: MinutesValuePlayer[];
-  injuryMap?: InjuryMap;
-  initialUnderperformers: (PlayerStats & { outperformedByCount: number })[];
-  initialOverperformers: (PlayerStats & { outperformsCount?: number })[];
+interface DiscoveryVariant {
+  under: DiscoveryCandidate[];
+  over: DiscoveryCandidate[];
 }
 
-const MIN_DISCOVERY_MINUTES = 260;
+interface ValueAnalysisUIProps {
+  initialData: MinutesValuePlayer[];
+  injuryMap?: InjuryMap;
+  discovery: { off: DiscoveryVariant; on: DiscoveryVariant };
+}
 
-export function ValueAnalysisUI({
-  initialAllPlayers,
-  initialData,
-  injuryMap,
-  initialUnderperformers,
-  initialOverperformers,
-}: ValueAnalysisUIProps) {
+export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnalysisUIProps) {
   const { params, update, push } = useQueryParams("/value-analysis");
 
   const includePen = params.get("pen") === "1";
 
-  const rawPlayerStats = useMemo(() => initialData.map(toPlayerStats), [initialData]);
-
-  const { allPlayers, rawUnderCandidates, rawOverCandidates } = useMemo(() => {
-    if (!includePen) {
-      return {
-        allPlayers: initialAllPlayers,
-        rawUnderCandidates: initialUnderperformers.map((p) => ({
-          ...p,
-          comparisonCount: p.outperformedByCount,
-        })),
-        rawOverCandidates: initialOverperformers.map((p) => ({
-          ...p,
-          comparisonCount: p.outperformsCount || 0,
-        })),
-      };
-    }
-    const players = applyStatsToggles(rawPlayerStats, { includePen });
-    return {
-      allPlayers: players,
-      rawUnderCandidates: findValueCandidates(players, {
-        candidateOutperforms: false,
-        minMinutes: MIN_DISCOVERY_MINUTES,
-        sortAsc: false,
-      }).map((p) => ({ ...p, comparisonCount: p.count })),
-      rawOverCandidates: findValueCandidates(players, {
-        candidateOutperforms: true,
-        sortAsc: true,
-      }).map((p) => ({ ...p, comparisonCount: p.count })),
-    };
-  }, [
-    rawPlayerStats,
-    includePen,
-    initialAllPlayers,
-    initialUnderperformers,
-    initialOverperformers,
-  ]);
+  // Discovery candidates are precomputed server-side for both penalty states; the
+  // client only picks the matching set. allPlayers is derived here (a cheap map) to
+  // feed the league-scoped comparison recounts in DiscoverySection.
+  const allPlayers = useMemo(
+    () => applyStatsToggles(initialData.map(toPlayerStats), { includePen }),
+    [initialData, includePen],
+  );
+  const { under: rawUnderCandidates, over: rawOverCandidates } = includePen
+    ? discovery.on
+    : discovery.off;
 
   const pointsLabel = includePen ? "G+A" : "npG+A";
 
