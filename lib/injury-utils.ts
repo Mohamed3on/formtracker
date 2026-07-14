@@ -1,5 +1,5 @@
-import type { InjuredPlayer } from "@/app/types";
-import { extractClubIdFromLogoUrl } from "@/lib/format";
+import type { InjuredPlayer, InjuryMap } from "@/app/types";
+import { extractClubIdFromLogoUrl, getPlayerIdFromProfileUrl } from "@/lib/format";
 
 // Priority-ordered: first regex match wins, so body-part-specific rules come before generic ones
 const INJURY_CATEGORY_RULES: [string, RegExp][] = [
@@ -28,6 +28,16 @@ export function categorizeInjury(injury: string): string {
     if (pattern.test(injury)) return category;
   }
   return "Other";
+}
+
+/** Index injured players by Transfermarkt playerId → their injury detail. */
+export function buildInjuryMap(players: InjuredPlayer[]): InjuryMap {
+  const map: InjuryMap = {};
+  for (const p of players) {
+    const id = getPlayerIdFromProfileUrl(p.profileUrl);
+    if (id) map[id] = { injury: p.injury, returnDate: p.returnDate, injurySince: p.injurySince };
+  }
+  return map;
 }
 
 export interface TeamInjuryGroup {

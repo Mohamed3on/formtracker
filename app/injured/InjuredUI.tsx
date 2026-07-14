@@ -20,7 +20,6 @@ import {
   getPlayerIdFromProfileUrl,
   getTeamDetailHref,
 } from "@/lib/format";
-import { useProgressiveFetch } from "@/lib/use-progressive-fetch";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
 import { Combobox } from "@/components/Combobox";
 import { LeagueCombobox } from "@/components/LeagueCombobox";
@@ -51,13 +50,6 @@ export interface InjuredResponse {
 
 interface InjuredUIProps {
   initialData: InjuredResponse;
-  failedLeagues?: string[];
-}
-
-async function fetchLeagueInjured(code: string): Promise<InjuredPlayer[]> {
-  const res = await fetch(`/api/injured?league=${code}`);
-  const data = await res.json();
-  return (data.players || []) as InjuredPlayer[];
 }
 
 function CollapsibleChevron({ className = "w-4 h-4" }: { className?: string }) {
@@ -558,9 +550,8 @@ function StatsHighlights({
 
 type GroupSort = "value" | "count";
 
-export function InjuredUI({ initialData, failedLeagues = [] }: InjuredUIProps) {
+export function InjuredUI({ initialData }: InjuredUIProps) {
   const { params, update } = useQueryParams("/injured");
-  const { results: extraResults, pending } = useProgressiveFetch(failedLeagues, fetchLeagueInjured);
 
   const tab = params.get("tab") || "players";
   const leagueFilter = params.get("league") || "all";
@@ -568,12 +559,7 @@ export function InjuredUI({ initialData, failedLeagues = [] }: InjuredUIProps) {
   const teamSort: GroupSort = params.get("tSort") === "count" ? "count" : "value";
   const injurySort: GroupSort = params.get("iSort") === "count" ? "count" : "value";
 
-  const allPlayers = useMemo(() => {
-    if (extraResults.length === 0) return initialData.players;
-    return [...initialData.players, ...extraResults.flat()].sort(
-      (a, b) => b.marketValueNum - a.marketValueNum,
-    );
-  }, [initialData.players, extraResults]);
+  const allPlayers = initialData.players;
 
   const clubOptions = useMemo(
     () => uniqueFilterOptions(allPlayers, (p) => p.club, "All clubs"),
@@ -649,12 +635,6 @@ export function InjuredUI({ initialData, failedLeagues = [] }: InjuredUIProps) {
 
   return (
     <>
-      {pending.size > 0 && (
-        <p className="text-[11px] mb-4 animate-pulse text-accent-blue">
-          Retrying {pending.size} failed {pending.size === 1 ? "league" : "leagues"}...
-        </p>
-      )}
-
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
         <LeagueCombobox

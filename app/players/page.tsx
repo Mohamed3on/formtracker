@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getMinutesValueData, slimForClient } from "@/lib/fetch-minutes-value";
 import { getInjuredPlayers } from "@/lib/injured";
+import { buildInjuryMap } from "@/lib/injury-utils";
 import { DataLastUpdated } from "@/app/components/DataLastUpdated";
 import { PlayersUI } from "./PlayersUI";
 import { createPageMetadata } from "@/lib/metadata";
@@ -22,17 +23,10 @@ export const metadata = createPageMetadata({
   ],
 });
 
-const SPIELER_RE = /\/spieler\/(\d+)/;
-
 export default async function PlayersPage() {
   const [players, injuredData] = await Promise.all([getMinutesValueData(), getInjuredPlayers()]);
 
-  const injuryMap: Record<string, { injury: string; returnDate: string; injurySince: string }> = {};
-  for (const p of injuredData.players) {
-    const m = p.profileUrl.match(SPIELER_RE);
-    if (m)
-      injuryMap[m[1]] = { injury: p.injury, returnDate: p.returnDate, injurySince: p.injurySince };
-  }
+  const injuryMap = buildInjuryMap(injuredData.players);
 
   return (
     <>

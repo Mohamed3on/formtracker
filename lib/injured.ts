@@ -58,38 +58,55 @@ export async function fetchInjuredPlayersUncached(): Promise<{
   players: InjuredPlayer[];
   totalPlayers: number;
   leagues: string[];
-  failedLeagues: string[];
 }> {
-  const results = await Promise.allSettled(
-    LEAGUES.map(async (league) => {
-      const url = `${BASE_URL}/${league.slug}/verletztespieler/wettbewerb/${league.code}/plus/1`;
-      const html = await fetchPage(url);
-      const $ = cheerio.load(html);
-      return { players: parseInjuredPlayers($, league.name), league: league.name };
-    }),
-  );
-
+  const MAX_ATTEMPTS = 3;
   const allPlayers: InjuredPlayer[] = [];
   const leagueSet = new Set<string>();
-  const failedLeagues: string[] = [];
-  results.forEach((result) => {
-    if (result.status === "fulfilled") {
-      allPlayers.push(...result.value.players);
-      leagueSet.add(result.value.league);
-    } else {
-      failedLeagues.push(String(result.reason));
+  let pending = [...LEAGUES];
+
+  // Retry leagues that fail rather than surfacing them to the client. Degrade
+  // gracefully on persistent failure: the injured data also feeds the injury
+  // map on other pages, so partial data beats throwing. (Mirrors team-form.)
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS && pending.length > 0; attempt++) {
+    const results = await Promise.allSettled(
+      pending.map(async (league) => {
+        const url = `${BASE_URL}/${league.slug}/verletztespieler/wettbewerb/${league.code}/plus/1`;
+        return parseInjuredPlayers(cheerio.load(await fetchPage(url)), league.name);
+      }),
+    );
+
+    const nextPending: typeof pending = [];
+    results.forEach((result, i) => {
+      if (result.status === "fulfilled") {
+        allPlayers.push(...result.value);
+        leagueSet.add(pending[i].name);
+      } else {
+        nextPending.push(pending[i]);
+      }
+    });
+    pending = nextPending;
+
+    if (pending.length > 0 && attempt < MAX_ATTEMPTS) {
+      console.warn(
+        `injured attempt ${attempt}/${MAX_ATTEMPTS}: retrying ${pending.map((l) => l.name).join(", ")}`,
+      );
+      await new Promise((r) => setTimeout(r, 2000 * attempt));
     }
-  });
+  }
+
+  if (pending.length > 0) {
+    console.warn(
+      `injured: gave up on ${pending.map((l) => l.name).join(", ")} after ${MAX_ATTEMPTS} attempts`,
+    );
+  }
 
   allPlayers.sort((a, b) => b.marketValueNum - a.marketValueNum);
-  const leagues = [...leagueSet];
 
   return {
     success: true,
     players: allPlayers,
     totalPlayers: allPlayers.length,
-    leagues,
-    failedLeagues,
+    leagues: [...leagueSet],
   };
 }
 

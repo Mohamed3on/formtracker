@@ -7,6 +7,7 @@ import {
   slimForClient,
 } from "@/lib/fetch-minutes-value";
 import { getInjuredPlayers } from "@/lib/injured";
+import { buildInjuryMap } from "@/lib/injury-utils";
 import { findValueCandidates } from "@/lib/value-analysis";
 import { DataLastUpdated } from "@/app/components/DataLastUpdated";
 import { ValueAnalysisUI } from "./ValueAnalysisUI";
@@ -29,17 +30,10 @@ export const metadata = createPageMetadata({
   ],
 });
 
-const SPIELER_RE = /\/spieler\/(\d+)/;
-
 export default async function ValueAnalysisPage() {
   const [mvPlayers, injuredData] = await Promise.all([getMinutesValueData(), getInjuredPlayers()]);
 
-  const injuryMap: Record<string, { injury: string; returnDate: string; injurySince: string }> = {};
-  for (const p of injuredData.players) {
-    const m = p.profileUrl.match(SPIELER_RE);
-    if (m)
-      injuryMap[m[1]] = { injury: p.injury, returnDate: p.returnDate, injurySince: p.injurySince };
-  }
+  const injuryMap = buildInjuryMap(injuredData.players);
 
   // Fold major-tournament national-team stats once; flows to the client via
   // initialData and into the precomputed candidate lists below.
