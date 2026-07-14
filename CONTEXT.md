@@ -22,9 +22,11 @@ the **seam** between "how Transfermarkt happens to render a page" and everything
   (they stay in the caller); the shared DOM walk lives in the module.
 - **tmImage** — normalizes a scraped image URL to its largest size (one rule, replacing the
   six ad-hoc size regexes that were scattered across the scrapers). The largest-size word is
-  per family (portrait→`header`, crest→`head`, flag→`head`, logo→`header`). Building image URLs
-  from an id (`crestUrl` / `flagUrl` / `leagueLogoUrl`, used by the refresh scripts and
-  `leagues.ts`) is a planned extension, not yet built.
+  per family (portrait→`header`, crest→`head`, flag→`head`, logo→`header`). It also builds image
+  URLs from an id at each family's largest size — `crestUrl` / `flagUrl` / `leagueLogoUrl`, used
+  by the refresh scripts and `leagues.ts`. These live in the cheerio-free `image` submodule;
+  import them from `@/lib/transfermarkt/image` (not the barrel) so pure/client-reachable callers
+  like `leagues.ts` don't pull cheerio into their bundle.
 - **attr(i, selector, name)** — a bounded escape hatch on the row accessor for genuinely
   bespoke cells (e.g. the movers page keeps the previous value in a `<span title>`). Prefer
   the typed `text` / `image` / `imageTitle` / `link` accessors.

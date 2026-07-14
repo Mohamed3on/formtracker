@@ -13,6 +13,7 @@ import {
   type ClubTypes,
 } from "@/lib/fetch-player-minutes";
 import { extractClubIdFromLogoUrl } from "@/lib/format";
+import { crestUrl, flagUrl } from "@/lib/transfermarkt/image";
 import { fetchClubTypes } from "@/lib/alpha-clubs";
 import { fetchPage, setMaxConcurrent } from "@/lib/fetch";
 import { BASE_URL } from "@/lib/constants";
@@ -391,10 +392,6 @@ function mergeStats(players: MinutesValuePlayer[], cache: Cache): void {
 
 // --- 4. Club map: build from player data + scrape unknowns ---
 
-function clubLogoUrl(clubId: string): string {
-  return `https://tmssl.akamaized.net/images/wappen/head/${clubId}.png`;
-}
-
 async function loadClubMap(): Promise<ClubMap> {
   try {
     return JSON.parse(await readFile(CLUBS_PATH, "utf-8")) as ClubMap;
@@ -407,13 +404,9 @@ function seedClubMapFromPlayers(players: MinutesValuePlayer[], clubs: ClubMap): 
   for (const p of players) {
     const id = extractClubIdFromLogoUrl(p.clubLogoUrl);
     if (id && p.club && !clubs[id]) {
-      clubs[id] = { name: p.club, logoUrl: clubLogoUrl(id) };
+      clubs[id] = { name: p.club, logoUrl: crestUrl(id) };
     }
   }
-}
-
-function flagLogoUrl(landId: string): string {
-  return `https://tmssl.akamaized.net/images/flagge/head/${landId}.png`;
 }
 
 async function scrapeClub(clubId: string): Promise<{ name: string; logoUrl: string } | null> {
@@ -427,7 +420,7 @@ async function scrapeClub(clubId: string): Promise<{ name: string; logoUrl: stri
     // National teams render a flag header (flagge/begegnungslider/{landId}); their
     // wappen/head crest is an empty image, so use the country flag instead.
     const landId = html.match(/flagge\/begegnungslider\/(\d+)\.png/)?.[1];
-    return { name, logoUrl: landId ? flagLogoUrl(landId) : clubLogoUrl(clubId) };
+    return { name, logoUrl: landId ? flagUrl(landId) : crestUrl(clubId) };
   } catch {
     return null;
   }
@@ -453,7 +446,7 @@ async function resolveUnknownClubs(players: MinutesValuePlayer[], clubs: ClubMap
     for (let j = 0; j < batch.length; j++) {
       const r = results[j];
       const club = r.status === "fulfilled" ? r.value : null;
-      clubs[batch[j]] = club ?? { name: `Club ${batch[j]}`, logoUrl: clubLogoUrl(batch[j]) };
+      clubs[batch[j]] = club ?? { name: `Club ${batch[j]}`, logoUrl: crestUrl(batch[j]) };
       if (club) resolved++;
     }
     if (i + BATCH < ids.length) {

@@ -24,3 +24,23 @@ export function tmImage(url: string): string {
     return largest ? `/${family}/${largest}/` : segment;
   });
 }
+
+// The other direction: build an image URL from an id, at each family's largest
+// size (the same vocabulary tmImage upgrades to). TM serves the asset at both
+// `/images/...` and `//images/...`; we use the single-slash canonical form.
+const IMAGE_CDN = "https://tmssl.akamaized.net/images";
+
+/** Club crest URL for a Transfermarkt club id. */
+export function crestUrl(clubId: string): string {
+  return `${IMAGE_CDN}/wappen/head/${clubId}.png`;
+}
+
+/** Nation flag URL for a Transfermarkt land id. */
+export function flagUrl(landId: string): string {
+  return `${IMAGE_CDN}/flagge/head/${landId}.png`;
+}
+
+/** League / competition logo URL for a competition code. */
+export function leagueLogoUrl(code: string): string {
+  return `${IMAGE_CDN}/logo/header/${code.toLowerCase()}.png`;
+}

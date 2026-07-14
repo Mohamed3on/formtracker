@@ -1,3 +1,5 @@
+import { leagueLogoUrl } from "@/lib/transfermarkt/image";
+
 export const LEAGUES = [
   {
     code: "GB1",
@@ -45,7 +47,7 @@ export type League = (typeof LEAGUES)[number];
 
 const leagueLogoMap: Record<string, string> = {};
 for (const l of LEAGUES) {
-  const url = `https://tmssl.akamaized.net//images/logo/header/${l.code.toLowerCase()}.png`;
+  const url = leagueLogoUrl(l.code);
   leagueLogoMap[l.name] = url;
   // Also map normalized key (lowercase, no spaces) for scraped names like "LaLiga"
   leagueLogoMap[l.name.toLowerCase().replace(/\s/g, "")] = url;
