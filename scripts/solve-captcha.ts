@@ -9,7 +9,7 @@
  */
 
 import { chromium } from "playwright";
-import { proxyInit, proxyLaunchOption } from "../lib/proxy";
+import { forceTmProxy, proxyInit, proxyLaunchOption } from "../lib/proxy";
 
 const API_KEY = process.env.TM_2CAPTCHA_KEY;
 if (!API_KEY) {
@@ -138,6 +138,9 @@ async function solveCaptcha(): Promise<string> {
 const MAX_SOLVE_ATTEMPTS = 3;
 
 async function main() {
+  // Captcha solving only runs when the direct IP is already WAF-blocked, so mint the fresh
+  // cookie through the proxy (its Playwright session + verify fetches) rather than direct.
+  forceTmProxy();
   for (let attempt = 1; attempt <= MAX_SOLVE_ATTEMPTS; attempt++) {
     try {
       console.error(`[captcha] Solving fresh cookie (attempt ${attempt}/${MAX_SOLVE_ATTEMPTS})...`);

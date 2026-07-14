@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { proxyInit } from "@/lib/proxy";
+import { tmFetch } from "@/lib/proxy";
 
 /**
  * Checks if Transfermarkt has published market value updates within the last ~36 hours.
@@ -24,9 +24,8 @@ const HEADERS = {
 };
 
 async function main() {
-  const res = await fetch(URL, {
+  const res = await tmFetch(URL, {
     headers: { ...HEADERS, ...(process.env.TM_COOKIE ? { Cookie: process.env.TM_COOKIE } : {}) },
-    ...proxyInit(),
   });
   const html = await res.text();
 

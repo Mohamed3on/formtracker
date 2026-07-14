@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage, withSlot } from "./fetch";
-import { proxyInit } from "./proxy";
+import { tmFetch } from "./proxy";
 import { parseMarketValue } from "./parse-market-value";
 import { extractClubIdFromLogoUrl } from "./format";
 import clubTypesData from "@/data/club-types.json";
@@ -387,10 +387,9 @@ export async function fetchPlayerMinutesRaw(
   const [htmlContent, ceapiRes, seniorCareer] = await Promise.all([
     fetchPage(`${BASE_URL}/x/leistungsdaten/spieler/${playerId}`),
     withSlot(() =>
-      fetch(`${BASE_URL}/ceapi/performance-game/${playerId}`, {
+      tmFetch(`${BASE_URL}/ceapi/performance-game/${playerId}`, {
         headers: getCeapiHeaders(),
         cache: "no-store",
-        ...proxyInit(),
       }),
     ),
     fetchSeniorCareer(playerId),

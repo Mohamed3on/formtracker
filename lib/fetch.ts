@@ -1,4 +1,4 @@
-import { proxyInit } from "./proxy";
+import { tmFetch } from "./proxy";
 
 const BASE_HEADERS: Record<string, string> = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
@@ -70,7 +70,7 @@ async function fetchPageInner(
     revalidate !== undefined ? { next: { revalidate } } : { cache: "no-store" as const };
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const response = await fetch(url, { headers, ...proxyInit(), ...cacheOpts });
+      const response = await tmFetch(url, { headers, ...cacheOpts });
       if (response.status >= 400) {
         // 4xx/5xx = WAF block or server error — retrying won't help, need a new token
         throw new Error(`HTTP ${response.status}`);
