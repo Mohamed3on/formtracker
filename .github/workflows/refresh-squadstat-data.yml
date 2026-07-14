@@ -156,6 +156,7 @@ jobs:
         id: check
         env:
           TM_COOKIE: ${{ secrets.TM_COOKIE }}
+          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
         run: |
           if bun run scripts/check-mv-updates.ts; then
             echo "has_updates=true" >> "$GITHUB_OUTPUT"
@@ -182,6 +183,7 @@ jobs:
       - name: Run refresh script
         env:
           TM_COOKIE: ${{ secrets.TM_COOKIE }}
+          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
         run: bun run scripts/refresh-biggest-movers.ts
 
       - name: Commit and push

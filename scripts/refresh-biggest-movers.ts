@@ -4,6 +4,7 @@ import { join } from "path";
 import { parseMarketValue } from "@/lib/parse-market-value";
 import { BASE_URL } from "@/lib/constants";
 import { withSlot, setMaxConcurrent } from "@/lib/fetch";
+import { proxyInit } from "@/lib/proxy";
 import type { MarketValueMover, MarketValueMoversResult } from "@/app/types";
 
 setMaxConcurrent(3);
@@ -63,6 +64,7 @@ async function fetchWithRetry(url: string, referer: string, label: string): Prom
           Referer: referer,
           ...(process.env.TM_COOKIE ? { Cookie: process.env.TM_COOKIE } : {}),
         },
+        ...proxyInit(),
       });
       if (!response.ok) {
         console.warn(`[${label}] HTTP ${response.status}, retry ${attempt + 1}/${MAX_RETRIES}`);
