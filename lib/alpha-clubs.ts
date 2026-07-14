@@ -7,7 +7,9 @@ const HEADERS = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 
 /** Batch-resolve clubTypeId for the given clubIds. Returns a map of
  *  clubId → clubTypeId for IDs the API responded for; missing/failed IDs are
- *  omitted. Logs HTTP failures via the optional logger. */
+ *  omitted. Logs HTTP/connection failures via the optional logger — club-type
+ *  resolution is best-effort enrichment, so a flaky alpha host never aborts the
+ *  refresh (the caller tolerates a partial map and re-tries misses next run). */
 export async function fetchClubTypes(
   ids: string[],
   logger: (msg: string) => void = console.warn,
@@ -16,16 +18,22 @@ export async function fetchClubTypes(
   for (let i = 0; i < ids.length; i += ALPHA_CLUBS_BATCH) {
     const batch = ids.slice(i, i + ALPHA_CLUBS_BATCH);
     const url = `${ALPHA_CLUBS_API}?${batch.map((id) => `ids[]=${id}`).join("&")}`;
-    const r = await fetch(url, { headers: HEADERS });
-    if (!r.ok) {
-      logger(`alpha-clubs batch ${i / ALPHA_CLUBS_BATCH}: HTTP ${r.status}`);
-      continue;
-    }
-    const j = (await r.json()) as {
-      data?: Array<{ id: string; baseDetails?: { clubTypeId?: number } }>;
-    };
-    for (const c of j.data ?? []) {
-      if (typeof c.baseDetails?.clubTypeId === "number") out[c.id] = c.baseDetails.clubTypeId;
+    try {
+      const r = await fetch(url, { headers: HEADERS });
+      if (!r.ok) {
+        logger(`alpha-clubs batch ${i / ALPHA_CLUBS_BATCH}: HTTP ${r.status}`);
+        continue;
+      }
+      const j = (await r.json()) as {
+        data?: Array<{ id: string; baseDetails?: { clubTypeId?: number } }>;
+      };
+      for (const c of j.data ?? []) {
+        if (typeof c.baseDetails?.clubTypeId === "number") out[c.id] = c.baseDetails.clubTypeId;
+      }
+    } catch (err) {
+      logger(
+        `alpha-clubs batch ${i / ALPHA_CLUBS_BATCH}: ${err instanceof Error ? err.message : err}`,
+      );
     }
   }
   return out;
