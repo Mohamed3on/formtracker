@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import { parsePlayerTable } from "@/lib/transfermarkt";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import type { MinutesValuePlayer, PlayerStats } from "@/app/types";
@@ -41,58 +41,29 @@ export async function getPlayerStatsData(): Promise<PlayerStats[]> {
   return players.map((p) => toPlayerStats(includeTournamentStats(p)));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseMarketValueRow($: cheerio.CheerioAPI, row: any): Partial<MinutesValuePlayer> | null {
-  const cells = $(row).find("> td");
-  if (cells.length < 6) return null;
-
-  const nameCell = $(cells[1]);
-  const inlineTable = nameCell.find(".inline-table");
-  const nameLink = inlineTable.find("td.hauptlink a");
-  const name = nameLink.attr("title") || nameLink.text().trim();
-  const profileUrl = nameLink.attr("href") || "";
-  const position = inlineTable.find("tr").eq(1).find("td").text().trim();
-  const imgEl = inlineTable.find("img").first();
-  const imageUrl = (imgEl.attr("data-src") || imgEl.attr("src") || "").replace(
-    "/small/",
-    "/header/",
+function parseMarketValueRows(html: string): MinutesValuePlayer[] {
+  return parsePlayerTable<MinutesValuePlayer>(
+    html,
+    (player, row) => {
+      if (!player.name || !player.playerId) return null;
+      const mvDisplay = row.text(5);
+      return {
+        ...EMPTY_PLAYER_STATS,
+        name: player.name,
+        position: player.position,
+        age: parseInt(row.text(2)) || 0,
+        club: row.link(4).title || row.imageTitle(4),
+        nationality: row.imageTitle(3),
+        nationalityFlagUrl: row.image(3),
+        marketValue: parseMarketValue(mvDisplay),
+        marketValueDisplay: mvDisplay,
+        imageUrl: player.imageUrl,
+        profileUrl: player.profileUrl,
+        playerId: player.playerId,
+      };
+    },
+    { playerColumn: 1 },
   );
-
-  const playerIdMatch = profileUrl.match(/\/spieler\/(\d+)/);
-  const playerId = playerIdMatch ? playerIdMatch[1] : "";
-
-  const age = parseInt($(cells[2]).text().trim()) || 0;
-
-  // Nationality from flag images
-  const natCell = $(cells[3]);
-  const natImg = natCell.find("img").first();
-  const nationality = natImg.attr("title") || "";
-  const nationalityFlagUrl =
-    (natImg.attr("src") || "").replace(/\/(tiny|verysmall)\//, "/medium/") || "";
-
-  const clubCell = $(cells[4]);
-  const clubLink = clubCell.find("a").first();
-  const club = clubLink.attr("title") || clubLink.find("img").attr("title") || "";
-  const league = "";
-
-  const mvDisplay = $(cells[5]).text().trim();
-  const marketValue = parseMarketValue(mvDisplay);
-
-  if (!name || !playerId) return null;
-  return {
-    name,
-    position,
-    age,
-    club,
-    league,
-    nationality,
-    nationalityFlagUrl,
-    marketValue,
-    marketValueDisplay: mvDisplay,
-    imageUrl,
-    profileUrl,
-    playerId,
-  };
 }
 
 /** Scrape market-value listing pages with a given query string. */
@@ -104,29 +75,15 @@ async function fetchMVPages(queryString: string, pages: number): Promise<Minutes
 
   const results = await Promise.allSettled(urls.map((url) => fetchPage(url)));
 
-  const mvMap = new Map<string, Partial<MinutesValuePlayer>>();
+  const mvMap = new Map<string, MinutesValuePlayer>();
   for (const result of results) {
     if (result.status !== "fulfilled") continue;
-    const $ = cheerio.load(result.value);
-    $("table.items > tbody > tr").each((_, row) => {
-      const player = parseMarketValueRow($, row);
-      if (player?.playerId) mvMap.set(player.playerId, player);
-    });
+    for (const player of parseMarketValueRows(result.value)) {
+      mvMap.set(player.playerId, player);
+    }
   }
 
-  const players: MinutesValuePlayer[] = [];
-  for (const [playerId, mv] of mvMap) {
-    players.push({
-      ...EMPTY_PLAYER_STATS,
-      ...mv,
-      name: mv.name || "",
-      position: mv.position || "",
-      imageUrl: mv.imageUrl || "",
-      profileUrl: mv.profileUrl || "",
-      playerId,
-    });
-  }
-
+  const players = [...mvMap.values()];
   players.sort((a, b) => b.marketValue - a.marketValue);
   return players;
 }

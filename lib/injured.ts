@@ -23,7 +23,7 @@ function parseInjuredPlayers(html: string, leagueName: string): InjuredPlayer[] 
       marketValue,
       marketValueNum,
       imageUrl: player.imageUrl,
-      profileUrl: player.profileUrl,
+      profileUrl: player.profileUrl ? `${BASE_URL}${player.profileUrl}` : "",
       league: leagueName,
     };
   });

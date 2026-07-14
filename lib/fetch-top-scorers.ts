@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import { parsePlayerTable } from "@/lib/transfermarkt";
 import type { MinutesValuePlayer } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage } from "./fetch";
@@ -19,30 +19,23 @@ function fetchPlayerList(
           console.error(`[${label}] Failed to fetch ${urls[index]}:`, result.reason);
           continue;
         }
-        const $ = cheerio.load(result.value);
-        $("table.items > tbody > tr").each((_, row) => {
-          const cells = $(row).find("> td");
-          if (cells.length < 6) return;
-
-          const inlineTable = $(cells[1]).find(".inline-table");
-          const nameLink = inlineTable.find("td.hauptlink a");
-          const name = nameLink.attr("title") || nameLink.text().trim();
-          const profileUrl = nameLink.attr("href") || "";
-          const playerIdMatch = profileUrl.match(/\/spieler\/(\d+)/);
-          const playerId = playerIdMatch ? playerIdMatch[1] : "";
-
-          if (!name || !playerId || seen.has(playerId)) return;
-          seen.add(playerId);
-
-          const position = inlineTable.find("tr").eq(1).find("td").text().trim();
-          const imgEl = inlineTable.find("img").first();
-          const imageUrl = (imgEl.attr("data-src") || imgEl.attr("src") || "").replace(
-            "/medium/",
-            "/header/",
-          );
-
-          players.push({ ...EMPTY_PLAYER_STATS, name, position, imageUrl, profileUrl, playerId });
-        });
+        const pageRows = parsePlayerTable(
+          result.value,
+          (player) => {
+            if (!player.name || !player.playerId || seen.has(player.playerId)) return null;
+            seen.add(player.playerId);
+            return {
+              ...EMPTY_PLAYER_STATS,
+              name: player.name,
+              position: player.position,
+              imageUrl: player.imageUrl,
+              profileUrl: player.profileUrl,
+              playerId: player.playerId,
+            };
+          },
+          { playerColumn: 1 },
+        );
+        players.push(...pageRows);
       }
 
       return players;

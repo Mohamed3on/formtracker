@@ -35,7 +35,7 @@ describe("parsePlayerTable — real injured (Premier League) fixture", () => {
       position: "Right-Back",
       club: "Arsenal FC",
       marketValue: "€70.00m",
-      profileUrl: "https://www.transfermarkt.com/jurrien-timber/profil/spieler/420243",
+      profileUrl: "/jurrien-timber/profil/spieler/420243", // module returns the raw TM href
     });
   });
 
@@ -47,5 +47,54 @@ describe("parsePlayerTable — real injured (Premier League) fixture", () => {
 
   it("matches the parsed snapshot", () => {
     expect(rows).toMatchSnapshot();
+  });
+});
+
+// The market-value page puts the player cell in column 1 (column 0 is the rank) and
+// carries nationality as an image title — exercises playerColumn + imageTitle.
+const mvHtml = readFileSync(
+  fileURLToPath(new URL("./__fixtures__/market-value-top.html", import.meta.url)),
+  "utf8",
+);
+
+const mvRows = parsePlayerTable(
+  mvHtml,
+  (player, row) => {
+    if (!player.name || !player.playerId) return null;
+    return {
+      name: player.name,
+      playerId: player.playerId,
+      position: player.position,
+      imageUrl: player.imageUrl,
+      age: parseInt(row.text(2)) || 0,
+      nationality: row.imageTitle(3),
+      flag: row.image(3),
+      club: row.link(4).title || row.imageTitle(4),
+      marketValue: row.text(5),
+    };
+  },
+  { playerColumn: 1 },
+);
+
+describe("parsePlayerTable — real market-value page (player cell in column 1)", () => {
+  it("parses every row from the rank-prefixed table", () => {
+    expect(mvRows).toHaveLength(25);
+  });
+
+  it("reads nationality / club / value / age for the top-valued player", () => {
+    const top = mvRows[0];
+    expect(top.nationality).not.toBe("");
+    expect(top.club).not.toBe("");
+    expect(top.marketValue).toMatch(/€\d/);
+    expect(top.age).toBeGreaterThan(0);
+  });
+
+  it("upgrades headshots and flags to the largest size via tmImage", () => {
+    expect(mvRows[0].imageUrl).toContain("/portrait/header/");
+    expect(mvRows[0].flag).toContain("/flagge/head/");
+  });
+
+  it("matches the parsed snapshot", () => {
+    expect(mvRows).toMatchSnapshot();
   });
 });
