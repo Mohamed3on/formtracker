@@ -79,6 +79,7 @@ jobs:
         env:
           TM_COOKIE: ${{ secrets.TM_COOKIE }}
           TM_2CAPTCHA_KEY: ${{ secrets.TM_2CAPTCHA_KEY }}
+          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
           FORCE_REFRESH: ${{ inputs.force_refresh && '1' || '0' }}
           STALE_HOURS: ${{ inputs.stale_hours }}
           SKIP_MINUTES_REGRESSION: ${{ inputs.skip_minutes_regression && '1' || '0' }}

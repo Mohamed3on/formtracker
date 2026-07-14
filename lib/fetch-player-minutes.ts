@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage, withSlot } from "./fetch";
+import { proxyInit } from "./proxy";
 import { parseMarketValue } from "./parse-market-value";
 import { extractClubIdFromLogoUrl } from "./format";
 import clubTypesData from "@/data/club-types.json";
@@ -32,6 +33,7 @@ async function fetchSeniorCareer(
   try {
     const r = await fetch(`${TM_API_BASE}/player/${playerId}/national-career-history`, {
       headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
+      ...proxyInit(),
     });
     if (!r.ok) return null;
     const j = (await r.json()) as { data?: { history?: NationalCareerEntry[] } };
@@ -389,6 +391,7 @@ export async function fetchPlayerMinutesRaw(
       fetch(`${BASE_URL}/ceapi/performance-game/${playerId}`, {
         headers: getCeapiHeaders(),
         cache: "no-store",
+        ...proxyInit(),
       }),
     ),
     fetchSeniorCareer(playerId),

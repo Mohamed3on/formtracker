@@ -1,3 +1,5 @@
+import { proxyInit } from "./proxy";
+
 const BASE_HEADERS: Record<string, string> = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -68,7 +70,7 @@ async function fetchPageInner(
     revalidate !== undefined ? { next: { revalidate } } : { cache: "no-store" as const };
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const response = await fetch(url, { headers, ...cacheOpts });
+      const response = await fetch(url, { headers, ...proxyInit(), ...cacheOpts });
       if (response.status >= 400) {
         // 4xx/5xx = WAF block or server error — retrying won't help, need a new token
         throw new Error(`HTTP ${response.status}`);

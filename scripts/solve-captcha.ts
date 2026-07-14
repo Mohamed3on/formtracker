@@ -9,6 +9,7 @@
  */
 
 import { chromium } from "playwright";
+import { proxyInit, proxyLaunchOption } from "../lib/proxy";
 
 const API_KEY = process.env.TM_2CAPTCHA_KEY;
 if (!API_KEY) {
@@ -22,7 +23,7 @@ const POLL_INTERVAL = 5_000;
 const MAX_POLLS = 60;
 
 async function solveCaptcha(): Promise<string> {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, ...proxyLaunchOption() });
   try {
     const context = await browser.newContext({
       userAgent:
@@ -112,8 +113,8 @@ async function solveCaptcha(): Promise<string> {
     const UA =
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36";
     const [withCookie, noCookie, viaBrowser] = await Promise.all([
-      fetch(VALIDATE_URL, { headers: { "User-Agent": UA, Cookie: cookie } }),
-      fetch(VALIDATE_URL, { headers: { "User-Agent": UA } }),
+      fetch(VALIDATE_URL, { headers: { "User-Agent": UA, Cookie: cookie }, ...proxyInit() }),
+      fetch(VALIDATE_URL, { headers: { "User-Agent": UA }, ...proxyInit() }),
       context.request.get(VALIDATE_URL).catch((e) => ({ status: () => `err:${e}` })),
     ]);
     const body = (await withCookie.text()).slice(0, 200).replace(/\s+/g, " ");
