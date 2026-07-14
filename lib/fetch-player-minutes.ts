@@ -33,7 +33,6 @@ async function fetchSeniorCareer(
   try {
     const r = await fetch(`${TM_API_BASE}/player/${playerId}/national-career-history`, {
       headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" },
-      ...proxyInit(),
     });
     if (!r.ok) return null;
     const j = (await r.json()) as { data?: { history?: NationalCareerEntry[] } };

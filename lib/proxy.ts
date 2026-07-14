@@ -1,8 +1,13 @@
 /**
- * Transfermarkt's AWS WAF hard-blocks datacenter IPs, so the GitHub Actions
+ * www.transfermarkt.com's AWS WAF hard-blocks datacenter IPs, so the GitHub Actions
  * data-refresh scraper gets 403s (and can't even solve a captcha — the block page
- * has no challenge widget). When TM_PROXY_URL is set we route every TM fetch through
- * a residential proxy, so requests come from a clean IP that WAF serves normally.
+ * has no challenge widget). When TM_PROXY_URL is set we route www.transfermarkt.com
+ * fetches through a residential proxy, so requests come from a clean IP WAF serves.
+ *
+ * Only spread this into www.transfermarkt.com requests. The alpha API host
+ * (tmapi-alpha.transfermarkt.technology — national-career, club-types) is NOT
+ * WAF-blocked, works direct from datacenter IPs, and does NOT route cleanly through
+ * residential exits (fetch throws "Unable to connect"), so those calls stay direct.
  *
  * TM_PROXY_URL is only set in the Actions workflow — it's unset in Vercel production,
  * where fetches stay direct (Vercel's IPs aren't blocked and shouldn't pay proxy cost).
