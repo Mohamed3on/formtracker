@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import { parseProfileHeader } from "@/lib/transfermarkt";
 import type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage, withSlot } from "./fetch";
@@ -395,58 +395,11 @@ export async function fetchPlayerMinutesRaw(
     fetchSeniorCareer(playerId),
   ]);
 
-  // Parse club/ribbon from HTML
-  const $ = cheerio.load(htmlContent);
-  const clubInfo = $(".data-header__club-info");
-  const club = clubInfo.find(".data-header__club a").text().trim();
-  const clubAnchor = $(".data-header__box__club-link").first();
-  const clubLogoImg = clubAnchor.find("img").first();
-  const clubLogoSrcset = (clubLogoImg.attr("srcset") || "").trim();
-  const clubLogoUrl = clubLogoSrcset.split(/\s+/)[0] || clubLogoImg.attr("src") || "";
-  // Current first-team clubId. Used to drop B-team / youth / previous-club
-  // appearances from season aggregation in aggregateSeasonStats.
-  const currentClubId = (clubAnchor.attr("href") || "").match(/\/verein\/(\d+)/)?.[1] ?? "";
-  const ribbonText = $(".data-header__ribbon span").text().trim().toLowerCase();
-  const isOnLoan = ribbonText === "on loan";
-  const isNewSigning = ribbonText === "new arrival" || ribbonText === "winter signing" || isOnLoan;
-
-  // Nationality from profile header
-  const natFlagImg = $("span[itemprop='nationality'] img.flaggenrahmen").first();
-  const nationalityFlagUrl =
-    (natFlagImg.attr("src") || "").replace(/\/(tiny|verysmall)\//, "/medium/") || "";
-  const nationality = natFlagImg.attr("title") || "";
-
-  // League logo URL from profile header
-  const leagueLinkImg = $(".data-header__league-link img").first();
-  const leagueLogoUrl =
-    (leagueLinkImg.attr("src") || "").replace(/\/(verytiny|tiny)\//, "/header/") || "";
-
-  // Parse senior international caps from profile header (Caps/Goals: N).
-  // The header only shows the player's *current* national team, so it
-  // under-reports for youth-squad players. Treated here as a fallback for when
-  // the alpha API is unreachable; the API result takes precedence below.
-  const capsLi = $("li:contains('Caps/Goals')").first();
-  const capsUl = capsLi.closest("ul");
-  const natTeamName = capsUl.find("a[href*='/startseite/verein/']").first().attr("title") || "";
-  const headerIsSenior = !!natTeamName && !/U\d/i.test(natTeamName);
-  const headerCaps = headerIsSenior ? parseInt(capsLi.find("a").first().text().trim()) || 0 : 0;
-  const ntLabel = capsUl.find(".data-header__label").first().text().trim().toLowerCase();
-  const headerCurrentIntl = headerIsSenior && ntLabel.includes("current international");
-
-  // Parse contract expiry from club info header
-  const contractLabel = clubInfo.find(".data-header__label:contains('Contract expires:')");
-  const contractExpiry = contractLabel.find(".data-header__content").text().trim() || undefined;
-
-  // Parse market value from profile header
-  const mvEl = $(".data-header__market-value-wrapper");
-  const mvText = mvEl.clone().children("p").remove().end().text().trim();
-  const marketValue = parseMarketValue(mvText);
-  const marketValueDisplay = mvText || "-";
-
-  // Parse age from birth date
-  const birthText = $("span[itemprop='birthDate']").text().trim();
-  const ageMatch = birthText.match(/\((\d+)\)/);
-  const age = ageMatch ? parseInt(ageMatch[1]) : 0;
+  // The data-header (club, nationality, market value, caps, contract, age) is
+  // parsed by the Transfermarkt module; only the cross-source work stays here.
+  const header = parseProfileHeader(htmlContent);
+  const marketValue = parseMarketValue(header.marketValueText);
+  const marketValueDisplay = header.marketValueText || "-";
 
   if (!ceapiRes.ok) {
     throw new Error(`ceapi ${ceapiRes.status} for ${playerId}`);
@@ -458,28 +411,28 @@ export async function fetchPlayerMinutesRaw(
   if (!Array.isArray(games)) {
     throw new Error(`ceapi returned no performance array for ${playerId}`);
   }
-  const stats = aggregateSeasonStats(games, currentClubId, clubTypes);
+  const stats = aggregateSeasonStats(games, header.clubId, clubTypes);
 
   // The alpha API is the canonical source for senior caps + whether the
   // player is in the current squad (the same data powers TM's green/yellow
   // shirt-number badge). Header values are kept as a fallback for API outages.
-  const intlCareerCaps = seniorCareer?.caps ?? headerCaps;
-  const isCurrentIntl = seniorCareer?.isCurrent ?? headerCurrentIntl;
+  const intlCareerCaps = seniorCareer?.caps ?? header.headerCaps;
+  const isCurrentIntl = seniorCareer?.isCurrent ?? header.headerIsCurrentSenior;
 
   const shared = {
-    club,
-    clubLogoUrl,
+    club: header.club,
+    clubLogoUrl: header.clubLogoUrl,
     intlCareerCaps,
     isCurrentIntl,
-    isNewSigning,
-    isOnLoan,
-    contractExpiry,
-    nationality,
-    nationalityFlagUrl,
-    leagueLogoUrl,
+    isNewSigning: header.isNewSigning,
+    isOnLoan: header.isOnLoan,
+    contractExpiry: header.contractExpiry,
+    nationality: header.nationality,
+    nationalityFlagUrl: header.nationalityFlagUrl,
+    leagueLogoUrl: header.leagueLogoUrl,
     marketValue,
     marketValueDisplay,
-    age,
+    age: header.age,
   };
 
   return { ...stats, ...shared, rawGames: games };

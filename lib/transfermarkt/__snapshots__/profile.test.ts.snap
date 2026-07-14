@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parseProfileHeader — real player profile > matches the snapshot 1`] = `
+{
+  "age": 25,
+  "club": "Man City",
+  "clubId": "281",
+  "clubLogoUrl": "https://tmssl.akamaized.net//images/wappen/normquad/281.png?lm=1467356331",
+  "contractExpiry": "30/06/2034",
+  "headerCaps": 55,
+  "headerIsCurrentSenior": true,
+  "isNewSigning": false,
+  "isOnLoan": false,
+  "leagueLogoUrl": "https://tmssl.akamaized.net//images/logo/header/gb1.png?lm=1521104656",
+  "marketValueText": "€200.00m",
+  "nationality": "Norway",
+  "nationalityFlagUrl": "https://tmssl.akamaized.net//images/flagge/head/125.png?lm=1520611569",
+}
+`;
