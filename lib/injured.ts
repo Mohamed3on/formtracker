@@ -1,56 +1,32 @@
 import { unstable_cache } from "next/cache";
-import * as cheerio from "cheerio";
+import { parsePlayerTable } from "@/lib/transfermarkt";
 import type { InjuredPlayer } from "@/app/types";
 import { BASE_URL } from "@/lib/constants";
 import { LEAGUES } from "@/lib/leagues";
 import { fetchPage } from "@/lib/fetch";
 import { parseMarketValue } from "@/lib/parse-market-value";
 
-function parseInjuredPlayers($: cheerio.CheerioAPI, leagueName: string): InjuredPlayer[] {
-  const players: InjuredPlayer[] = [];
-  $("table.items > tbody > tr").each((_, row) => {
-    const cells = $(row).find("> td");
-    if (cells.length < 8) return;
-    const nameCell = $(cells[0]);
-    const inlineTable = nameCell.find(".inline-table");
-    const playerLink = inlineTable.find(".hauptlink a").first();
-    const name = playerLink.attr("title") || playerLink.text().trim();
-    const profileUrl = playerLink.attr("href") || "";
-    const position = inlineTable.find("tr:last-child td").text().trim();
-    const imageUrl = (
-      inlineTable.find("img").attr("data-src") ||
-      inlineTable.find("img").attr("src") ||
-      ""
-    ).replace("/small/", "/header/");
-    const clubCell = $(cells[1]);
-    const clubLink = clubCell.find("a").first();
-    const club = clubLink.attr("title") || "";
-    const clubLogoUrl = (clubCell.find("img").attr("src") || "").replace("/tiny/", "/head/");
-    const age = parseInt($(cells[2]).text().trim(), 10) || undefined;
-    const injury = $(cells[4]).text().trim();
-    const injurySince = $(cells[5]).text().trim();
-    const returnDate = $(cells[6]).text().trim();
-    const marketValue = $(cells[7]).text().trim();
+function parseInjuredPlayers(html: string, leagueName: string): InjuredPlayer[] {
+  return parsePlayerTable(html, (player, row) => {
+    const marketValue = row.text(7);
     const marketValueNum = parseMarketValue(marketValue);
-    if (name && marketValueNum > 0) {
-      players.push({
-        name,
-        position,
-        club,
-        clubLogoUrl,
-        injury,
-        returnDate,
-        injurySince,
-        age,
-        marketValue,
-        marketValueNum,
-        imageUrl,
-        profileUrl: profileUrl ? `${BASE_URL}${profileUrl}` : "",
-        league: leagueName,
-      });
-    }
+    if (!player.name || marketValueNum <= 0) return null;
+    return {
+      name: player.name,
+      position: player.position,
+      club: row.link(1).title,
+      clubLogoUrl: row.image(1),
+      injury: row.text(4),
+      returnDate: row.text(6),
+      injurySince: row.text(5),
+      age: parseInt(row.text(2), 10) || undefined,
+      marketValue,
+      marketValueNum,
+      imageUrl: player.imageUrl,
+      profileUrl: player.profileUrl,
+      league: leagueName,
+    };
   });
-  return players;
 }
 
 export async function fetchInjuredPlayersUncached(): Promise<{
@@ -71,7 +47,7 @@ export async function fetchInjuredPlayersUncached(): Promise<{
     const results = await Promise.allSettled(
       pending.map(async (league) => {
         const url = `${BASE_URL}/${league.slug}/verletztespieler/wettbewerb/${league.code}/plus/1`;
-        return parseInjuredPlayers(cheerio.load(await fetchPage(url)), league.name);
+        return parseInjuredPlayers(await fetchPage(url), league.name);
       }),
     );
 
