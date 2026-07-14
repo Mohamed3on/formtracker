@@ -98,3 +98,46 @@ describe("parsePlayerTable — real market-value page (player cell in column 1)"
     expect(mvRows).toMatchSnapshot();
   });
 });
+
+// The market-value movers (changes) page carries the previous value in a <span
+// title="…"> inside the value cell — exercises the attr() escape hatch.
+const moversHtml = readFileSync(
+  fileURLToPath(new URL("./__fixtures__/market-value-movers.html", import.meta.url)),
+  "utf8",
+);
+
+const moverRows = parsePlayerTable(
+  moversHtml,
+  (player, row) => {
+    const prevTitle = row.attr(5, "span", "title");
+    if (!player.name || !player.playerId || !prevTitle) return null;
+    return {
+      name: player.name,
+      playerId: player.playerId,
+      club: row.link(2).title,
+      nationality: row.imageTitle(3),
+      currentValue: row.text(5).replace(/ /g, "").trim(),
+      previousTitle: prevTitle,
+      clubLogo: row.image(2),
+    };
+  },
+  { playerColumn: 1 },
+);
+
+describe("parsePlayerTable — real market-value movers page (attr escape hatch)", () => {
+  it("parses the changes table", () => {
+    expect(moverRows.length).toBeGreaterThan(10);
+  });
+
+  it("reads the previous value from the span title via attr()", () => {
+    expect(moverRows[0].previousTitle).toMatch(/€/);
+  });
+
+  it("upgrades club crests to the largest size via tmImage", () => {
+    expect(moverRows[0].clubLogo).toContain("/wappen/head/");
+  });
+
+  it("matches the parsed snapshot", () => {
+    expect(moverRows).toMatchSnapshot();
+  });
+});

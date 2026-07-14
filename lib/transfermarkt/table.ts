@@ -23,6 +23,9 @@ export interface RowAccessor {
   imageTitle(i: number): string;
   /** First link in column `i`, as `{ href, title }`. */
   link(i: number): { href: string; title: string };
+  /** Escape hatch: an attribute off the first `selector` match in column `i`, for
+   *  bespoke cells the typed accessors don't cover. Prefer text/image/link/imageTitle. */
+  attr(i: number, selector: string, name: string): string;
 }
 
 const PLAYER_ID = /\/spieler\/(\d+)/;
@@ -73,6 +76,7 @@ export function parsePlayerTable<T>(
         const a = $(cells[i]).find("a").first();
         return { href: a.attr("href") || "", title: a.attr("title") || "" };
       },
+      attr: (i, selector, name) => $(cells[i]).find(selector).first().attr(name) || "",
     };
     const mapped = map(player, row);
     if (mapped != null) rows.push(mapped);

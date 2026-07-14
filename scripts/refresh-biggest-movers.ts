@@ -1,4 +1,4 @@
-import * as cheerio from "cheerio";
+import { parsePlayerTable } from "@/lib/transfermarkt";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { parseMarketValue } from "@/lib/parse-market-value";
@@ -85,70 +85,36 @@ async function fetchWithRetry(url: string, referer: string, label: string): Prom
 }
 
 function parsePeriodMovers(html: string, date: string): MarketValueMover[] {
-  const $ = cheerio.load(html);
-  const players: MarketValueMover[] = [];
-
-  $("table.items tbody tr").each((_, row) => {
-    const $row = $(row);
-    const cells = $row.children("td");
-    if (cells.length < 8) return;
-
-    const $inline = $row.find("table.inline-table");
-    const $nameLink = $inline.find("td.hauptlink a").first();
-    const name = $nameLink.text().trim();
-    const href = $nameLink.attr("href") || "";
-    const playerIdMatch = href.match(/\/spieler\/(\d+)/);
-    const playerId = playerIdMatch ? playerIdMatch[1] : "";
-    const position = $inline.find("tr").last().find("td").last().text().trim();
-
-    const $img = $inline.find("img").first();
-    const imageUrl = $img.attr("data-src") || $img.attr("src") || "";
-
-    const $clubCell = cells.eq(2);
-    const club = $clubCell.find("a").attr("title") || "";
-    const clubLogoUrl =
-      $clubCell.find("img").attr("data-src") || $clubCell.find("img").attr("src") || "";
-
-    const nationality = cells.eq(3).find("img").first().attr("title") || "";
-    const age = parseInt(cells.eq(4).text().trim(), 10) || 0;
-
-    const $valueCell = cells.eq(5);
-    const currentValueText = $valueCell
-      .text()
-      .replace(/\u00a0/g, "")
-      .trim();
-    const currentValue = parseMarketValue(currentValueText);
-    const prevTitle = $valueCell.find("span").attr("title") || "";
-    const prevMatch = prevTitle.match(/€[\d.]+\s*(bn|m|k)?/i);
-    const previousValue = prevMatch ? parseMarketValue(prevMatch[0]) : 0;
-
-    const relText = cells.eq(6).text().trim();
-    const relativeChange = Math.abs(parseFloat(relText.replace(/[^0-9.]/g, "")) || 0);
-
-    const diffText = cells.eq(7).text().trim();
-    const absoluteChange = parseMarketValue(diffText.replace(/[+-]/g, ""));
-
-    if (name && playerId && previousValue > 0) {
-      players.push({
-        name,
-        position,
-        age,
-        club,
-        clubLogoUrl,
-        nationality,
-        currentValue,
+  return parsePlayerTable(
+    html,
+    (player, row) => {
+      const prevMatch = row.attr(5, "span", "title").match(/€[\d.]+\s*(bn|m|k)?/i);
+      const previousValue = prevMatch ? parseMarketValue(prevMatch[0]) : 0;
+      if (!player.name || !player.playerId || previousValue <= 0) return null;
+      return {
+        name: player.name,
+        position: player.position,
+        age: parseInt(row.text(4), 10) || 0,
+        club: row.link(2).title,
+        clubLogoUrl: row.image(2),
+        nationality: row.imageTitle(3),
+        currentValue: parseMarketValue(
+          row
+            .text(5)
+            .replace(/\u00a0/g, "")
+            .trim(),
+        ),
         previousValue,
-        absoluteChange,
-        relativeChange,
-        imageUrl,
-        profileUrl: `${BASE_URL}${href}`,
-        playerId,
+        absoluteChange: parseMarketValue(row.text(7).replace(/[+-]/g, "")),
+        relativeChange: Math.abs(parseFloat(row.text(6).replace(/[^0-9.]/g, "")) || 0),
+        imageUrl: player.imageUrl,
+        profileUrl: `${BASE_URL}${player.profileUrl}`,
+        playerId: player.playerId,
         period: date,
-      });
-    }
-  });
-
-  return players;
+      };
+    },
+    { playerColumn: 1 },
+  );
 }
 
 function selectPeriodMovers(players: MarketValueMover[]): MarketValueMover[] {
