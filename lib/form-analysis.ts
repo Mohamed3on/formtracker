@@ -4,6 +4,7 @@ import type { TeamStats, PeriodAnalysis, AnalysisResult, AggregatedTeam } from "
 import { BASE_URL } from "@/lib/constants";
 import { fetchPage } from "@/lib/fetch";
 import { isSameLeague } from "@/lib/leagues";
+import { tmImage } from "@/lib/transfermarkt";
 
 const PERIODS = [20, 15, 10, 5];
 
@@ -35,7 +36,7 @@ function parseTeamRow($: cheerio.CheerioAPI, row: any): TeamStats | null {
 
   // Extract logo URL and club URL
   const logoImg = nameCell.find(".inline-table img").first();
-  const logoUrl = (logoImg.attr("src") || "").replace("/verysmall/", "/head/");
+  const logoUrl = tmImage(logoImg.attr("src") || "");
   const clubUrl = clubLink.attr("href") || "";
   const clubIdMatch = clubUrl.match(/\/verein\/(\d+)/);
   const clubId = clubIdMatch ? clubIdMatch[1] : "";

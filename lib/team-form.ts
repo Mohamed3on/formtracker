@@ -5,6 +5,7 @@ import { BASE_URL } from "./constants";
 import { LEAGUES } from "./leagues";
 import { fetchPage } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
+import { tmImage } from "@/lib/transfermarkt";
 interface LeagueTeam {
   name: string;
   position: number;
@@ -47,7 +48,7 @@ function parseStartseitePage($: cheerio.CheerioAPI): {
 
     const clubCell = $(cells[1]);
     const clubLink = clubCell.find("a").first();
-    const logoUrl = (clubCell.find("img").attr("src") || "").replace("/tiny/", "/head/");
+    const logoUrl = tmImage(clubCell.find("img").attr("src") || "");
     const name = clubLink.attr("title") || "";
     const clubUrl = clubLink.attr("href") || "";
     const clubIdMatch = clubUrl.match(/\/verein\/(\d+)/);
