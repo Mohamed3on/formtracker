@@ -1019,6 +1019,7 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
   // ── G+A benchmark state ──
   const benchStrongerOnly = params.get("bStronger") === "1";
   const benchSameLeagueOnly = params.get("bLeague") === "1";
+  const benchTop5Only = params.get("bTop5") === "1";
 
   // ── Discovery state (Overpriced "u" / Bargains "o") ──
   const underControls = discoveryControls("u", params, update);
@@ -1050,8 +1051,9 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
     if (benchSameLeagueOnly && targetLeague) return (p: PlayerStats) => p.league === targetLeague;
     if (benchStrongerOnly && targetLeague)
       return isSameOrStrongerLeague(leagueValues, targetLeague);
+    if (benchTop5Only) return (p: PlayerStats) => TOP_5_LEAGUES.includes(p.league);
     return null;
-  }, [benchSameLeagueOnly, targetLeague, benchStrongerOnly, leagueValues]);
+  }, [benchSameLeagueOnly, targetLeague, benchStrongerOnly, benchTop5Only, leagueValues]);
 
   const filteredUnderperformers = useMemo(
     () =>
@@ -1081,10 +1083,15 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
       const count = allPlayers.filter(isSameOrStrongerLeague(leagueValues, targetLeague)).length;
       return `Analyzed ${count.toLocaleString()} players in ${targetLeague} or stronger leagues`;
     }
+    if (benchTop5Only) {
+      const count = allPlayers.filter((p) => TOP_5_LEAGUES.includes(p.league)).length;
+      return `Analyzed ${count.toLocaleString()} players in the top 5 leagues`;
+    }
     return `Analyzed ${gaData?.totalPlayers.toLocaleString()} players across top European leagues`;
   }, [
     benchSameLeagueOnly,
     benchStrongerOnly,
+    benchTop5Only,
     targetLeague,
     allPlayers,
     leagueValues,
@@ -1151,7 +1158,13 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
           value={mode}
           onValueChange={(v) => {
             if (!v) return;
-            push({ mode: v === "ga" ? null : v, tab: null, bStronger: null, bLeague: null });
+            push({
+              mode: v === "ga" ? null : v,
+              tab: null,
+              bStronger: null,
+              bLeague: null,
+              bTop5: null,
+            });
           }}
         >
           <ToggleGroupItem value="ga" className="px-4">
@@ -1238,9 +1251,21 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
 
               <div className="flex flex-wrap items-center gap-2">
                 <FilterButton
+                  active={benchTop5Only}
+                  onClick={() =>
+                    update({ bTop5: benchTop5Only ? null : "1", bStronger: null, bLeague: null })
+                  }
+                >
+                  Top 5 leagues
+                </FilterButton>
+                <FilterButton
                   active={benchStrongerOnly}
                   onClick={() =>
-                    update({ bStronger: benchStrongerOnly ? null : "1", bLeague: null })
+                    update({
+                      bStronger: benchStrongerOnly ? null : "1",
+                      bLeague: null,
+                      bTop5: null,
+                    })
                   }
                 >
                   {strongerLeagueIcon}
@@ -1249,7 +1274,11 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
                 <FilterButton
                   active={benchSameLeagueOnly}
                   onClick={() =>
-                    update({ bLeague: benchSameLeagueOnly ? null : "1", bStronger: null })
+                    update({
+                      bLeague: benchSameLeagueOnly ? null : "1",
+                      bStronger: null,
+                      bTop5: null,
+                    })
                   }
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

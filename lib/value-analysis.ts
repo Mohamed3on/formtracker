@@ -10,7 +10,7 @@ import {
 
 export type ValueCandidate = PlayerStats & { count: number };
 
-export const MIN_COMPARISON_COUNT = 4;
+export const MIN_COMPARISON_COUNT = 3;
 
 /** Count how many players in `pool` the given player compares against. */
 export function countComparisons(

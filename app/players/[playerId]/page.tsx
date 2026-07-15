@@ -532,7 +532,7 @@ export default async function PlayerDetailPage({
   searchParams,
 }: {
   params: Promise<{ playerId: string }>;
-  searchParams: Promise<{ sameLeague?: string; allLeagues?: string }>;
+  searchParams: Promise<{ sameLeague?: string; allLeagues?: string; top5?: string }>;
 }) {
   const { playerId } = await params;
   const scope = paramsToScope(await searchParams);
@@ -713,6 +713,7 @@ export default async function PlayerDetailPage({
               all: comparisons.all.signalSummary,
               league: comparisons.league.signalSummary,
               sameOrStronger: comparisons.sameOrStronger.signalSummary,
+              top5: comparisons.top5.signalSummary,
             }}
             leagueLabel={player.league}
           />

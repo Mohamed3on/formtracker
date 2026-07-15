@@ -71,16 +71,25 @@ export function ComparisonPanels({
   };
 
   const { underperformers, outperformers } = comparisons[scope];
-  const benchmarkSuffix = { all: "", league: "&bLeague=1", sameOrStronger: "&bStronger=1" }[scope];
+  const benchmarkSuffix = {
+    all: "",
+    league: "&bLeague=1",
+    sameOrStronger: "&bStronger=1",
+    top5: "&bTop5=1",
+  }[scope];
   const peerLabel = {
     all: "comparable",
     league: leagueLabel,
     sameOrStronger: "same or stronger league",
+    top5: "top 5 league",
   }[scope];
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-end gap-2">
+        <FilterButton active={scope === "top5"} onClick={() => toggleScope("top5")}>
+          Top 5 leagues
+        </FilterButton>
         <FilterButton
           active={scope === "sameOrStronger"}
           onClick={() => toggleScope("sameOrStronger")}

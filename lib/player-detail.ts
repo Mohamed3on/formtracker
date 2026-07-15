@@ -15,6 +15,7 @@ import {
   gamesScheduled,
   isSameOrStrongerLeague,
   missedPct,
+  TOP_5_LEAGUES,
 } from "@/lib/filter-players";
 import { extractClubIdFromLogoUrl, formatMarketValue } from "@/lib/format";
 import { normalizeForSearch } from "@/lib/normalize";
@@ -392,6 +393,7 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
     sameOrStronger: buildScope(
       comparisonPlayers.filter(isSameOrStrongerLeague(leagueValues, comparisonTarget.league)),
     ),
+    top5: buildScope(comparisonPlayers.filter((p) => TOP_5_LEAGUES.includes(p.league))),
   };
 
   const topClubmatesByNpga = [...clubmates]
@@ -469,7 +471,7 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
 }
 
 export const getPlayerDetailData = cache((playerId: string) =>
-  unstable_cache(() => computePlayerDetailData(playerId), [`player-detail-v6-${playerId}`], {
+  unstable_cache(() => computePlayerDetailData(playerId), [`player-detail-v7-${playerId}`], {
     revalidate: 43200,
     tags: ["form-analysis"],
   })(),
