@@ -4,6 +4,8 @@ import { getWcResults } from "@/lib/wc/results";
 import { getWcTeams } from "@/lib/wc/teams";
 import { getWcManagers } from "@/lib/wc/managers";
 import { playerLinks } from "@/lib/wc/linkable-nations";
+import { buildWcScorers } from "@/lib/wc/scorers";
+import { getMinutesValueData } from "@/lib/fetch-minutes-value";
 import { WcLive } from "./WcLive";
 
 // Re-render at most hourly so live results/standings stay fresh (the underlying
@@ -18,12 +20,17 @@ export const metadata = createPageMetadata({
 });
 
 export default async function WcLivePage() {
-  const [teams, results] = await Promise.all([getWcTeams(), getWcResults()]);
+  const [teams, results, players] = await Promise.all([
+    getWcTeams(),
+    getWcResults(),
+    getMinutesValueData(),
+  ]);
   const live = buildLiveModel(teams, results);
   const [links, managers] = await Promise.all([playerLinks(teams), getWcManagers(live.tracker)]);
+  const scorers = buildWcScorers(players);
   return (
     <div className="py-6 sm:py-10">
-      <WcLive live={live} playerLinks={links} managers={managers} />
+      <WcLive live={live} playerLinks={links} managers={managers} scorers={scorers} />
     </div>
   );
 }

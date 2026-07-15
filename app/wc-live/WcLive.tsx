@@ -8,8 +8,10 @@ import { fmtS } from "@/lib/wc/format";
 import type { ManagerInfo } from "@/app/types";
 import type { Card, TeamLite } from "@/lib/wc/model";
 import type { LiveModel, TrackerRow } from "@/lib/wc/live";
+import type { WcScorer } from "@/lib/wc/scorers";
 import { TeamCell } from "../wc/TeamCell";
 import { PlayersLink } from "../wc/PlayersLink";
+import { WcScorers } from "./WcScorers";
 import { ManagerSection } from "../components/ManagerPPGBadge";
 import "../wc/wc.css";
 
@@ -45,10 +47,12 @@ export function WcLive({
   live,
   playerLinks,
   managers,
+  scorers,
 }: {
   live: LiveModel;
   playerLinks: Record<string, string>;
   managers: Record<string, ManagerInfo>;
+  scorers: WcScorer[];
 }) {
   const { model, tracker, cardByKey, liveGroups, thirdPlace, started } = live;
   const { bracket, cardH, cardW } = model;
@@ -279,6 +283,8 @@ export function WcLive({
           )}
         </div>
       </div>
+
+      {scorers.length > 0 && <WcScorers scorers={scorers} started={started} />}
 
       <div className="section-title">Every Team by Market Value</div>
       <p className="hint">
