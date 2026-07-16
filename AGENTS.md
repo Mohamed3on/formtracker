@@ -62,6 +62,32 @@ Use `curl` (not WebFetch) to inspect Transfermarkt HTML — match the headers fr
 curl -s -L -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" "https://www.transfermarkt.com/x/leistungsdaten/spieler/294057" | grep -A1 'content-box-headline'
 ```
 
+## Transfermarkt Relay (CI only)
+
+Transfermarkt's WAF blocks GitHub's Azure ranges with an HTTP 200 and an **empty body** — no
+403, and no captcha to solve. Cloudflare and AWS egress are served normally, so CI relays every
+TM fetch through `workers/tm-relay`. Local and Vercel production leave `TM_RELAY_URL` unset and
+fetch direct, which is why debugging with plain `curl` above still works.
+
+```bash
+cd workers/tm-relay && bunx wrangler deploy   # deployed by hand; changes ~never
+bunx wrangler tail                            # live relay traffic
+```
+
+Rotating the secret means setting it in **both** places, or CI 403s:
+
+```bash
+S=$(openssl rand -hex 32)
+printf %s "$S" | bunx wrangler secret put RELAY_SECRET   # in workers/tm-relay
+printf %s "$S" | gh secret set TM_RELAY_SECRET
+```
+
+If TM ever blocks Cloudflare too (`[relay] upstream 200 len=0` in the Worker log, or
+`Rate limited (0b)` in the run), point `TM_RELAY_URL` at another unblocked host — AWS works.
+
+**The refresh alert skips when any `scraper-broken` issue is open.** Close it when you fix the
+thing, or you're blind to the next failure.
+
 ## Current Cache Tags
 
 - `underperformers` - Player underperformer candidates
