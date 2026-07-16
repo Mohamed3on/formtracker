@@ -51,6 +51,7 @@ jobs:
 
   refresh-minutes-value:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
       issues: write
@@ -122,7 +123,8 @@ jobs:
           bash scripts/ci-push.sh "chore: refresh minutes-value data" data/minutes-value.json data/updated-at.txt data/player-pool-mv.json data/player-pool-mv-updated-at.txt data/player-pool-scorers.json
 
       - name: Alert on failure
-        if: failure() && steps.refresh.outcome == 'failure'
+        # 'cancelled' covers the job timing out, which is how a wedged solver surfaces.
+        if: always() && (steps.refresh.outcome == 'failure' || steps.refresh.outcome == 'cancelled')
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -1,4 +1,4 @@
-import { tmFetch } from "./proxy";
+import { forceTmProxy, tmFetch } from "./proxy";
 
 const BASE_HEADERS: Record<string, string> = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
@@ -78,6 +78,9 @@ async function fetchPageInner(
       const html = await response.text();
       // Transfermarkt rate-limit responses are ~146 bytes — only these are worth retrying
       if (html.length > 500) return html;
+      // WAF also blocks datacenter IPs with a 200 and a near-empty body, which tmFetch's
+      // status check can't see. Latch here or every retry re-hits the same blocked IP.
+      forceTmProxy();
       console.warn(
         `[fetch] Rate limited (${html.length}b), retry ${attempt + 1}/${MAX_RETRIES}: ${url}`,
       );

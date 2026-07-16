@@ -268,6 +268,9 @@ async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise
         const cookie = execFileSync("bun", ["run", "scripts/solve-captcha.ts"], {
           encoding: "utf-8",
           stdio: ["pipe", "pipe", "inherit"],
+          // Without this the solver can wedge in Playwright and block the run
+          // until the job's own timeout kills it hours later.
+          timeout: 5 * 60_000,
         }).trim();
         process.env.TM_COOKIE = cookie;
         await writeFile("/tmp/tm-fresh-cookie.txt", cookie);
