@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { getNationalityHref } from "@/lib/format";
 
 // Build Transfermarkt landId -> current dataset nationality name from the players
 // source (/players reads the same file). The landId is stable and also embedded in
@@ -30,7 +31,7 @@ export async function playerLinks(
   const out: Record<string, string> = {};
   for (const t of teams) {
     const nat = byId.get(t.landId);
-    if (nat) out[t.name] = `/players?nat=${encodeURIComponent(nat)}`;
+    if (nat) out[t.name] = getNationalityHref(nat);
   }
   return out;
 }

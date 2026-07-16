@@ -68,6 +68,10 @@ export function getTeamDetailHref(clubId: string): string {
   return `/teams/${clubId}`;
 }
 
+export function getNationalityHref(nationality: string): string {
+  return `/players?nat=${encodeURIComponent(nationality)}`;
+}
+
 export function extractClubIdFromLogoUrl(url?: string): string | null {
   if (!url) return null;
   return url.match(/\/(\d+)\.png/)?.[1] ?? null;

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PositionDisplay } from "@/components/PositionDisplay";
 import { NationalityFlag } from "@/components/NationalityFlag";
 import { ClubLogo } from "@/components/ClubLogo";
-import { getTeamDetailHref } from "@/lib/format";
+import { getNationalityHref, getTeamDetailHref } from "@/lib/format";
 
 interface PlayerSubtitleProps {
   position: string;
@@ -38,7 +38,17 @@ export function PlayerSubtitle({
       {nationalityFlagUrl && (
         <>
           <span className="opacity-40">•</span>
-          <NationalityFlag url={nationalityFlagUrl} name={nationality} />
+          {nationality ? (
+            <Link
+              href={getNationalityHref(nationality)}
+              aria-label={`Players from ${nationality}`}
+              className="inline-flex transition-opacity hover:opacity-70"
+            >
+              <NationalityFlag url={nationalityFlagUrl} name={nationality} />
+            </Link>
+          ) : (
+            <NationalityFlag url={nationalityFlagUrl} />
+          )}
         </>
       )}
       <span className="opacity-40">•</span>
