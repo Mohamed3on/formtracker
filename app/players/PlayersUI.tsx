@@ -169,6 +169,39 @@ function ClubChip({ club, logoUrl }: { club: string; logoUrl?: string }) {
   );
 }
 
+function NationalityChip({
+  nationality,
+  flagUrl,
+  calledUp,
+  onSelect,
+}: {
+  nationality?: string;
+  flagUrl?: string;
+  calledUp?: boolean;
+  onSelect: (nationality: string) => void;
+}) {
+  // With no flag there is nothing left to show on mobile, where the name is hidden.
+  const layout = `${flagUrl ? "flex" : "hidden md:flex"} items-center gap-1.5 shrink-0`;
+  const inner = (
+    <>
+      <NationalityFlag url={flagUrl} name={nationality} calledUp={calledUp} />
+      <span className="hidden md:inline">{nationality}</span>
+    </>
+  );
+  return nationality ? (
+    <button
+      type="button"
+      onClick={() => onSelect(nationality)}
+      aria-label={`Show only players from ${nationality}`}
+      className={`${layout} hover:underline hover:text-text-primary transition-colors`}
+    >
+      {inner}
+    </button>
+  ) : (
+    <span className={layout}>{inner}</span>
+  );
+}
+
 interface CardContext {
   sortBy: SortKey;
   showCaps: boolean;
@@ -176,6 +209,7 @@ interface CardContext {
   showContract: boolean;
   formWindow: FormWindow;
   formGA: (player: MinutesValuePlayer) => number;
+  onNationality: (nationality: string) => void;
 }
 
 function PlayerCard({
@@ -202,23 +236,18 @@ function PlayerCard({
   const detailHref = getPlayerDetailHref(player.playerId);
 
   let nationalityDisplay: ReactNode = null;
-  if (player.nationalityFlagUrl) {
+  if (player.nationalityFlagUrl || player.nationality) {
     nationalityDisplay = (
       <>
-        <span className="opacity-40">·</span>
-        <NationalityFlag
-          url={player.nationalityFlagUrl}
-          name={player.nationality}
+        <span className={player.nationalityFlagUrl ? "opacity-40" : "hidden md:inline opacity-40"}>
+          ·
+        </span>
+        <NationalityChip
+          nationality={player.nationality}
+          flagUrl={player.nationalityFlagUrl}
           calledUp={player.isCurrentIntl}
+          onSelect={ctx.onNationality}
         />
-        <span className="hidden md:inline">{player.nationality}</span>
-      </>
-    );
-  } else if (player.nationality) {
-    nationalityDisplay = (
-      <>
-        <span className="hidden md:inline opacity-40">·</span>
-        <span className="hidden md:inline shrink-0">{player.nationality}</span>
       </>
     );
   }
@@ -966,6 +995,7 @@ export function PlayersUI({
                   showContract: contractYear !== null,
                   formWindow,
                   formGA: (pl) => getFormGA(pl, formWindow, includePen).total,
+                  onNationality: (nat) => fadeUpdate({ nat }),
                 }}
               />
             )}
