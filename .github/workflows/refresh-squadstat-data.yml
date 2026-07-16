@@ -23,32 +23,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  warm-caches:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Warm API caches
-        env:
-          PROD_URL: ${{ secrets.PRODUCTION_URL }}
-        run: |
-          echo "Warming analyze..."
-          ANALYZE=$(curl -sf "$PROD_URL/api/analyze" || echo '{}')
-
-          echo "Warming other endpoints in parallel..."
-          curl -sf "$PROD_URL/api/expected-position" > /dev/null &
-          curl -sf "$PROD_URL/api/injured" > /dev/null &
-          wait
-
-          echo "Warming manager pages..."
-          CLUB_IDS=$(echo "$ANALYZE" | jq -r '
-            [.analysis[]? | .topTeams[]?, .bottomTeams[]? | .clubId // empty]
-            | unique[]' 2>/dev/null || true)
-
-          for id in $CLUB_IDS; do
-            curl -sf "$PROD_URL/api/manager/$id" > /dev/null &
-          done
-          wait
-          echo "Done warming caches."
-
   refresh-minutes-value:
     runs-on: ubuntu-latest
     timeout-minutes: 20
