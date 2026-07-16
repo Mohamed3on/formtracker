@@ -90,7 +90,13 @@ thing, or you're blind to the next failure.
 
 ## Current Cache Tags
 
-- `underperformers` - Player underperformer candidates
-- `injured` - Injured players across all leagues
-- `team-form` - Team over/underperformers based on market value (route: `/expected-position`)
+This list must mirror `ALL_TAGS` in `/app/api/revalidate/route.ts` exactly — that's the
+fallback the header refresh button busts on any page without its own tag config.
+
+- `form-analysis` - League form tables and player detail (`lib/form-analysis.ts`, `lib/player-detail.ts`)
 - `manager` - Manager info from mitarbeiterhistorie page
+- `team-form` - Team over/underperformers based on market value (route: `/expected-position`)
+- `injured` - Injured players across all leagues
+- `biggest-movers` - Repeat market-value winners/losers
+- `wc-teams` - World Cup squads
+- `wc-live` - World Cup fixtures, knockout schedule, and results

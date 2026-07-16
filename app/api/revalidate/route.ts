@@ -6,7 +6,6 @@ const ALL_TAGS = [
   "manager",
   "team-form",
   "injured",
-  "player-recent-matches",
   "biggest-movers",
   "wc-teams",
   "wc-live",
