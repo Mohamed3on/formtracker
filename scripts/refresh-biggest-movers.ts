@@ -4,7 +4,7 @@ import { join } from "path";
 import { parseMarketValue } from "@/lib/parse-market-value";
 import { BASE_URL } from "@/lib/constants";
 import { withSlot, setMaxConcurrent } from "@/lib/fetch";
-import { tmFetch } from "@/lib/proxy";
+import { tmFetch } from "@/lib/tm-relay";
 import type { MarketValueMover, MarketValueMoversResult } from "@/app/types";
 
 setMaxConcurrent(3);
@@ -59,11 +59,7 @@ async function fetchWithRetry(url: string, referer: string, label: string): Prom
   return withSlot(async () => {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const response = await tmFetch(url, {
-        headers: {
-          ...AJAX_HEADERS,
-          Referer: referer,
-          ...(process.env.TM_COOKIE ? { Cookie: process.env.TM_COOKIE } : {}),
-        },
+        headers: { ...AJAX_HEADERS, Referer: referer },
       });
       if (!response.ok) {
         console.warn(`[${label}] HTTP ${response.status}, retry ${attempt + 1}/${MAX_RETRIES}`);

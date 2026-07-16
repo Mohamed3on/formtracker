@@ -1,14 +1,10 @@
-import { forceTmProxy, tmFetch } from "./proxy";
+import { tmFetch } from "./tm-relay";
 
 const BASE_HEADERS: Record<string, string> = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Cache-Control": "no-cache",
 };
-
-function getHeaders(): Record<string, string> {
-  return process.env.TM_COOKIE ? { ...BASE_HEADERS, Cookie: process.env.TM_COOKIE } : BASE_HEADERS;
-}
 
 const MAX_RETRIES = 5;
 const BASE_DELAY = 1000;
@@ -65,22 +61,23 @@ async function fetchPageInner(
   revalidate?: number,
   extraHeaders?: Record<string, string>,
 ): Promise<string> {
-  const headers = { ...getHeaders(), ...extraHeaders };
+  const headers = { ...BASE_HEADERS, ...extraHeaders };
   const cacheOpts =
     revalidate !== undefined ? { next: { revalidate } } : { cache: "no-store" as const };
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       const response = await tmFetch(url, { headers, ...cacheOpts });
       if (response.status >= 400) {
-        // 4xx/5xx = WAF block or server error — retrying won't help, need a new token
-        throw new Error(`HTTP ${response.status}`);
+        // 4xx/5xx = relay rejection, WAF block, or server error — retrying won't help.
+        // The relay explains itself in the body ("host not allowed", "forbidden"), so carry
+        // it into the error: the status alone can't tell a bad secret from a dead upstream.
+        const reason = await response.text().catch(() => "");
+        throw new Error(`HTTP ${response.status}${reason ? `: ${reason.slice(0, 120)}` : ""}`);
       }
       const html = await response.text();
-      // Transfermarkt rate-limit responses are ~146 bytes — only these are worth retrying
+      // Transfermarkt rate-limit responses are ~146 bytes — only these are worth retrying.
+      // A blocked IP answers 200 with an empty body, which lands here too.
       if (html.length > 500) return html;
-      // WAF also blocks datacenter IPs with a 200 and a near-empty body, which tmFetch's
-      // status check can't see. Latch here or every retry re-hits the same blocked IP.
-      forceTmProxy();
       console.warn(
         `[fetch] Rate limited (${html.length}b), retry ${attempt + 1}/${MAX_RETRIES}: ${url}`,
       );

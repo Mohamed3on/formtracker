@@ -1,6 +1,5 @@
 import { writeFile, readFile, mkdir } from "fs/promises";
 import { join } from "path";
-import { execFileSync } from "child_process";
 import {
   fetchMinutesValueRaw,
   fetchO30MostValuableRaw,
@@ -233,7 +232,7 @@ async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise
     `[refresh] ${Object.keys(cache).length} players served from cache, ${remaining.length} need fetching`,
   );
   console.log(
-    `[refresh] TM_COOKIE: ${process.env.TM_COOKIE ? `set (${process.env.TM_COOKIE.length} chars)` : "NOT SET"}`,
+    `[refresh] TM_RELAY_URL: ${process.env.TM_RELAY_URL ? "set — fetching via relay" : "NOT SET — fetching direct"}`,
   );
 
   for (let round = 0; round <= MAX_RETRY_ROUNDS && remaining.length > 0; round++) {
@@ -260,21 +259,6 @@ async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise
           failures++;
           failed.push(batch[j]);
         }
-      }
-
-      // If entire batch failed, cookie is dead — rotate immediately
-      if (failures === batch.length && batch.length > 1) {
-        console.log("[refresh] Cookie expired, solving fresh captcha...");
-        const cookie = execFileSync("bun", ["run", "scripts/solve-captcha.ts"], {
-          encoding: "utf-8",
-          stdio: ["pipe", "pipe", "inherit"],
-          // Without this the solver can wedge in Playwright and block the run
-          // until the job's own timeout kills it hours later.
-          timeout: 5 * 60_000,
-        }).trim();
-        process.env.TM_COOKIE = cookie;
-        await writeFile("/tmp/tm-fresh-cookie.txt", cookie);
-        console.log("[refresh] Rotated cookie, continuing...");
       }
 
       const failRate = failures / batch.length;

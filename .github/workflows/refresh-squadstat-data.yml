@@ -65,9 +65,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install Playwright Chromium
-        run: bunx playwright install --with-deps chromium
-
       - name: Restore player cache
         uses: actions/cache/restore@v4
         with:
@@ -78,38 +75,12 @@ jobs:
       - name: Run refresh scripts
         id: refresh
         env:
-          TM_COOKIE: ${{ secrets.TM_COOKIE }}
-          TM_2CAPTCHA_KEY: ${{ secrets.TM_2CAPTCHA_KEY }}
-          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
+          TM_RELAY_URL: ${{ secrets.TM_RELAY_URL }}
+          TM_RELAY_SECRET: ${{ secrets.TM_RELAY_SECRET }}
           FORCE_REFRESH: ${{ inputs.force_refresh && '1' || '0' }}
           STALE_HOURS: ${{ inputs.stale_hours }}
           SKIP_MINUTES_REGRESSION: ${{ inputs.skip_minutes_regression && '1' || '0' }}
         run: bun run scripts/refresh-minutes-value.ts
-
-      - name: Sync fresh cookie
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          # If the refresh script solved a fresh cookie, it writes it here
-          [ -f /tmp/tm-fresh-cookie.txt ] || exit 0
-          COOKIE=$(cat /tmp/tm-fresh-cookie.txt)
-          echo "Syncing fresh cookie to GitHub secret + Vercel..."
-          echo -n "$COOKIE" | gh secret set TM_COOKIE
-          PROJECT_ID="prj_wFW1sJsFd48VNhm9KWAN19vmLA2N"
-          TEAM_ID="team_0AB8ygPQlmDZKieEgjsCzIoD"
-          API="https://api.vercel.com"
-          AUTH="Authorization: Bearer $VERCEL_TOKEN"
-          ENV_ID=$(curl -sf -H "$AUTH" "$API/v9/projects/$PROJECT_ID/env?teamId=$TEAM_ID" \
-            | jq -r '.envs[] | select(.key == "TM_COOKIE") | .id' 2>/dev/null || true)
-          if [ -n "$ENV_ID" ]; then
-            curl -sf -X DELETE -H "$AUTH" "$API/v9/projects/$PROJECT_ID/env/$ENV_ID?teamId=$TEAM_ID" || true
-          fi
-          curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
-            -d "$(jq -n --arg v "$COOKIE" '{key:"TM_COOKIE",value:$v,target:["production"],type:"encrypted"}')" \
-            "$API/v10/projects/$PROJECT_ID/env?teamId=$TEAM_ID"
-          echo "Cookie synced."
 
       - name: Save player cache
         if: always()
@@ -123,7 +94,7 @@ jobs:
           bash scripts/ci-push.sh "chore: refresh minutes-value data" data/minutes-value.json data/updated-at.txt data/player-pool-mv.json data/player-pool-mv-updated-at.txt data/player-pool-scorers.json
 
       - name: Alert on failure
-        # 'cancelled' covers the job timing out, which is how a wedged solver surfaces.
+        # 'cancelled' covers the job hitting its timeout, which failure() does not catch.
         if: always() && (steps.refresh.outcome == 'failure' || steps.refresh.outcome == 'cancelled')
         env:
           GH_TOKEN: ${{ github.token }}
@@ -134,9 +105,13 @@ jobs:
           if [ -n "$EXISTING" ]; then
             echo "Alert issue #$EXISTING already open, skipping."
           else
-            BODY="The data refresh script failed. Transfermarkt may have changed their page structure again."
+            BODY="The data refresh failed. Check the run log first — the error carries the reason."
             BODY="$BODY"$'\n\n'"**Run:** $RUN_URL"
-            BODY="$BODY"$'\n\n'"Check \`lib/fetch-player-minutes.ts\` — the ceapi or HTML selectors likely need updating."
+            BODY="$BODY"$'\n\n'"\`HTTP 403: forbidden\` → TM_RELAY_SECRET drifted from the Worker's."
+            BODY="$BODY"$'\n'"\`HTTP 502\` → the relay reached Cloudflare but not Transfermarkt."
+            BODY="$BODY"$'\n'"\`Rate limited (0b)\` → Transfermarkt is now blocking Cloudflare too; repoint TM_RELAY_URL at another host."
+            BODY="$BODY"$'\n'"Parsed 0 players from a full page → selectors moved; check \`lib/fetch-player-minutes.ts\`."
+            BODY="$BODY"$'\n\n'"Worker logs: \`cd workers/tm-relay && bunx wrangler tail\`"
             gh issue create --title "Scraper broken: data refresh failed" --label "scraper-broken" --body "$BODY"
           fi
 
@@ -157,8 +132,8 @@ jobs:
       - name: Check for market value updates today
         id: check
         env:
-          TM_COOKIE: ${{ secrets.TM_COOKIE }}
-          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
+          TM_RELAY_URL: ${{ secrets.TM_RELAY_URL }}
+          TM_RELAY_SECRET: ${{ secrets.TM_RELAY_SECRET }}
         run: |
           if bun run scripts/check-mv-updates.ts; then
             echo "has_updates=true" >> "$GITHUB_OUTPUT"
@@ -184,8 +159,8 @@ jobs:
 
       - name: Run refresh script
         env:
-          TM_COOKIE: ${{ secrets.TM_COOKIE }}
-          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
+          TM_RELAY_URL: ${{ secrets.TM_RELAY_URL }}
+          TM_RELAY_SECRET: ${{ secrets.TM_RELAY_SECRET }}
         run: bun run scripts/refresh-biggest-movers.ts
 
       - name: Commit and push

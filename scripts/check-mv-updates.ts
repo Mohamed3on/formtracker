@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { tmFetch } from "@/lib/proxy";
+import { tmFetch } from "@/lib/tm-relay";
 
 /**
  * Checks if Transfermarkt has published market value updates within the last ~36 hours.
@@ -25,7 +25,7 @@ const HEADERS = {
 
 async function main() {
   const res = await tmFetch(URL, {
-    headers: { ...HEADERS, ...(process.env.TM_COOKIE ? { Cookie: process.env.TM_COOKIE } : {}) },
+    headers: HEADERS,
   });
   const html = await res.text();
 

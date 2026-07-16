@@ -2,7 +2,7 @@ import { parseProfileHeader } from "@/lib/transfermarkt";
 import type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage, withSlot } from "./fetch";
-import { tmFetch } from "./proxy";
+import { tmFetch } from "./tm-relay";
 import { parseMarketValue } from "./parse-market-value";
 import { extractClubIdFromLogoUrl } from "./format";
 import clubTypesData from "@/data/club-types.json";
@@ -83,12 +83,6 @@ const CEAPI_BASE_HEADERS: Record<string, string> = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
   Accept: "application/json",
 };
-
-function getCeapiHeaders(): Record<string, string> {
-  return process.env.TM_COOKIE
-    ? { ...CEAPI_BASE_HEADERS, Cookie: process.env.TM_COOKIE }
-    : CEAPI_BASE_HEADERS;
-}
 
 /** Domestic league competition ID → display name */
 export const LEAGUE_NAMES: Record<string, string> = {
@@ -388,7 +382,7 @@ export async function fetchPlayerMinutesRaw(
     fetchPage(`${BASE_URL}/x/leistungsdaten/spieler/${playerId}`),
     withSlot(() =>
       tmFetch(`${BASE_URL}/ceapi/performance-game/${playerId}`, {
-        headers: getCeapiHeaders(),
+        headers: CEAPI_BASE_HEADERS,
         cache: "no-store",
       }),
     ),
