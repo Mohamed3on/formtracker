@@ -121,7 +121,7 @@ export default function HowItWorksPage() {
             <p>
               <Term>PPG (Points Per Game)</Term> is the manager&apos;s average points per match at
               this club. The ranking (e.g. &ldquo;2/7&rdquo;) compares them to all managers at the
-              same club with a similar number of games, going back to 1995.
+              same club with a similar number of games, going back to 1992.
             </p>
           </div>
         </Section>

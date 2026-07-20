@@ -178,10 +178,10 @@ export async function getManagerInfo(
   const isCurrentManager = !endDate || endDate > now;
 
   const minMatches = firstManager.matches;
-  const since1995 = allManagers.filter((m) => {
+  const since1992 = allManagers.filter((m) => {
     const appointed = parseDate(m.appointedDate);
     return (
-      appointed && appointed.getFullYear() >= 1995 && m.matches >= minMatches && m.ppg !== null
+      appointed && appointed.getFullYear() >= 1992 && m.matches >= minMatches && m.ppg !== null
     );
   });
 
@@ -192,7 +192,7 @@ export async function getManagerInfo(
   // (the FS page). Restated rows are fresh objects; the parsed entries stay untouched.
   const comparable: ManagerHistoryEntry[] = officialOnly
     ? await Promise.all(
-        since1995.map(async (m) => {
+        since1992.map(async (m) => {
           if (m.ppg === null || !m.trainerId) return m;
           const totalPoints = Math.round(m.ppg * m.matches);
           const fs = await getFriendlyRecord(m.trainerId, clubId, m.appointedDate, m.endDate);
@@ -205,7 +205,7 @@ export async function getManagerInfo(
           };
         }),
       )
-    : since1995;
+    : since1992;
 
   const isIncumbent = (m: ManagerHistoryEntry) =>
     m.name === firstManager.name && m.appointedDate === firstManager.appointedDate;
@@ -224,7 +224,7 @@ export async function getManagerInfo(
     ppg: incumbent.ppg,
     isCurrentManager,
     ppgRank: rank > 0 ? rank : undefined,
-    totalComparableManagers: since1995.length > 0 ? since1995.length : undefined,
+    totalComparableManagers: since1992.length > 0 ? since1992.length : undefined,
     bestManager,
     worstManager,
     officialOnly,

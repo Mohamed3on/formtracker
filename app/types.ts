@@ -63,7 +63,12 @@ export interface AggregatedTeam {
   clubId: string;
   count: number;
   entries: { category: string; period: number; value: number }[];
-  stats: { points: number; goalDiff: number; goalsScored: number; goalsConceded: number };
+  stats: {
+    points: number;
+    goalDiff: number;
+    goalsScored: number;
+    goalsConceded: number;
+  };
 }
 
 export interface AnalysisResult {
@@ -90,7 +95,7 @@ export interface ManagerInfo {
   matches: number;
   ppg: number | null; // null if no matches or "-" in data
   isCurrentManager: boolean;
-  ppgRank?: number; // rank among managers with >= matches since 1995 (1 = best)
+  ppgRank?: number; // rank among managers with >= matches since 1992 (1 = best)
   totalComparableManagers?: number; // how many managers qualify for comparison
   bestManager?: ManagerTrivia; // best PPG among comparable managers
   worstManager?: ManagerTrivia; // worst PPG among comparable managers
@@ -229,7 +234,10 @@ export interface CeapiGame {
     opponent?: { clubId?: string };
   };
   statistics: {
-    generalStatistics: { positionId?: number | null; participationState?: string | null };
+    generalStatistics: {
+      positionId?: number | null;
+      participationState?: string | null;
+    };
     goalStatistics: {
       goalsScoredTotal?: number | null;
       assists?: number | null;

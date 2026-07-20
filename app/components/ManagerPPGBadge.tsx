@@ -93,7 +93,7 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
       className={`inline-flex shrink-0 cursor-help items-center gap-1 rounded px-1.5 py-0.5 text-[10px] @md:text-xs transition-opacity hover:opacity-80 ${tone}`}
     >
       {isOnly && (
-        <span aria-hidden title="Only manager with this many games since 1995">
+        <span aria-hidden title="Only manager with this many games since 1992">
           👑
         </span>
       )}
@@ -113,13 +113,13 @@ export function ManagerPPGBadge({ manager }: ManagerPPGBadgeProps) {
         <span className="font-value text-text-primary">{manager.ppg!.toFixed(2)}</span> PPG over{" "}
         <span className="font-value text-text-primary">{manager.matches}</span> games
         {isOnly ? (
-          <> — only manager with that many since 1995</>
+          <> — only manager with that many since 1992</>
         ) : (
           <>
             {" "}
             — {isBest ? "best" : isWorst ? "worst" : `#${manager.ppgRank}`} of{" "}
             <span className="font-value text-text-primary">{manager.totalComparableManagers}</span>{" "}
-            since 1995
+            since 1992
           </>
         )}
       </div>

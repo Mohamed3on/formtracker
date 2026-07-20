@@ -100,7 +100,7 @@ export function ManagerClient({ clubId }: { clubId: string }) {
                   <span className="font-value">{manager.totalComparableManagers}</span> by PPG
                 </span>
                 <InfoTip>
-                  Among managers with {manager.matches}+ games at this club since 1995.
+                  Among managers with {manager.matches}+ games at this club since 1992.
                 </InfoTip>
               </span>
             </>
@@ -110,7 +110,7 @@ export function ManagerClient({ clubId }: { clubId: string }) {
 
       {isOnly && (
         <p className="text-[11px] text-text-muted">
-          No other manager since 1995 has reached {manager.matches} games at this club.
+          No other manager since 1992 has reached {manager.matches} games at this club.
         </p>
       )}
 
