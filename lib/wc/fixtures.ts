@@ -50,7 +50,7 @@ function teamIn(cell: cheerio.Cheerio<any>): string | null {
 }
 
 async function fetchFixtures(): Promise<GroupFixture[]> {
-  const html = await fetchPage(FIXTURES_URL, 3600);
+  const html = await fetchPage(FIXTURES_URL, 86400);
   const $ = cheerio.load(html);
   const out: GroupFixture[] = [];
 
@@ -99,7 +99,7 @@ async function fetchFixtures(): Promise<GroupFixture[]> {
   return out;
 }
 
-/** Group-stage fixtures with live scores + matchday, refreshed hourly. */
+/** Group-stage fixtures with final scores + matchday. Tournament over — daily cache. */
 export const getWcFixtures = unstable_cache(
   async (): Promise<GroupFixture[]> => {
     try {
@@ -110,7 +110,7 @@ export const getWcFixtures = unstable_cache(
     }
   },
   ["wc-fixtures"],
-  { revalidate: 3600, tags: ["wc-live"] },
+  { revalidate: 86400, tags: ["wc-live"] },
 );
 
 // TM labels each knockout fixture "Ro32 1" … "FI"/"3rd"; map to the bracket model's
@@ -128,7 +128,7 @@ function koKey(cell: string): string | null {
 // The knockout box lists every bracket fixture with its kickoff date — even while the
 // teams are still "Winner Group A" placeholders — so the projected matchups get real dates.
 async function fetchKnockoutSchedule(): Promise<Record<string, Kick>> {
-  const html = await fetchPage(FIXTURES_URL, 3600);
+  const html = await fetchPage(FIXTURES_URL, 86400);
   const $ = cheerio.load(html);
   const out: Record<string, Kick> = {};
   const box = $(".content-box-headline")
@@ -161,5 +161,5 @@ export const getWcKnockoutSchedule = unstable_cache(
     }
   },
   ["wc-knockout-schedule"],
-  { revalidate: 3600, tags: ["wc-live"] },
+  { revalidate: 86400, tags: ["wc-live"] },
 );

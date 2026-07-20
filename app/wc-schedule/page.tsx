@@ -6,8 +6,8 @@ import { buildLiveModel } from "@/lib/wc/live";
 import { buildMatchups } from "@/lib/wc/matchups";
 import { WcSchedule } from "./WcSchedule";
 
-// Re-render at most hourly so live scores stay fresh; the data caches are 1h too.
-export const revalidate = 3600;
+// The tournament is over and results are final — daily cache like the rest of the site.
+export const revalidate = 86400;
 
 export const metadata = createPageMetadata({
   title: "World Cup 2026 — Full Schedule by Squad Value",

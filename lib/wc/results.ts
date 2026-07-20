@@ -60,7 +60,7 @@ function teamIn(cell: cheerio.Cheerio<any>): string | null {
 }
 
 async function fetchResults(): Promise<WcResults> {
-  const html = await fetchPage(FIXTURES_URL, 3600);
+  const html = await fetchPage(FIXTURES_URL, 86400);
   const $ = cheerio.load(html);
   const groups: Record<string, GroupData> = {};
   let started = false;
@@ -143,7 +143,8 @@ async function fetchResults(): Promise<WcResults> {
   return { started, fetchedAt: Date.now(), groups, ko };
 }
 
-/** Live World Cup results from Transfermarkt (group standings + knockout), refreshed every 6h. */
+/** Final World Cup results from Transfermarkt (group standings + knockout). The tournament
+ *  is over, so a daily cache is plenty. */
 export const getWcResults = unstable_cache(
   async (): Promise<WcResults> => {
     try {
@@ -154,5 +155,5 @@ export const getWcResults = unstable_cache(
     }
   },
   ["wc-live-results"],
-  { revalidate: 3600, tags: ["wc-live"] },
+  { revalidate: 86400, tags: ["wc-live"] },
 );

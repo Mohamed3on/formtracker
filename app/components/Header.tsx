@@ -93,6 +93,12 @@ function SpinnerIcon({ className }: { className?: string }) {
 
 const navItems = [
   { href: "/", label: "Home", desktopHidden: true },
+  { href: "/form", label: "Recent Form" },
+  { href: "/expected-position", label: "Value vs Table" },
+  { href: "/players", label: "Players" },
+  { href: "/value-analysis", label: "Over/Under" },
+  { href: "/injured", label: "Injury Impact" },
+  { href: "/biggest-movers", label: "Biggest Movers" },
   {
     href: "/wc-live",
     label: "World Cup",
@@ -101,12 +107,6 @@ const navItems = [
       { href: "/wc-schedule", label: "Full Schedule" },
     ],
   },
-  { href: "/form", label: "Recent Form" },
-  { href: "/expected-position", label: "Value vs Table" },
-  { href: "/players", label: "Players" },
-  { href: "/value-analysis", label: "Over/Under" },
-  { href: "/injured", label: "Injury Impact" },
-  { href: "/biggest-movers", label: "Biggest Movers" },
 ] as const;
 
 type NavLink = { href: string; label: string };

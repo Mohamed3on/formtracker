@@ -66,12 +66,9 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
     });
   });
 
-  // Client clock (data only refreshes hourly) so a fixture flips to "live" the moment it kicks off.
+  // Client clock, set once on mount (SSR renders without it). The tournament is over,
+  // so no minute ticker — nothing flips to "live" anymore.
   useIsoLayoutEffect(() => setNow(Date.now()), []);
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
 
   const max = Math.max(1, ...rows.map((r) => r.sum));
   // Surface the advanced/knocked-out legend only once a knockout tie has actually settled.
