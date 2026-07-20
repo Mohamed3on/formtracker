@@ -102,10 +102,7 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
         </h1>
         <p className="mt-2 max-w-prose text-sm text-text-secondary">
           All {rows.length} matches — group fixtures and the knockout bracket — ranked by combined
-          squad market value (live). Group scores fill in as games are played;{" "}
-          <b className="text-amber-400">knockout</b> matchups are{" "}
-          <b className="text-amber-400">projected</b> by value (higher value advances) until the
-          real bracket fills in. Kickoffs in <b>CEST (UTC+2)</b>.
+          squad market value, with every score final. Kickoffs in <b>CEST (UTC+2)</b>.
         </p>
         <div className="mt-4 flex items-center gap-3">
           <span className="text-xs uppercase tracking-wider text-text-muted">Sort</span>
@@ -126,12 +123,6 @@ export function WcSchedule({ rows }: { rows: MatchupRow[] }) {
               ✓ Confirmed
             </span>
             qualified into the slot
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="rounded-full border border-dashed border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-400">
-              Proj
-            </span>
-            squad-value pick — chip shows why (group spot, best third…)
           </span>
           {anyDecided && (
             <>

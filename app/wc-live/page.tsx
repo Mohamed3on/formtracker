@@ -13,9 +13,9 @@ import { WcLive } from "./WcLive";
 export const revalidate = 86400;
 
 export const metadata = createPageMetadata({
-  title: "World Cup 2026 — Live vs Expectations",
+  title: "World Cup 2026 — Final Results vs Expectations",
   description:
-    "Live World Cup 2026 tracker: real results overwriting the market-value prediction, showing which teams beat or fall short of the round their squad value seeds them into.",
+    "World Cup 2026 final results vs the market-value prediction: which teams beat or fell short of the round their squad value seeded them into.",
   path: "/wc-live",
 });
 

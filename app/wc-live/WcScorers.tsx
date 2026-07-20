@@ -55,7 +55,7 @@ export function WcScorers({ scorers, started }: { scorers: WcScorer[]; started: 
 
   return (
     <>
-      <div className="section-title">Top Scorers {started ? "· live" : "· projected"}</div>
+      <div className="section-title">Top Scorers {started ? "· final" : "· projected"}</div>
       <p className="hint">
         Every player&apos;s World Cup goals and assists — <b>non-penalty by default</b>, ties broken
         by fewer minutes played. Tap a metric to re-sort; toggle Penalties to fold spot-kicks back

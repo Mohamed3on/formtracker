@@ -234,12 +234,11 @@ export function WcLive({
   return (
     <div className="wc-root" onClick={onCanvasClick}>
       <header className="wc-hero">
-        <div className="kicker">FIFA World Cup 2026 · Live vs the value model</div>
+        <div className="kicker">FIFA World Cup 2026 · Final results vs the value model</div>
         <h1 className="wc-title">Expectations vs Reality</h1>
         <p className="rule">
-          The market-value prediction, getting overwritten by real results as they come in.{" "}
-          <b>vs Exp</b> tracks who is beating or falling short of the round their squad value seeds
-          them into.{" "}
+          The market-value prediction, overwritten by the real results. <b>vs Exp</b> tracks who
+          beat or fell short of the round their squad value seeded them into.{" "}
           <Link href="/wc-schedule" className="wc-link">
             See the full schedule →
           </Link>
@@ -253,16 +252,16 @@ export function WcLive({
           every hour).
         </div>
       ) : (
-        <div className="wc-banner live">
-          🔴 Live · <b>{overRows.length}</b> teams projected ahead of their value seeding,{" "}
-          <b>{underRows.length}</b> behind. Refreshed every hour.
+        <div className="wc-banner">
+          🏁 Full time · <b>{overRows.length}</b> teams finished ahead of their value seeding,{" "}
+          <b>{underRows.length}</b> behind.
         </div>
       )}
 
       <div className="section-title">Over / Under-achievers</div>
       <p className="hint">
-        Measured in knockout rounds projected — real results first, then value — vs the round each
-        squad&apos;s market value seeds it into.
+        Measured in knockout rounds reached vs the round each squad&apos;s market value seeded it
+        into.
         {!started && " Projections only — nothing decided yet."}
       </p>
       <div className="tracker">
@@ -288,16 +287,12 @@ export function WcLive({
 
       <div className="section-title">Every Team by Market Value</div>
       <p className="hint">
-        Every squad ranked by value, with the round it&apos;s <b>Projected</b> to reach — real
-        results first, then value — against the <b>Exp</b> round its value seeds it into.{" "}
-        <b>Click a knockout team</b> to trace its run below.
+        Every squad ranked by value, with the round it <b>Reached</b> against the <b>Exp</b> round
+        its value seeded it into. <b>Click a knockout team</b> to trace its run below.
       </p>
       <div className="bkey mv-key">
         <span className="item">
           <span className="pill p-r32 real">Reached</span> result is final
-        </span>
-        <span className="item">
-          <span className="pill p-r32 proj">Projected</span> by squad value
         </span>
       </div>
       <div className="mv-grid">
@@ -321,11 +316,10 @@ export function WcLive({
         />
       </div>
 
-      <div className="section-title">The Bracket {started ? "· live" : "· predicted"}</div>
+      <div className="section-title">The Bracket {started ? "· final" : "· predicted"}</div>
       <p className="hint">
-        Each side turns <b>confirmed</b> the moment its real team qualifies in — dashed sides are
-        the squad-value projection until then, and a played tie shows its score.{" "}
-        <b>Hover or click</b> a team to trace its run.
+        The bracket as it was played — every tie shows its final score. <b>Hover or click</b> a team
+        to trace its run.
         {pinned && (
           <>
             {" "}
@@ -336,12 +330,6 @@ export function WcLive({
       <div className="bkey">
         <span className="item">
           <span className="sw conf">✓</span> Confirmed — qualified into the slot
-        </span>
-        <span className="item">
-          <span className="sw proj" /> Projected by squad value
-        </span>
-        <span className="item">
-          <span className="sw adv" /> Projected to advance
         </span>
       </div>
       <div ref={scrollRef} className="full-bleed wc-bracket-scroll" style={{ scrollMarginTop: 72 }}>
@@ -431,7 +419,7 @@ export function WcLive({
       </div>
 
       <div className="section-title">
-        Best Third-Placed Race {started ? "· live" : "· projected"}
+        Best Third-Placed Race {started ? "· final" : "· projected"}
       </div>
       <p className="hint">
         Eight of the twelve third-placed teams advance to the Round of 32, ranked by points, then
@@ -499,8 +487,7 @@ export function WcLive({
       </div>
 
       <div className="wc-foot">
-        Live data from Transfermarkt · value seeding from current squad market values · refreshed
-        every hour.
+        Final results from Transfermarkt · value seeding from squad market values · refreshed daily.
       </div>
     </div>
   );
@@ -530,7 +517,7 @@ function LiveTable({
           <th>#</th>
           <th>Team</th>
           <th className="r">Value</th>
-          <th>Projected</th>
+          <th>Reached</th>
           <th className="mv-exp">Exp</th>
           <th className="r">vs Exp</th>
         </tr>

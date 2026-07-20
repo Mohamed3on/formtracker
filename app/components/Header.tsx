@@ -103,7 +103,7 @@ const navItems = [
     href: "/wc-live",
     label: "World Cup",
     children: [
-      { href: "/wc-live", label: "Live Tracker" },
+      { href: "/wc-live", label: "Final Results" },
       { href: "/wc-schedule", label: "Full Schedule" },
     ],
   },

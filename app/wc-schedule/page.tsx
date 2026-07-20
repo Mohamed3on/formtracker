@@ -12,7 +12,7 @@ export const revalidate = 86400;
 export const metadata = createPageMetadata({
   title: "World Cup 2026 — Full Schedule by Squad Value",
   description:
-    "Every World Cup 2026 match — group fixtures and projected knockout games — ranked by combined squad market value, with live scores, kickoff dates and times.",
+    "Every World Cup 2026 match — group fixtures and knockout games — ranked by combined squad market value, with final scores, kickoff dates and times.",
   path: "/wc-schedule",
 });
 
