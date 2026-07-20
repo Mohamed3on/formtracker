@@ -29,19 +29,19 @@ export function ManagerClient({ clubId }: { clubId: string }) {
   const distinction = isOnly
     ? {
         Icon: Crown,
-        label: "Longest-serving since '95",
+        label: "Longest-serving since '92",
         pill: "border-accent-gold/30 bg-accent-gold/10 text-accent-gold shadow-[0_0_18px_rgba(255,215,0,0.16)]",
       }
     : isBest
       ? {
           Icon: Trophy,
-          label: "Best PPG since '95",
+          label: "Best PPG since '92",
           pill: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
         }
       : isWorst
         ? {
             Icon: TriangleAlert,
-            label: "Worst PPG since '95",
+            label: "Worst PPG since '92",
             pill: "border-red-500/30 bg-red-500/10 text-red-400",
           }
         : null;
