@@ -2,6 +2,7 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { MarketValueMover, MinutesValuePlayer, PlayerStats } from "@/app/types";
 import { findRepeatLosers, findRepeatWinners } from "@/lib/biggest-movers";
+import { getDataVersion } from "@/lib/data-version";
 import {
   applyStatsToggles,
   getMinutesValueData,
@@ -470,12 +471,14 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
   };
 }
 
-export const getPlayerDetailData = cache((playerId: string) =>
-  unstable_cache(() => computePlayerDetailData(playerId), [`player-detail-v7-${playerId}`], {
-    revalidate: 43200,
-    tags: ["form-analysis"],
-  })(),
-);
+export const getPlayerDetailData = cache(async (playerId: string) => {
+  const dataVersion = await getDataVersion();
+  return unstable_cache(
+    () => computePlayerDetailData(playerId),
+    [`player-detail-v7-${playerId}`, dataVersion],
+    { revalidate: 43200, tags: ["form-analysis"] },
+  )();
+});
 
 export function formatTrendLabel(trend: PlayerTrend): string {
   const updates = trend.appearances.length;

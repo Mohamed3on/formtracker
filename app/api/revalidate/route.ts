@@ -1,15 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-const ALL_TAGS = [
-  "form-analysis",
-  "manager",
-  "team-form",
-  "injured",
-  "biggest-movers",
-  "wc-teams",
-  "wc-live",
-];
+const ALL_TAGS = ["form-analysis", "manager", "team-form", "injured", "wc-teams", "wc-live"];
 
 export async function POST(request: NextRequest) {
   try {

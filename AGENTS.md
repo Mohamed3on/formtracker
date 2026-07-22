@@ -54,6 +54,12 @@ revalidateTag("your-new-tag");
 
 This ensures the header refresh button properly busts all caches.
 
+**Caches over committed `data/*.json` files are different.** `unstable_cache` entries survive
+deployments, so they go stale the moment CI commits fresh data. Plain file reads (see
+`lib/biggest-movers.ts`) need no `unstable_cache` at all — they're fresh every deploy. If the
+derived computation is expensive enough to cache (see `lib/player-detail.ts`), include
+`getDataVersion()` from `lib/data-version.ts` in the cache key so each data deploy misses cleanly.
+
 ## Debugging Transfermarkt Pages
 
 Use `curl` (not WebFetch) to inspect Transfermarkt HTML — match the headers from `lib/fetch.ts`:
@@ -97,6 +103,5 @@ fallback the header refresh button busts on any page without its own tag config.
 - `manager` - Manager info from mitarbeiterhistorie page
 - `team-form` - Team over/underperformers based on market value (route: `/expected-position`)
 - `injured` - Injured players across all leagues
-- `biggest-movers` - Repeat market-value winners/losers
 - `wc-teams` - World Cup squads
 - `wc-live` - World Cup fixtures, knockout schedule, and results
