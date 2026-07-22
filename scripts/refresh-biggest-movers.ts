@@ -91,7 +91,9 @@ function parsePeriodMovers(html: string, date: string): MarketValueMover[] {
         name: player.name,
         position: player.position,
         age: parseInt(row.text(4), 10) || 0,
-        club: row.link(2).title,
+        // Badge title, not anchor title: TM doubles the anchor's title for
+        // pseudo-clubs ("Without ClubWithout Club" on vereinslos rows)
+        club: row.imageTitle(2) || row.link(2).title,
         clubLogoUrl: row.image(2),
         nationality: row.imageTitle(3),
         currentValue: parseMarketValue(
