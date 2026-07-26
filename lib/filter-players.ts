@@ -152,9 +152,14 @@ export function displayAvailable(p: {
   return gamesAvailable(p) + (p.intlAppearances ?? 0);
 }
 
+/** Value constraint for minutes benchmark peers. Default (undefined) keeps the per-list
+ *  behavior: pricier-or-equal for "playing less", cheaper-or-equal for "playing more". */
+export type MinutesValueFilter = "pricier" | "cheaper" | "any";
+
 /** Split players into those playing less and more minutes than the target, sorted for display.
  *  "Playing less" = same-or-higher value, available for same-or-more games yet fewer minutes (had opportunity but didn't play).
  *  "Playing more" = same-or-lower value, available for same-or-fewer games yet more minutes (played more despite less opportunity/value).
+ *  Pass `valueFilter` to override the value constraint on both lists ("any" drops it entirely).
  *  Position rank is also enforced so e.g. CBs (who naturally play more) aren't compared against CFs. */
 export function filterMinutesBenchmark<
   T extends {
@@ -167,9 +172,20 @@ export function filterMinutesBenchmark<
     position: string;
     playedPosition?: string;
   },
->(players: T[], target: T): { playingLess: T[]; playingMore: T[] } {
+>(
+  players: T[],
+  target: T,
+  valueFilter?: MinutesValueFilter,
+): { playingLess: T[]; playingMore: T[] } {
   const benchAvail = gamesAvailable(target);
   const targetRank = getPositionClassRank(effectivePosition(target));
+  const valueOk = (p: T, fallback: MinutesValueFilter) => {
+    const filter = valueFilter ?? fallback;
+    if (filter === "any") return true;
+    return filter === "pricier"
+      ? p.marketValue >= target.marketValue
+      : p.marketValue <= target.marketValue;
+  };
   const playingLess: T[] = [];
   const playingMore: T[] = [];
   for (const p of players) {
@@ -178,11 +194,10 @@ export function filterMinutesBenchmark<
     const pPos = effectivePosition(p);
     const pRank = getPositionClassRank(pPos);
     if (p.minutes <= target.minutes) {
-      if (p.marketValue >= target.marketValue && pAvail >= benchAvail && pRank <= targetRank)
-        playingLess.push(p);
+      if (valueOk(p, "pricier") && pAvail >= benchAvail && pRank <= targetRank) playingLess.push(p);
     } else {
       if (
-        p.marketValue <= target.marketValue &&
+        valueOk(p, "cheaper") &&
         pAvail <= benchAvail &&
         pRank >= targetRank &&
         pPos !== "Goalkeeper"

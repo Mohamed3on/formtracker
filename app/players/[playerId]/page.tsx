@@ -9,6 +9,8 @@ import { getPlayerDetailData, seasonNpga, type PlayerRankings } from "@/lib/play
 import { paramsToScope } from "@/lib/comparison-scope";
 import { getPlayerRecentMatches } from "@/lib/player-recent-matches";
 import { displayAvailable } from "@/lib/filter-players";
+import { MIN_COMPARISON_COUNT } from "@/lib/value-analysis";
+import { InfoTip } from "@/app/components/InfoTip";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,6 +26,7 @@ import { PlayerSubtitle } from "@/components/PlayerSubtitle";
 import { timeAgo } from "@/app/components/DataLastUpdated";
 import { ComparisonPanels } from "./ComparisonPanels";
 import { HeroSignalBadges } from "./HeroSignalBadges";
+import { MinutesBenchmarkSection } from "./MinutesBenchmarkSection";
 import { DetailDeck } from "@/components/DetailDeck";
 import { HeroMetric } from "@/components/HeroMetric";
 import { SectionPanel } from "@/components/SectionPanel";
@@ -180,70 +183,6 @@ function formatShortDate(value: string): string {
     month: "short",
     day: "numeric",
   }).format(date);
-}
-
-function MinutesBenchmarkPanel({
-  title,
-  count,
-  players,
-  benchmarkUrl,
-  emptyLabel,
-  accentClass,
-}: {
-  title: string;
-  count: number;
-  players: MinutesValuePlayer[];
-  benchmarkUrl: string;
-  emptyLabel: string;
-  accentClass: string;
-}) {
-  return (
-    <SectionPanel
-      title={`${title} (${count ?? players.length})`}
-      aside={
-        <Link
-          href={benchmarkUrl}
-          className="text-xs text-text-secondary transition-colors hover:text-text-primary"
-        >
-          Full benchmark →
-        </Link>
-      }
-    >
-      <div className="space-y-2">
-        {players.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
-            {emptyLabel}
-          </div>
-        ) : (
-          players.slice(0, 6).map((p) => (
-            <Link
-              key={p.playerId}
-              href={getPlayerDetailHref(p.playerId)}
-              className="flex items-center gap-3 rounded-xl border border-border-subtle bg-elevated p-2.5 transition-colors hover:border-border-medium hover:bg-card-hover"
-            >
-              <PlayerAvatar
-                imageUrl={p.imageUrl}
-                name={p.name}
-                size="sm"
-                className="border border-border-subtle"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-text-primary">{p.name}</p>
-                <p className="mt-0.5 text-xs text-text-secondary">
-                  {p.club} · {p.marketValueDisplay}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className={`font-value text-sm ${accentClass}`}>
-                  {p.minutes.toLocaleString()}&apos;
-                </p>
-              </div>
-            </Link>
-          ))
-        )}
-      </div>
-    </SectionPanel>
-  );
 }
 
 function RecentMatchCard({ match }: { match: RecentGameStats }) {
@@ -590,6 +529,8 @@ export default async function PlayerDetailPage({
   } = data;
   const { signalSummary } = comparisons.all;
   const fallbackMatchCount = player.recentForm?.length ?? 0;
+  const peersPlayingLess = minutesBenchmark.pricier.playingLessCount;
+  const peersPlayingMore = minutesBenchmark.cheaper.playingMoreCount;
 
   return (
     <DetailPageShell backHref="/players" backLabel="Back to player explorer">
@@ -717,12 +658,23 @@ export default async function PlayerDetailPage({
             }}
             leagueLabel={player.league}
           />
-          {(minutesBenchmark.playingLessCount ?? minutesBenchmark.playingLess.length) === 0 &&
-            (minutesBenchmark.playingMoreCount ?? minutesBenchmark.playingMore.length) > 0 && (
-              <SignalBadge className="border-accent-cold-border bg-accent-cold-glow text-accent-cold-soft">
-                Fewest minutes among comparable peers
-              </SignalBadge>
-            )}
+          {peersPlayingLess === 0 && peersPlayingMore >= MIN_COMPARISON_COUNT && (
+            <SignalBadge className="border-accent-cold-border bg-accent-cold-glow text-accent-cold-soft">
+              Fewest minutes among {peersPlayingMore} comparable peers
+              <InfoTip className="ml-1">
+                <p>
+                  No player worth the same or more — with as many games available, in a
+                  same-or-more-defensive role — has played fewer minutes than {player.name} this
+                  season.
+                </p>
+                <p className="mt-1.5">
+                  Meanwhile {peersPlayingMore} players worth the same or less, with no more
+                  available games, have played more. Based on all tracked leagues — see the Minutes
+                  section below.
+                </p>
+              </InfoTip>
+            </SignalBadge>
+          )}
           <Suspense>
             <PlayerInjuryBadge playerId={player.playerId} />
           </Suspense>
@@ -1015,24 +967,11 @@ export default async function PlayerDetailPage({
         />
 
         {/* Minutes tab */}
-        <section className="grid gap-4 lg:grid-cols-2">
-          <MinutesBenchmarkPanel
-            title="Playing less"
-            count={minutesBenchmark.playingLessCount}
-            players={minutesBenchmark.playingLess}
-            benchmarkUrl={`/value-analysis?id=${player.playerId}&name=${encodeURIComponent(player.name)}&mode=mins&tab=less`}
-            emptyLabel="No same-or-higher value players are playing fewer minutes."
-            accentClass="text-accent-cold-soft"
-          />
-          <MinutesBenchmarkPanel
-            title="Playing more"
-            count={minutesBenchmark.playingMoreCount}
-            players={minutesBenchmark.playingMore}
-            benchmarkUrl={`/value-analysis?id=${player.playerId}&name=${encodeURIComponent(player.name)}&mode=mins&tab=more`}
-            emptyLabel="No same-or-lower value players are playing more minutes."
-            accentClass="text-accent-hot"
-          />
-        </section>
+        <MinutesBenchmarkSection
+          benchmark={minutesBenchmark}
+          playerId={player.playerId}
+          playerName={player.name}
+        />
 
         <section className="grid gap-4 lg:grid-cols-[0.34fr_0.66fr]">
           <SectionPanel title="Standing within the club">

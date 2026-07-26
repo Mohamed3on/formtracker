@@ -25,6 +25,7 @@ import {
   filterMinutesBenchmark,
   missedPct,
   uniqueFilterOptions,
+  type MinutesValueFilter,
 } from "@/lib/filter-players";
 import { countComparisons, MIN_COMPARISON_COUNT } from "@/lib/value-analysis";
 import { applyStatsToggles, toPlayerStats } from "@/lib/stats-toggles";
@@ -48,6 +49,12 @@ import type { PlayerStats, MinutesValuePlayer, InjuryMap } from "@/app/types";
 
 type Mode = "ga" | "mins";
 type CompareTab = "less" | "more";
+const MINS_VALUE_FILTERS = new Set<string>(["pricier", "cheaper", "any"]);
+const MINS_VALUE_PHRASE: Record<MinutesValueFilter, string> = {
+  pricier: "same-or-higher value",
+  cheaper: "same-or-lower value",
+  any: "comparable",
+};
 type DiscoverySortKey = "count" | "value-asc" | "value-desc" | "ga-desc" | "ga-asc";
 const DISCOVERY_SORT_KEYS = new Set<string>([
   "count",
@@ -1036,6 +1043,14 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
   const maxMissedRaw = params.get("maxMiss") ? parseInt(params.get("maxMiss")!) : NaN;
   const maxMissedPct = Number.isNaN(maxMissedRaw) ? null : maxMissedRaw;
   const minsTop5Only = params.get("mTop5") === "1";
+  const minsValueRaw = params.get("mVal");
+  const minsValueFilter =
+    minsValueRaw && MINS_VALUE_FILTERS.has(minsValueRaw)
+      ? (minsValueRaw as MinutesValueFilter)
+      : null;
+  // Until explicitly chosen, each tab keeps its natural default (pricier for Less, cheaper for More)
+  const minsLessFilter = minsValueFilter ?? "pricier";
+  const minsMoreFilter = minsValueFilter ?? "cheaper";
 
   // ── G+A benchmark (computed client-side from data already on the page) ──
   const gaData = useMemo(
@@ -1112,8 +1127,8 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
   const { playingLess, playingMore } = useMemo(() => {
     if (!minsSelected)
       return { playingLess: [] as MinutesValuePlayer[], playingMore: [] as MinutesValuePlayer[] };
-    return filterMinutesBenchmark(initialData, minsSelected);
-  }, [minsSelected, initialData]);
+    return filterMinutesBenchmark(initialData, minsSelected, minsValueFilter ?? undefined);
+  }, [minsSelected, initialData, minsValueFilter]);
 
   // ── Minutes discovery list ──
   const minsClubOptions = useMemo(
@@ -1505,14 +1520,38 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
                     matches the player has been unavailable for (injury, suspension, etc.).
                   </p>
                   <p className="mt-1.5">
-                    &ldquo;Playing Less&rdquo; shows equally or more expensive players getting fewer
-                    minutes. &ldquo;Playing More&rdquo; shows equally or cheaper players getting
-                    more minutes despite fewer available games.
+                    &ldquo;Playing Less&rdquo; shows peers getting fewer minutes despite equal or
+                    more available games. &ldquo;Playing More&rdquo; shows peers getting more
+                    minutes despite equal or fewer available games. The peer value toggle controls
+                    which side of the price tag they come from.
+                  </p>
+                  <p className="mt-1.5">
+                    Positions are matched so natural rotation doesn&apos;t skew results: only
+                    same-or-more-defensive peers count as playing less, and only
+                    same-or-more-attacking peers count as playing more.
                   </p>
                 </InfoTip>
               </p>
 
               <section>
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
+                    Peer value
+                  </span>
+                  <ToggleGroup
+                    type="single"
+                    size="sm"
+                    value={minsTab === "less" ? minsLessFilter : minsMoreFilter}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      update({ mVal: v });
+                    }}
+                  >
+                    <ToggleGroupItem value="pricier">Same or pricier</ToggleGroupItem>
+                    <ToggleGroupItem value="cheaper">Same or cheaper</ToggleGroupItem>
+                    <ToggleGroupItem value="any">Any value</ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
                 <Tabs value={minsTab} onValueChange={(v) => push({ tab: v === "less" ? null : v })}>
                   <TabsList className="w-full mb-4">
                     <TabsTrigger value="less" className="flex-1 gap-2">
@@ -1533,7 +1572,7 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
                       <div className="rounded-xl p-10 text-center animate-fade-in bg-card border border-border-subtle">
                         <p className="font-medium text-lg text-text-primary">No results</p>
                         <p className="text-sm mt-1 text-text-muted">
-                          No same-or-higher value players have fewer minutes than{" "}
+                          No {MINS_VALUE_PHRASE[minsLessFilter]} players have fewer minutes than{" "}
                           {minsSelected.name}
                         </p>
                       </div>
@@ -1562,7 +1601,8 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
                       <div className="rounded-xl p-10 text-center animate-fade-in bg-card border border-border-subtle">
                         <p className="font-medium text-lg text-text-primary">No results</p>
                         <p className="text-sm mt-1 text-text-muted">
-                          No same-or-lower value players have more minutes than {minsSelected.name}
+                          No {MINS_VALUE_PHRASE[minsMoreFilter]} players have more minutes than{" "}
+                          {minsSelected.name}
                         </p>
                       </div>
                     ) : (

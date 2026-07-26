@@ -17,6 +17,7 @@ import {
   isSameOrStrongerLeague,
   missedPct,
   TOP_5_LEAGUES,
+  type MinutesValueFilter,
 } from "@/lib/filter-players";
 import { extractClubIdFromLogoUrl, formatMarketValue } from "@/lib/format";
 import { normalizeForSearch } from "@/lib/normalize";
@@ -104,12 +105,16 @@ export interface PlayerSignalSummary {
   discoveryThreshold: number;
 }
 
-export interface MinutesBenchmark {
+export interface MinutesBenchmarkLists {
   playingLess: MinutesValuePlayer[];
   playingMore: MinutesValuePlayer[];
   playingLessCount: number;
   playingMoreCount: number;
 }
+
+/** Benchmark lists per peer-value filter; the UI defaults to pricier for
+ *  "playing less" and cheaper for "playing more" (the signal pairing). */
+export type MinutesBenchmark = Record<MinutesValueFilter, MinutesBenchmarkLists>;
 
 export interface SubgroupRanking {
   label: string;
@@ -405,7 +410,15 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
     })
     .slice(0, 6);
 
-  const { playingLess, playingMore } = filterMinutesBenchmark(players, player);
+  const buildMinutesBenchmarkLists = (valueFilter: MinutesValueFilter): MinutesBenchmarkLists => {
+    const { playingLess, playingMore } = filterMinutesBenchmark(players, player, valueFilter);
+    return {
+      playingLess: playingLess.slice(0, 10).map(stripRecentForm),
+      playingMore: playingMore.slice(0, 10).map(stripRecentForm),
+      playingLessCount: playingLess.length,
+      playingMoreCount: playingMore.length,
+    };
+  };
 
   // Subgroup rankings (loan players, new signings)
   const subgroupRankings: SubgroupRanking[] = [];
@@ -452,10 +465,9 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
     clubmates: clubmates.map(stripRecentForm),
     topClubmatesByNpga: topClubmatesByNpga.map(stripRecentForm),
     minutesBenchmark: {
-      playingLess: playingLess.slice(0, 10).map(stripRecentForm),
-      playingMore: playingMore.slice(0, 10).map(stripRecentForm),
-      playingLessCount: playingLess.length,
-      playingMoreCount: playingMore.length,
+      pricier: buildMinutesBenchmarkLists("pricier"),
+      cheaper: buildMinutesBenchmarkLists("cheaper"),
+      any: buildMinutesBenchmarkLists("any"),
     },
     subgroupRankings,
     penaltyRank:
@@ -475,7 +487,7 @@ export const getPlayerDetailData = cache(async (playerId: string) => {
   const dataVersion = await getDataVersion();
   return unstable_cache(
     () => computePlayerDetailData(playerId),
-    [`player-detail-v7-${playerId}`, dataVersion],
+    [`player-detail-v8-${playerId}`, dataVersion],
     { revalidate: 43200, tags: ["form-analysis"] },
   )();
 });
