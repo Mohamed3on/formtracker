@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
@@ -22,12 +23,18 @@ import { getLeagueAnalysis } from "@/lib/form-analysis";
 import { getMinutesValueData, slimForClient } from "@/lib/fetch-minutes-value";
 import { getInjuredPlayers } from "@/lib/injured";
 import { formatMarketValue } from "@/lib/format";
+import { JsonLd } from "@/components/JsonLd";
+import { absoluteUrl } from "@/lib/site-config";
 
 export function generateStaticParams() {
   return LEAGUES.map((l) => ({ slug: l.slug }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const league = getLeagueBySlug(slug);
   if (!league) {
@@ -35,14 +42,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: "League",
       description: "Form, expected position, top players, and injuries for one league.",
       path: `/leagues/${slug}`,
+      noIndex: true,
     });
   }
   return createPageMetadata({
-    title: league.name,
-    description: `${league.name}: in-form and out-of-form teams, expected position vs actual, top players by npG+A, and injury report from SquadStat.`,
+    title: `${league.name} Table, Form, Player Stats & Injuries`,
+    description: `${league.name} standings and squad-value expectations, recent team form, top players by non-penalty goals plus assists, and the latest injury impact data.`,
     path: `/leagues/${slug}`,
     keywords: [
       league.name,
+      `${league.name} table`,
+      `${league.name} player stats`,
       `${league.name} form`,
       `${league.name} top scorers`,
       `${league.name} injuries`,
@@ -134,9 +144,69 @@ export default async function LeaguePage({ params }: { params: Promise<{ slug: s
   const logoUrl = getLeagueLogoUrl(league.name);
   const trackedPlayers = leaguePlayers.length;
   const teamCount = leagueTeams.length;
+  const pageUrl = absoluteUrl(`/leagues/${league.slug}`);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": pageUrl,
+        url: pageUrl,
+        name: `${league.name} table, form, player stats and injuries`,
+        description: `${league.name} football analytics dashboard with standings, form, player output and injury impact.`,
+        mainEntity: { "@id": `${pageUrl}#league` },
+      },
+      {
+        "@type": "SportsOrganization",
+        "@id": `${pageUrl}#league`,
+        name: league.name,
+        url: pageUrl,
+        sport: "Association football",
+        ...(logoUrl ? { logo: logoUrl, image: logoUrl } : {}),
+        ...(tmUrl ? { sameAs: tmUrl } : {}),
+        member: leagueTeams.map((team) => ({
+          "@type": "SportsTeam",
+          name: team.name,
+          url: absoluteUrl(`/teams/${team.clubId}`),
+          ...(team.logoUrl ? { logo: team.logoUrl } : {}),
+        })),
+        additionalProperty: [
+          { "@type": "PropertyValue", name: "Teams", value: teamCount },
+          {
+            "@type": "PropertyValue",
+            name: "Tracked players",
+            value: trackedPlayers,
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Players currently injured",
+            value: leagueInjured.length,
+          },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: absoluteUrl("/"),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: league.name,
+            item: pageUrl,
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <DetailPageShell backHref="/" backLabel="Back to home">
+      <JsonLd data={jsonLd} />
       <DetailHero>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.5rem] border border-border-medium bg-white p-3 sm:h-28 sm:w-28">

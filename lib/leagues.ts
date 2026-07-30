@@ -6,6 +6,7 @@ export const LEAGUES = [
     name: "Premier League",
     slug: "premier-league",
     hex: "#38003c",
+    shareHex: "#c45cff",
     tailwindBg: "bg-purple-900",
     textOnBg: "text-white",
   },
@@ -14,6 +15,7 @@ export const LEAGUES = [
     name: "La Liga",
     slug: "laliga",
     hex: "#ff4b44",
+    shareHex: "#ff625c",
     tailwindBg: "bg-orange-500",
     textOnBg: "text-white",
   },
@@ -22,6 +24,7 @@ export const LEAGUES = [
     name: "Bundesliga",
     slug: "bundesliga",
     hex: "#d20515",
+    shareHex: "#ff3d4c",
     tailwindBg: "bg-red-600",
     textOnBg: "text-white",
   },
@@ -30,6 +33,7 @@ export const LEAGUES = [
     name: "Serie A",
     slug: "serie-a",
     hex: "#024494",
+    shareHex: "#4793ff",
     tailwindBg: "bg-blue-700",
     textOnBg: "text-white",
   },
@@ -38,6 +42,7 @@ export const LEAGUES = [
     name: "Ligue 1",
     slug: "ligue-1",
     hex: "#dae025",
+    shareHex: "#dae025",
     tailwindBg: "bg-yellow-400",
     textOnBg: "text-black",
   },
@@ -95,12 +100,15 @@ export function isSameLeague(a: string, b: string): boolean {
 }
 
 const leagueColorMap: Record<string, string> = {};
+const leagueShareColorMap: Record<string, string> = {};
 const leagueStyleMap: Record<string, { bg: string; text: string; hex: string }> = {};
 for (const l of LEAGUES) {
   const key = l.name;
   const normalizedKey = l.name.toLowerCase().replace(/\s/g, "");
   leagueColorMap[key] = l.hex;
   leagueColorMap[normalizedKey] = l.hex;
+  leagueShareColorMap[key] = l.shareHex;
+  leagueShareColorMap[normalizedKey] = l.shareHex;
   const style = { bg: l.tailwindBg, text: l.textOnBg, hex: l.hex };
   leagueStyleMap[key] = style;
   leagueStyleMap[normalizedKey] = style;
@@ -111,6 +119,14 @@ export function getLeagueColor(leagueName: string): string {
     leagueColorMap[leagueName] ||
     leagueColorMap[leagueName.toLowerCase().replace(/\s/g, "")] ||
     "#666"
+  );
+}
+
+export function getLeagueShareColor(leagueName: string): string {
+  return (
+    leagueShareColorMap[leagueName] ||
+    leagueShareColorMap[leagueName.toLowerCase().replace(/\s/g, "")] ||
+    "#58a6ff"
   );
 }
 

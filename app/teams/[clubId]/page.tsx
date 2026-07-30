@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Crown, Medal, TrendingDown, TrendingUp, TriangleAlert } from "lucide-react";
@@ -27,6 +28,9 @@ import { SquadTab } from "./SquadTab";
 import { ManagerClient } from "./TeamDeferredData";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import type { InjuredPlayer } from "@/app/types";
+import { JsonLd } from "@/components/JsonLd";
+import { getLeagueUrl } from "@/lib/leagues";
+import { absoluteUrl } from "@/lib/site-config";
 
 function InjuredPlayerRow({ player }: { player: InjuredPlayer }) {
   const returnInfo = formatReturnInfo(player.returnDate);
@@ -76,7 +80,11 @@ function InjuredPlayerRow({ player }: { player: InjuredPlayer }) {
   );
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ clubId: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ clubId: string }>;
+}): Promise<Metadata> {
   const { clubId } = await params;
   const data = await getTeamDetailData(clubId);
 
@@ -85,14 +93,28 @@ export async function generateMetadata({ params }: { params: Promise<{ clubId: s
       title: "Team Report",
       description: "Detailed team report with squad, value analysis, and injuries.",
       path: `/teams/${clubId}`,
+      noIndex: true,
     });
   }
 
+  const standingsSummary =
+    data.teamForm && data.teamForm.points > 0
+      ? `${ordinal(data.teamForm.leaguePosition)} in ${data.league} with ${data.teamForm.points} points`
+      : `compete in ${data.league}`;
+
   return createPageMetadata({
-    title: `${data.name} Report`,
-    description: `${data.name}: squad overview, value analysis, injury report, and form data from SquadStat.`,
+    title: `${data.name} Squad, Form, Injuries & Market Value`,
+    description: `${data.name} ${standingsSummary}, with ${data.squad.length} tracked players and a ${formatMarketValue(data.squadValue)} squad value. Explore form, injuries and player analysis.`,
     path: `/teams/${clubId}`,
-    keywords: [data.name, data.league, "team report", "squad analysis"],
+    keywords: [
+      data.name,
+      `${data.name} squad`,
+      `${data.name} stats`,
+      `${data.name} injuries`,
+      data.league,
+      "team report",
+      "squad analysis",
+    ],
   });
 }
 
@@ -182,9 +204,82 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
         ? "below expected"
         : "on par"
     : null;
+  const pageUrl = absoluteUrl(`/teams/${clubId}`);
+  const leaguePath = getLeagueUrl(league);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": pageUrl,
+        url: pageUrl,
+        name: `${name} squad, form and injury report`,
+        description: `${name} football analytics and squad report for ${league}.`,
+        mainEntity: { "@id": `${pageUrl}#team` },
+      },
+      {
+        "@type": "SportsTeam",
+        "@id": `${pageUrl}#team`,
+        name,
+        url: pageUrl,
+        sport: "Association football",
+        ...(logoUrl ? { logo: logoUrl, image: logoUrl } : {}),
+        ...(clubUrl ? { sameAs: clubUrl } : {}),
+        memberOf: {
+          "@type": "SportsOrganization",
+          name: league,
+          ...(leaguePath ? { url: absoluteUrl(leaguePath) } : {}),
+        },
+        additionalProperty: [
+          ...(teamForm && teamForm.points > 0
+            ? [
+                {
+                  "@type": "PropertyValue",
+                  name: "League position",
+                  value: teamForm.leaguePosition,
+                },
+                {
+                  "@type": "PropertyValue",
+                  name: "Points",
+                  value: teamForm.points,
+                },
+              ]
+            : []),
+          {
+            "@type": "PropertyValue",
+            name: "Squad market value",
+            value: formatMarketValue(data.squadValue),
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Tracked players",
+            value: squad.length,
+          },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Team rankings",
+            item: absoluteUrl("/expected-position"),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name,
+            item: pageUrl,
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <DetailPageShell backHref="/expected-position" backLabel="Back to team rankings">
+      <JsonLd data={jsonLd} />
       <DetailHero>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.5rem] border border-border-medium bg-white p-3 sm:h-28 sm:w-28">

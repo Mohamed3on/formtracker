@@ -6,6 +6,7 @@ interface PageMetadataInput {
   description: string;
   path: string;
   keywords?: string[];
+  noIndex?: boolean;
 }
 
 export function createPageMetadata({
@@ -13,6 +14,7 @@ export function createPageMetadata({
   description,
   path,
   keywords = [],
+  noIndex = false,
 }: PageMetadataInput): Metadata {
   const fullTitle = `${title} | ${SITE_NAME}`;
 
@@ -27,6 +29,8 @@ export function createPageMetadata({
       title: fullTitle,
       description,
       type: "website",
+      locale: "en_US",
+      siteName: SITE_NAME,
       url: absoluteUrl(path),
     },
     twitter: {
@@ -34,5 +38,13 @@ export function createPageMetadata({
       title: fullTitle,
       description,
     },
+    ...(noIndex
+      ? {
+          robots: {
+            index: false,
+            follow: false,
+          },
+        }
+      : {}),
   };
 }
