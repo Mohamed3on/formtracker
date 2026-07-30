@@ -9,6 +9,7 @@ import { Footer } from "./components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { absoluteUrl, getSiteOrigin, SITE_NAME } from "@/lib/site-config";
 import { Analytics } from "@vercel/analytics/next";
+import { JsonLd } from "@/components/JsonLd";
 
 export const viewport: Viewport = {
   themeColor: "#0a0a0a",
@@ -19,6 +20,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteOrigin()),
+  applicationName: SITE_NAME,
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  category: "sports",
   title: {
     default: "SquadStat - Football Form, Value & Injury Analytics",
     template: "%s | SquadStat",
@@ -105,11 +110,7 @@ export default function RootLayout({
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} ${GeistPixelSquare.variable} antialiased bg-neutral-950 text-neutral-100 min-h-screen flex flex-col`}
       >
-        {/* JSON-LD: static, trusted data — no user input */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <JsonLd data={jsonLd} />
         <Providers>
           <Header />
           <main className="page-container flex-1">{children}</main>

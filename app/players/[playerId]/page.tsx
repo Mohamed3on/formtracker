@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Crown, Medal, TrendingDown, TrendingUp } from "lucide-react";
@@ -36,6 +37,8 @@ import type { MinutesValuePlayer, RecentGameStats } from "@/app/types";
 import { POSITION_NAMES } from "@/lib/fetch-player-minutes";
 import { PlayerInjuryBadge } from "./PlayerInjuryBadge";
 import { effectivePosition, getBroadPositionFilter } from "@/lib/positions";
+import { JsonLd } from "@/components/JsonLd";
+import { absoluteUrl } from "@/lib/site-config";
 
 function rankColor(rank: number, total: number): string {
   const pct = rank / total;
@@ -439,7 +442,11 @@ function ClubContextItem({
   );
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ playerId: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ playerId: string }>;
+}): Promise<Metadata> {
   const { playerId } = await params;
   const data = await getPlayerDetailData(playerId);
 
@@ -448,17 +455,21 @@ export async function generateMetadata({ params }: { params: Promise<{ playerId:
       title: "Player Report",
       description: "Detailed player report with rankings, form, and value comparisons.",
       path: `/players/${playerId}`,
+      noIndex: true,
     });
   }
 
+  const { player } = data;
   return createPageMetadata({
-    title: `${data.player.name} Report`,
-    description: `${data.player.name} at ${data.player.club}: rankings, form, minutes, and comparable-player analysis from SquadStat's tracked dataset.`,
-    path: `/players/${data.player.playerId}`,
+    title: `${player.name} Stats, Form & Market Value`,
+    description: `${player.name} (${player.club}, ${player.league}): ${player.goals} goals, ${player.assists} assists, ${player.minutes.toLocaleString("en")} minutes and a ${player.marketValueDisplay} market value, with form and peer rankings.`,
+    path: `/players/${player.playerId}`,
     keywords: [
-      data.player.name,
-      data.player.club,
-      data.player.league,
+      player.name,
+      `${player.name} stats`,
+      `${player.name} market value`,
+      player.club,
+      player.league,
       "player report",
       "football player rankings",
       "player form stats",
@@ -531,9 +542,66 @@ export default async function PlayerDetailPage({
   const fallbackMatchCount = player.recentForm?.length ?? 0;
   const peersPlayingLess = minutesBenchmark.pricier.playingLessCount;
   const peersPlayingMore = minutesBenchmark.cheaper.playingMoreCount;
+  const pageUrl = absoluteUrl(`/players/${player.playerId}`);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": pageUrl,
+        url: pageUrl,
+        name: `${player.name} stats, form and market value`,
+        description: `${player.name} performance report for ${player.club} in ${player.league}.`,
+        mainEntity: { "@id": `${pageUrl}#player` },
+      },
+      {
+        "@type": "Person",
+        "@id": `${pageUrl}#player`,
+        name: player.name,
+        url: pageUrl,
+        ...(player.imageUrl ? { image: player.imageUrl } : {}),
+        jobTitle: "Professional footballer",
+        nationality: player.nationality,
+        sameAs: getLeistungsdatenUrl(player.profileUrl),
+        memberOf: {
+          "@type": "SportsTeam",
+          name: player.club,
+          ...(data.clubId ? { url: absoluteUrl(`/teams/${data.clubId}`) } : {}),
+        },
+        additionalProperty: [
+          {
+            "@type": "PropertyValue",
+            name: "Market value",
+            value: player.marketValueDisplay,
+          },
+          { "@type": "PropertyValue", name: "Goals", value: player.goals },
+          { "@type": "PropertyValue", name: "Assists", value: player.assists },
+          { "@type": "PropertyValue", name: "Minutes played", value: player.minutes },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Players",
+            item: absoluteUrl("/players"),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: player.name,
+            item: pageUrl,
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <DetailPageShell backHref="/players" backLabel="Back to player explorer">
+      <JsonLd data={jsonLd} />
       <DetailHero>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <PlayerAvatar
