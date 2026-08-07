@@ -3,6 +3,9 @@ name: Notify Refresh Failure
 # workflow_run fires after the refresh workflow finishes regardless of how it
 # died — including 35m-timeout cancels and runs GitHub's runner infra never
 # picked up, which the refresh workflow's own in-job alert step can't catch.
+#
+# At most one Telegram ping per UTC day (an actions/cache day-marker): a broken
+# scraper fails 8 runs/day and each ping past the first adds nothing.
 on:
   workflow_run:
     workflows: ["Refresh SquadStat Data"]
@@ -13,7 +16,19 @@ jobs:
     if: contains(fromJSON('["failure", "cancelled", "timed_out", "startup_failure"]'), github.event.workflow_run.conclusion)
     runs-on: ubuntu-latest
     steps:
+      - name: Compute day key
+        id: day
+        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Check if already pinged today
+        id: pinged
+        uses: actions/cache/restore@v4
+        with:
+          path: .telegram-pinged
+          key: telegram-daily-${{ steps.day.outputs.date }}
+
       - name: Send Telegram alert
+        if: steps.pinged.outputs.cache-hit != 'true'
         env:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -33,7 +48,18 @@ jobs:
           TEXT="⚠️ SquadStat data refresh: $CONCLUSION"
           [ -n "$BAD_JOBS" ] && TEXT="$TEXT"$'\n'"$BAD_JOBS"
           TEXT="$TEXT"$'\n'"$RUN_URL"
+          TEXT="$TEXT"$'\n'"(first failure today — further ones stay quiet until tomorrow)"
           curl -sS --fail-with-body "https://api.telegram.org/bot$TOKEN/sendMessage" \
             --data-urlencode chat_id="$CHAT_ID" \
             --data-urlencode text="$TEXT" \
             --data-urlencode disable_web_page_preview=true
+          date -u > .telegram-pinged
+
+      # Only reached when the send above succeeded — a failed send doesn't
+      # burn the day's one ping.
+      - name: Mark pinged today
+        if: steps.pinged.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .telegram-pinged
+          key: telegram-daily-${{ steps.day.outputs.date }}

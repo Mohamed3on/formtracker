@@ -110,6 +110,16 @@ const HISTORY_TTL = 21_600; // 6h — a manager change should surface the same d
 const ENDED_STINT_TTL = 2_592_000; // 30d — immutable history
 const OPEN_STINT_TTL = 21_600; // 6h — the incumbent is still playing games
 
+/** unstable_cache needs Next's incremental cache and crashes in plain bun
+ *  scripts ("Invariant: incrementalCache missing"). Scripts that call
+ *  getManagerInfo (scripts/snapshot-wc.ts) set SKIP_NEXT_CACHE=1 to run the
+ *  raw scrape instead. */
+const cachedScrape = <T>(
+  fn: () => Promise<T>,
+  key: string[],
+  opts: { revalidate: number; tags: string[] },
+): Promise<T> => (process.env.SKIP_NEXT_CACHE === "1" ? fn() : unstable_cache(fn, key, opts)());
+
 /** Every cache here wraps a single scrape rather than the assembled ManagerInfo, because
  *  `unstable_cache` bypasses *reads* whenever it runs nested inside another `unstable_cache`
  *  (see next/dist/server/web/spec-extension/unstable-cache.js: "when we are nested inside of
@@ -118,7 +128,7 @@ const OPEN_STINT_TTL = 21_600; // 6h — the incumbent is still playing games
  *  which is what blew /wc-live's prerender budget. Assembly below is pure CPU, so re-running
  *  it per call costs nothing. */
 const getManagerHistory = (clubId: string) =>
-  unstable_cache(
+  cachedScrape(
     async () => {
       const html = await fetchPage(`${BASE_URL}/placeholder/mitarbeiterhistorie/verein/${clubId}`);
       const managers = parseManagerTable(cheerio.load(html));
@@ -128,7 +138,7 @@ const getManagerHistory = (clubId: string) =>
     },
     [`manager-history-${clubId}`],
     { revalidate: HISTORY_TTL, tags: ["manager"] },
-  )();
+  );
 
 /** A manager's friendly-only record for one national-team stint, from Transfermarkt's
  *  detailed-performance page filtered to Friendlies (FS) and scoped to the stint's dates.
@@ -141,7 +151,7 @@ const getManagerHistory = (clubId: string) =>
 const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: string, end: string) => {
   const endDate = end ? parseDate(end) : null;
   const ended = !!endDate && endDate < new Date();
-  return unstable_cache(
+  return cachedScrape(
     async () => {
       const from = toIsoDate(appointed);
       const to = toIsoDate(end); // toIsoDate("") → null, so an open stint drops the upper bound
@@ -154,7 +164,7 @@ const getFriendlyRecord = (trainerId: string, vereinId: string, appointed: strin
     },
     [`friendlies-${trainerId}-${vereinId}-${appointed}`],
     { revalidate: ended ? ENDED_STINT_TTL : OPEN_STINT_TTL, tags: ["manager"] },
-  )();
+  );
 };
 
 export async function getManagerInfo(

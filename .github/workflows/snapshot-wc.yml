@@ -1,0 +1,34 @@
+name: Snapshot World Cup Archive
+
+# One-shot (rerunnable) archiver: freezes the finished tournament's final
+# state from Transfermarkt into committed data/wc/*.json, which the lib/wc
+# readers serve. Dispatch manually; there is no schedule — the data is final.
+on:
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Snapshot tournament data
+        env:
+          TM_RELAY_URL: ${{ secrets.TM_RELAY_URL }}
+          TM_RELAY_SECRET: ${{ secrets.TM_RELAY_SECRET }}
+          SKIP_NEXT_CACHE: "1"
+        run: bun run scripts/snapshot-wc.ts
+
+      - name: Commit and push
+        run: |
+          bash scripts/ci-push.sh "chore: freeze World Cup archive snapshots" data/wc/teams.json data/wc/results.json data/wc/fixtures.json data/wc/knockout-schedule.json data/wc/managers.json
