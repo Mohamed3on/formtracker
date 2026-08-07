@@ -22,11 +22,13 @@ export const REFRESH_OUTPUTS = {
   ],
 } as const;
 
-if (import.meta.main) {
-  const key = process.argv[2] as keyof typeof REFRESH_OUTPUTS;
-  const files = REFRESH_OUTPUTS[key];
+// Invoked directly by the workflow: `bun run scripts/outputs.ts <flow>`.
+// (argv guard rather than import.meta.main — tsgo doesn't type the Bun-ism.)
+const flow = process.argv[2];
+if (flow) {
+  const files = REFRESH_OUTPUTS[flow as keyof typeof REFRESH_OUTPUTS];
   if (!files) {
-    console.error(`Unknown refresh flow: ${process.argv[2]}`);
+    console.error(`Unknown refresh flow: ${flow}`);
     process.exit(1);
   }
   console.log(files.join(" "));
