@@ -86,17 +86,6 @@ export function getFormNpga(
     .reduce((s, g) => s + g.goals - (g.penaltyGoals ?? 0) + g.assists, 0);
 }
 
-export function getFormGoals(player: { recentForm?: { goals: number }[] }, window: number): number {
-  return (player.recentForm ?? []).slice(0, window).reduce((s, g) => s + g.goals, 0);
-}
-
-export function getFormAssists(
-  player: { recentForm?: { assists: number }[] },
-  window: number,
-): number {
-  return (player.recentForm ?? []).slice(0, window).reduce((s, g) => s + g.assists, 0);
-}
-
 /** Single-pass form stats for a window — avoids 4 separate traversals. */
 export function getFormStats(
   player: {

@@ -1,15 +1,12 @@
 import { LEAGUE_NAMES, type RecentGameStats } from "./player-aggregation";
 
 /**
- * Returns enriched recent matches for a player.
- * Opponent names/logos are pre-populated by the refresh script via clubs.json.
- * This function just fills in any remaining gaps (competition names, match report URLs).
+ * Fills remaining gaps in a player's stored recent matches (competition names).
+ * Opponent names/logos are pre-populated by the refresh script via clubs.json;
+ * nothing here touches the network.
  */
-export async function getPlayerRecentMatches(
-  _playerId: string,
-  fallbackMatches: RecentGameStats[] = [],
-): Promise<RecentGameStats[]> {
-  return fallbackMatches.map((match) => ({
+export function enrichRecentMatches(matches: RecentGameStats[]): RecentGameStats[] {
+  return matches.map((match) => ({
     ...match,
     competitionName:
       match.competitionName ||

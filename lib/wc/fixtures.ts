@@ -43,7 +43,6 @@ function parseKick(text: string): Kick | null {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function teamIn(cell: cheerio.Cheerio<any>): string | null {
   const link = cell.find("a[href*='/verein/']").first();
   return link.length ? normName(link.text()) : null;

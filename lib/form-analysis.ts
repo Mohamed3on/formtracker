@@ -22,7 +22,6 @@ const BOTTOM_CATEGORIES = [
   { key: "goalsConceded" as const, label: "Most Conceded" },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseTeamRow($: cheerio.CheerioAPI, row: any): TeamStats | null {
   const cells = $(row).find("> td");
   if (cells.length < 11) return null;

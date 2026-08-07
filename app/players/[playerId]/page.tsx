@@ -8,7 +8,7 @@ import { createPageMetadata } from "@/lib/metadata";
 import { getLeistungsdatenUrl, getPlayerDetailHref } from "@/lib/format";
 import { getPlayerDetailData, seasonNpga, type PlayerRankings } from "@/lib/player-detail";
 import { paramsToScope } from "@/lib/comparison-scope";
-import { getPlayerRecentMatches } from "@/lib/player-recent-matches";
+import { enrichRecentMatches } from "@/lib/player-recent-matches";
 import { displayAvailable } from "@/lib/filter-players";
 import { MIN_COMPARISON_COUNT } from "@/lib/value-analysis";
 import { InfoTip } from "@/app/components/InfoTip";
@@ -314,51 +314,10 @@ function RecentMatchCard({ match }: { match: RecentGameStats }) {
   );
 }
 
-function RecentMatchesSkeleton() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex flex-col justify-between rounded-2xl border border-border-subtle bg-[linear-gradient(180deg,rgba(22,27,34,0.98),rgba(13,17,23,0.96))] p-3.5 animate-pulse"
-        >
-          <div>
-            <div className="h-3 w-16 rounded bg-border-subtle" />
-            <div className="mt-3 flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-lg bg-border-subtle" />
-              <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 w-24 rounded bg-border-subtle" />
-                <div className="h-3 w-16 rounded bg-border-subtle" />
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-1.5">
-            {Array.from({ length: 2 }).map((_, j) => (
-              <div
-                key={j}
-                className="rounded-lg border border-border-subtle/80 bg-black/20 px-2 py-1.5 text-center"
-              >
-                <div className="mx-auto h-2 w-8 rounded bg-border-subtle" />
-                <div className="mx-auto mt-2 h-4 w-4 rounded bg-border-subtle" />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+function RecentMatches({ matches }: { matches: RecentGameStats[] }) {
+  const recentMatches = enrichRecentMatches(matches);
 
-async function RecentMatchesAsync({
-  playerId,
-  fallbackMatches,
-}: {
-  playerId: string;
-  fallbackMatches: RecentGameStats[];
-}) {
-  const recentMatches = await getPlayerRecentMatches(playerId, fallbackMatches);
-
-  if (!recentMatches || recentMatches.length === 0) {
+  if (recentMatches.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border-subtle bg-black/20 px-4 py-6 text-sm text-text-secondary">
         No recent match log is stored for this player.
@@ -1017,12 +976,7 @@ export default async function PlayerDetailPage({
               </div>
             }
           >
-            <Suspense fallback={<RecentMatchesSkeleton />}>
-              <RecentMatchesAsync
-                playerId={player.playerId}
-                fallbackMatches={player.recentForm ?? []}
-              />
-            </Suspense>
+            <RecentMatches matches={player.recentForm ?? []} />
           </SectionPanel>
         </div>
 

@@ -1,12 +1,11 @@
 import { parsePlayerTable } from "@/lib/transfermarkt";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import type { MinutesValuePlayer, PlayerStats } from "@/app/types";
+import type { MinutesValuePlayer } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
-import { toPlayerStats, applyStatsToggles, includeTournamentStats } from "./stats-toggles";
-export { toPlayerStats, applyStatsToggles, includeTournamentStats };
+export { toPlayerStats, applyStatsToggles, includeTournamentStats } from "./stats-toggles";
 
 const MV_BASE = `${BASE_URL}/spieler-statistik/wertvollstespieler/marktwertetop`;
 
@@ -35,11 +34,6 @@ export const EMPTY_PLAYER_STATS: Omit<
   intlPenaltyGoals: 0,
   intlCareerCaps: 0,
 };
-
-export async function getPlayerStatsData(): Promise<PlayerStats[]> {
-  const players = await getMinutesValueData();
-  return players.map((p) => toPlayerStats(includeTournamentStats(p)));
-}
 
 function parseMarketValueRows(html: string): MinutesValuePlayer[] {
   return parsePlayerTable<MinutesValuePlayer>(
