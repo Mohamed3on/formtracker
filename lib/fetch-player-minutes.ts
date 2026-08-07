@@ -4,6 +4,7 @@ import { fetchPage, fetchJson } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
 import {
   aggregateSeasonStats,
+  currentLeagueName,
   tmCurrentSeasonId,
   ALPHA_TYPE_SENIOR,
   type CeapiGame,
@@ -127,6 +128,7 @@ export async function fetchPlayerMinutesRaw(
   const shared = {
     club: header.club,
     clubLogoUrl: header.clubLogoUrl,
+    league: currentLeagueName(header.leagueLogoUrl, stats.league),
     intlCareerCaps,
     isCurrentIntl,
     isNewSigning: header.isNewSigning,

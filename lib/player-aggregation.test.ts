@@ -239,4 +239,27 @@ describe("reaggregatePlayerStats", () => {
     expect(re.marketValue).toBe(50_000_000);
     expect(reaggregatePlayerStats(base, clubTypes, 2025)).toBe(base);
   });
+
+  it("pins league to the current club's header league, not the season's games", () => {
+    const prev = {
+      ...base,
+      leagueLogoUrl: "https://tmssl.akamaized.net//images/logo/header/l1.png?lm=1525905518",
+      rawGames: [game({ compId: "NL1" })],
+    };
+    expect(reaggregatePlayerStats(prev, clubTypes, 2025).league).toBe("Bundesliga");
+  });
+
+  it("falls back to the aggregated league when the header has no league logo", () => {
+    const prev = { ...base, rawGames: [game({ compId: "NL1" })] };
+    expect(reaggregatePlayerStats(prev, clubTypes, 2025).league).toBe("Eredivisie");
+  });
+
+  it("yields an empty league for a header league outside the mapped set", () => {
+    const prev = {
+      ...base,
+      leagueLogoUrl: "https://tmssl.akamaized.net//images/logo/header/a1.png",
+      rawGames: [game({ compId: "GB1" })],
+    };
+    expect(reaggregatePlayerStats(prev, clubTypes, 2025).league).toBe("");
+  });
 });

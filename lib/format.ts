@@ -76,3 +76,9 @@ export function extractClubIdFromLogoUrl(url?: string): string | null {
   if (!url) return null;
   return url.match(/\/(\d+)\.png/)?.[1] ?? null;
 }
+
+/** TM league-logo URLs embed the competition code (`/logo/header/l1.png` → L1). */
+export function extractLeagueCodeFromLogoUrl(url?: string): string | null {
+  if (!url) return null;
+  return url.match(/\/logo\/header\/(\w+)\.png/)?.[1]?.toUpperCase() ?? null;
+}

@@ -1,5 +1,5 @@
 import { BASE_URL } from "./constants";
-import { extractClubIdFromLogoUrl } from "./format";
+import { extractClubIdFromLogoUrl, extractLeagueCodeFromLogoUrl } from "./format";
 
 /** Pure aggregation of Transfermarkt ceapi per-game data into season stats.
  *  No I/O: everything here computes from already-fetched `CeapiGame[]`, which
@@ -136,6 +136,20 @@ export const LEAGUE_NAMES: Record<string, string> = {
   AFAC: "Asian Cup",
   GOCU: "Gold Cup",
 };
+
+/** A player's displayed league is his *current* club's league, read from the
+ *  profile-header league logo (the URL embeds the competition code). The
+ *  aggregated league — where this season's games were played — is only the
+ *  fallback for headers without a league link, so a row can never read
+ *  "Bayern Munich · Eredivisie" between a transfer and the first league game.
+ *  A known code outside LEAGUE_NAMES yields "" rather than a stale league. */
+export function currentLeagueName(
+  leagueLogoUrl: string | undefined,
+  aggregatedLeague: string,
+): string {
+  const code = extractLeagueCodeFromLogoUrl(leagueLogoUrl);
+  return code ? (LEAGUE_NAMES[code] ?? "") : aggregatedLeague;
+}
 
 /** Transfermarkt CEAPI positionId → display name */
 export const POSITION_NAMES: Record<number, string> = {
@@ -401,5 +415,5 @@ export function reaggregatePlayerStats(
   if (!games?.length) return prev;
   const currentClubId = extractClubIdFromLogoUrl(prev.clubLogoUrl) ?? "";
   const stats = aggregateSeasonStats(games, currentClubId, clubTypes, seasonId);
-  return { ...prev, ...stats };
+  return { ...prev, ...stats, league: currentLeagueName(prev.leagueLogoUrl, stats.league) };
 }
