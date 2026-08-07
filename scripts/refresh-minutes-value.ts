@@ -9,8 +9,10 @@ import { fetchTopScorersRaw, fetchYearlyScorersRaw } from "@/lib/fetch-top-score
 import {
   fetchPlayerMinutesRaw,
   reaggregatePlayerStats,
+  tmCurrentSeasonId,
   type ClubTypes,
 } from "@/lib/fetch-player-minutes";
+import { chooseSeason } from "@/lib/season-selection";
 import { extractClubIdFromLogoUrl } from "@/lib/format";
 import { crestUrl, flagUrl } from "@/lib/transfermarkt/image";
 import { fetchClubTypes } from "@/lib/alpha-clubs";
@@ -44,6 +46,9 @@ const POOL_MV_PATH = join(DATA_DIR, "player-pool-mv.json");
 const POOL_MV_TS_PATH = join(DATA_DIR, "player-pool-mv-updated-at.txt");
 const POOL_MV_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const POOL_SCORERS_PATH = join(DATA_DIR, "player-pool-scorers.json");
+// The TM season the committed data was aggregated for. Written on every
+// successful run; a change between runs marks a deliberate season flip.
+const SEASON_PATH = join(DATA_DIR, "season.txt");
 
 type CacheEntry = { data: PlayerStatsResult; fetchedAt: number };
 type Cache = Record<string, CacheEntry>;
@@ -110,10 +115,10 @@ async function gatherMvPool(): Promise<MinutesValuePlayer[]> {
   ]);
 }
 
-async function gatherScorerPool(): Promise<MinutesValuePlayer[]> {
-  console.log("[refresh] Fetching scorer pool (season + yearly)...");
+async function gatherScorerPool(seasonId: number): Promise<MinutesValuePlayer[]> {
+  console.log(`[refresh] Fetching scorer pool (season ${seasonId} + yearly)...`);
   const [seasonScorers, yearlyScorers] = await Promise.all([
-    fetchTopScorersRaw().catch(() => [] as MinutesValuePlayer[]),
+    fetchTopScorersRaw(seasonId).catch(() => [] as MinutesValuePlayer[]),
     fetchYearlyScorersRaw().catch(() => [] as MinutesValuePlayer[]),
   ]);
   if (seasonScorers.length === 0)
@@ -160,13 +165,13 @@ async function loadMvPool(): Promise<MinutesValuePlayer[]> {
 }
 
 /** Scorer pool: always attempt fetch (values change per match). Cache is fallback-only. */
-async function loadScorerPool(): Promise<MinutesValuePlayer[]> {
+async function loadScorerPool(seasonId: number): Promise<MinutesValuePlayer[]> {
   let cached: MinutesValuePlayer[] | null = null;
   try {
     cached = JSON.parse(await readFile(POOL_SCORERS_PATH, "utf-8"));
   } catch {}
   try {
-    const players = await gatherScorerPool();
+    const players = await gatherScorerPool(seasonId);
     await writeFile(POOL_SCORERS_PATH, JSON.stringify(players));
     return players;
   } catch (e) {
@@ -179,27 +184,15 @@ async function loadScorerPool(): Promise<MinutesValuePlayer[]> {
   }
 }
 
-async function loadOrGatherPlayers(): Promise<{
-  players: MinutesValuePlayer[];
-  mvIds: Set<string>;
-}> {
-  const [mvList, scorerList] = await Promise.all([loadMvPool(), loadScorerPool()]);
-  const players = dedupeById([
-    { label: "MV pool", list: mvList },
-    { label: "scorer pool", list: scorerList },
-  ]);
-  if (players.length < 100) {
-    throw new Error(`Only ${players.length} players — expected 100+.`);
-  }
-  return { players, mvIds: new Set(mvList.map((p) => p.playerId)) };
-}
-
 // --- 2. Fetch per-player stats with adaptive concurrency ---
 
-async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise<Cache> {
-  // Load cache from previous runs as fallback for rate-limited players
+type FetchState = { staleCache: Cache; cache: Cache };
+
+/** Load the previous runs' player cache once. Valid entries serve as fetch
+ *  fallback across all fetch phases. */
+async function loadCacheState(): Promise<FetchState> {
   const now = Date.now();
-  let staleCache: Cache = {};
+  const staleCache: Cache = {};
   try {
     const raw: Cache = JSON.parse(await readFile(CACHE_PATH, "utf-8"));
     // Discard entries older than STALE_MAX_MS, and treat zero-stats+empty-league entries
@@ -211,15 +204,28 @@ async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise
         staleCache[id] = entry;
       }
     }
-    const hits = playerIds.filter((id) => id in staleCache).length;
     console.log(
-      `[refresh] Loaded ${hits} valid cache entries (${Object.keys(raw).length - Object.keys(staleCache).length} expired)`,
+      `[refresh] Loaded ${Object.keys(staleCache).length} valid cache entries (${Object.keys(raw).length - Object.keys(staleCache).length} expired)`,
     );
   } catch {
     // No cache available
   }
+  console.log(
+    `[refresh] TM_RELAY_URL: ${process.env.TM_RELAY_URL ? "set — fetching via relay" : "NOT SET — fetching direct"}`,
+  );
+  return { staleCache, cache: {} };
+}
 
-  const cache: Cache = {};
+/** Fetch stats for the given players into `fetchState.cache` (cumulative across
+ *  calls — the pipeline runs one phase for the MV pool, then one for the
+ *  scorer-pool delta once the season is known). */
+async function fetchStats(
+  fetchState: FetchState,
+  playerIds: string[],
+  clubTypes: ClubTypes,
+): Promise<void> {
+  const { staleCache, cache } = fetchState;
+  const now = Date.now();
   if (FORCE_REFRESH) {
     console.log("[refresh] --force: bypassing cache, fetching all players");
   } else {
@@ -229,10 +235,7 @@ async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise
   }
   let remaining = playerIds.filter((id) => !cache[id]);
   console.log(
-    `[refresh] ${Object.keys(cache).length} players served from cache, ${remaining.length} need fetching`,
-  );
-  console.log(
-    `[refresh] TM_RELAY_URL: ${process.env.TM_RELAY_URL ? "set — fetching via relay" : "NOT SET — fetching direct"}`,
+    `[refresh] ${playerIds.length - remaining.length} players served from cache, ${remaining.length} need fetching`,
   );
 
   for (let round = 0; round <= MAX_RETRY_ROUNDS && remaining.length > 0; round++) {
@@ -278,8 +281,9 @@ async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise
         state.cleanStreak = 0;
       }
 
+      const done = playerIds.filter((id) => cache[id]).length;
       console.log(
-        `[refresh] ${Object.keys(cache).length}/${playerIds.length} fetched (batch: ${batch.length - failures}/${batch.length} ok)`,
+        `[refresh] ${done}/${playerIds.length} fetched (batch: ${batch.length - failures}/${batch.length} ok)`,
       );
       await writeFile(CACHE_PATH, JSON.stringify({ ...staleCache, ...cache }));
 
@@ -316,7 +320,6 @@ async function fetchAllStats(playerIds: string[], clubTypes: ClubTypes): Promise
       );
     }
   }
-  return cache;
 }
 
 // --- 3. Merge fetched stats into player objects ---
@@ -458,24 +461,46 @@ function enrichRecentForm(players: MinutesValuePlayer[], clubs: ClubMap): void {
   }
 }
 
-// --- 5. Validate ---
+// --- 5. Season selection ---
 
-async function validate(players: MinutesValuePlayer[], cache: Cache): Promise<void> {
-  const fetched = players.filter((p) => cache[p.playerId]);
+async function readSeasonMarker(): Promise<number | null> {
+  try {
+    const n = Number((await readFile(SEASON_PATH, "utf-8")).trim());
+    return Number.isFinite(n) && n > 2000 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// --- 6. Validate ---
+
+async function validate(players: MinutesValuePlayer[], seasonChanged: boolean): Promise<void> {
+  const fetched = players.filter((p) => p.fetchedAt);
   const zeroStats = fetched.filter((p) => p.goals === 0 && p.assists === 0 && p.minutes === 0);
   const zeroMV = players.filter((p) => p.marketValue <= 0);
   console.log(
     `[refresh] Validation: ${zeroStats.length}/${fetched.length} zero-stats, ${zeroMV.length}/${players.length} zero-MV`,
   );
-  if (fetched.length > 50 && zeroStats.length / fetched.length > 0.3) {
+  // Aggregation-bug backstop: even right after an early season flip (~35%
+  // coverage) zero-stats can't legitimately exceed ~65%. Near-total zeros mean
+  // aggregation broke (e.g. corrupted clubTypes) despite healthy rawGames —
+  // the season-coverage guard upstream can't see that.
+  if (fetched.length > 50 && zeroStats.length / fetched.length > 0.8) {
     throw new Error(
-      `${zeroStats.length}/${fetched.length} players have zero stats — scraping issue.`,
+      `${zeroStats.length}/${fetched.length} players aggregated to zero stats despite healthy payloads — aggregation bug.`,
     );
   }
   if (zeroMV.length > players.length * 0.1) {
     throw new Error(
       `${zeroMV.length}/${players.length} players have no market value — scraping issue.`,
     );
+  }
+
+  // A deliberate season flip resets every stat; comparing against the old
+  // season's file would only produce false alarms.
+  if (seasonChanged) {
+    console.log("[refresh] Season flipped — skipping old-vs-new regression checks this run.");
+    return;
   }
 
   try {
@@ -577,29 +602,52 @@ async function saveClubTypes(clubTypes: ClubTypes): Promise<void> {
 // --- Main pipeline ---
 
 async function main() {
-  const [{ players, mvIds }, clubTypes] = await Promise.all([
-    loadOrGatherPlayers(),
+  const markerSeason = await readSeasonMarker();
+  const [mvList, clubTypes, fetchState] = await Promise.all([
+    loadMvPool(),
     loadClubTypes(),
+    loadCacheState(),
   ]);
+  const mvIds = new Set(mvList.map((p) => p.playerId));
+  const mvPlayerIds = mvList.map((p) => p.playerId);
 
-  console.log(`[refresh] Fetching stats for ${players.length} players...`);
-  const cache = await fetchAllStats(
-    players.map((p) => p.playerId),
-    clubTypes,
+  // Phase 1: the MV pool is season-agnostic, so its stats can be fetched
+  // before the season is known — and 500+ top-flight players are a fully
+  // representative sample for the season decision.
+  console.log(`[refresh] Phase 1: fetching stats for ${mvPlayerIds.length} MV-pool players...`);
+  await fetchStats(fetchState, mvPlayerIds, clubTypes);
+
+  const season = chooseSeason(fetchState.cache, mvPlayerIds, tmCurrentSeasonId());
+  const seasonChanged = markerSeason !== null && markerSeason !== season;
+  console.log(
+    `[refresh] Aggregating season ${season}${seasonChanged ? ` (flipped from ${markerSeason})` : ""}`,
   );
 
-  // Re-aggregate only entries that referenced a newly-resolved clubId, so
-  // senior previous-club minutes aren't dropped just because the type lookup
-  // hadn't resolved them at fetch time.
+  // Phase 2: the scorer pool is season-scoped, so it's gathered for the chosen
+  // season and only its players not already covered by the MV pool are fetched.
+  const scorerList = await loadScorerPool(season);
+  const players = dedupeById([
+    { label: "MV pool", list: mvList },
+    { label: "scorer pool", list: scorerList },
+  ]);
+  if (players.length < 100) {
+    throw new Error(`Only ${players.length} players — expected 100+.`);
+  }
+  const scorerOnlyIds = players.map((p) => p.playerId).filter((id) => !mvIds.has(id));
+  console.log(
+    `[refresh] Phase 2: fetching stats for ${scorerOnlyIds.length} scorer-only players...`,
+  );
+  await fetchStats(fetchState, scorerOnlyIds, clubTypes);
+  const cache = fetchState.cache;
+
   const newlyResolved = await enrichClubTypes(cache, clubTypes);
-  if (newlyResolved.size > 0) {
-    for (const entry of Object.values(cache)) {
-      const touched = entry.data.rawGames?.some((g) =>
-        newlyResolved.has(g.clubsInformation?.club?.clubId ?? ""),
-      );
-      if (touched) entry.data = reaggregatePlayerStats(entry.data, clubTypes);
-    }
-    await saveClubTypes(clubTypes);
+  if (newlyResolved.size > 0) await saveClubTypes(clubTypes);
+
+  // Re-aggregate every entry for the chosen season: fetch-time aggregates used
+  // the date-based candidate (and possibly stale clubTypes), and cached entries
+  // may predate a season flip entirely. rawGames make this a local recompute.
+  for (const entry of Object.values(cache)) {
+    entry.data = reaggregatePlayerStats(entry.data, clubTypes, season);
   }
 
   mergeStats(players, cache);
@@ -610,21 +658,19 @@ async function main() {
   await resolveUnknownClubs(players, clubs);
   enrichRecentForm(players, clubs);
 
-  await validate(players, cache);
+  await validate(players, seasonChanged);
 
   // Scorer-pool players earn their slot via goals, so only top-flight ones count:
   // a winter signing's 2nd-division (or reserve-team) tally shouldn't read as a
   // top-5 scoring record. MV-pool players are notable on value alone, so all their
   // goals stand. (e.g. Arévalo's 13 "goals" were LaLiga2 + Stuttgart II, 0 Bundesliga.)
+  // Every entry was re-aggregated for the chosen season above, so topFlightGoals
+  // is current. No rawGames → leave goals as-is (no-MV, filtered below).
   for (const p of players) {
     if (mvIds.has(p.playerId)) continue;
-    // Recompute the gate value from rawGames every run rather than trusting the
-    // stored topFlightGoals — a pre-fix cache entry may have it missing or wrong
-    // (computed before the comp-type whitelist), which would let a cached false
-    // positive slip back in. No rawGames → leave goals as-is (no-MV, filtered below).
     const entry = cache[p.playerId];
     if (entry?.data.rawGames?.length) {
-      p.goals = reaggregatePlayerStats(entry.data, clubTypes).topFlightGoals;
+      p.goals = entry.data.topFlightGoals;
     }
   }
   const withMV = players.filter(
@@ -638,9 +684,10 @@ async function main() {
   await mkdir(DATA_DIR, { recursive: true });
   await writeFile(CLUBS_PATH, JSON.stringify(clubs));
   await writeFile(OUT_PATH, JSON.stringify(withMV));
+  await writeFile(SEASON_PATH, `${season}\n`);
   await writeFile(join(DATA_DIR, "updated-at.txt"), new Date().toISOString());
   console.log(
-    `[refresh] Done: ${withMV.length} players → ${OUT_PATH}, ${Object.keys(clubs).length} clubs cached`,
+    `[refresh] Done: ${withMV.length} players (season ${season}) → ${OUT_PATH}, ${Object.keys(clubs).length} clubs cached`,
   );
 }
 

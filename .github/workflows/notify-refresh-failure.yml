@@ -1,0 +1,39 @@
+name: Notify Refresh Failure
+
+# workflow_run fires after the refresh workflow finishes regardless of how it
+# died — including 35m-timeout cancels and runs GitHub's runner infra never
+# picked up, which the refresh workflow's own in-job alert step can't catch.
+on:
+  workflow_run:
+    workflows: ["Refresh SquadStat Data"]
+    types: [completed]
+
+jobs:
+  telegram:
+    if: contains(fromJSON('["failure", "cancelled", "timed_out", "startup_failure"]'), github.event.workflow_run.conclusion)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram alert
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GH_TOKEN: ${{ github.token }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$CHAT_ID" ]; then
+            echo "Telegram secrets not set — skipping."
+            exit 0
+          fi
+          BAD_JOBS=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" \
+            --jq '[.jobs[] | select(.conclusion != null and .conclusion != "success" and .conclusion != "skipped") | "\(.name): \(.conclusion)"] | join("; ")' \
+            2>/dev/null || true)
+          TEXT="⚠️ SquadStat data refresh: $CONCLUSION"
+          [ -n "$BAD_JOBS" ] && TEXT="$TEXT"$'\n'"$BAD_JOBS"
+          TEXT="$TEXT"$'\n'"$RUN_URL"
+          curl -sS --fail-with-body "https://api.telegram.org/bot$TOKEN/sendMessage" \
+            --data-urlencode chat_id="$CHAT_ID" \
+            --data-urlencode text="$TEXT" \
+            --data-urlencode disable_web_page_preview=true

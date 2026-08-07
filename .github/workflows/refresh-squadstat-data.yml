@@ -25,7 +25,8 @@ concurrency:
 jobs:
   refresh-minutes-value:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Full cache-expiry refetches (~615 players) have exceeded 20 minutes.
+    timeout-minutes: 35
     permissions:
       contents: write
       issues: write
@@ -65,7 +66,7 @@ jobs:
 
       - name: Commit and push
         run: |
-          bash scripts/ci-push.sh "chore: refresh minutes-value data" data/minutes-value.json data/updated-at.txt data/player-pool-mv.json data/player-pool-mv-updated-at.txt data/player-pool-scorers.json
+          bash scripts/ci-push.sh "chore: refresh minutes-value data" data/minutes-value.json data/updated-at.txt data/player-pool-mv.json data/player-pool-mv-updated-at.txt data/player-pool-scorers.json data/season.txt
 
       - name: Alert on failure
         # 'cancelled' covers the job hitting its timeout, which failure() does not catch.

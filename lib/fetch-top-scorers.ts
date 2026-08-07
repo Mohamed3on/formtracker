@@ -50,9 +50,9 @@ function paginateUrls(baseUrl: string, pages: number): string[] {
   });
 }
 
-/** Season top scorers (10 pages, ~250 players). */
-export function fetchTopScorersRaw(): Promise<MinutesValuePlayer[]> {
-  const baseUrl = `${BASE_URL}/scorer/topscorer/statistik/2024/saison_id/2025/selectedOptionKey/6/land_id/0/altersklasse//ausrichtung//spielerposition_id//filter/0/yt0/Show/plus/1/galerie/0`;
+/** Season top scorers (10 pages, ~250 players) for the given TM season. */
+export function fetchTopScorersRaw(seasonId: number): Promise<MinutesValuePlayer[]> {
+  const baseUrl = `${BASE_URL}/scorer/topscorer/statistik/2024/saison_id/${seasonId}/selectedOptionKey/6/land_id/0/altersklasse//ausrichtung//spielerposition_id//filter/0/yt0/Show/plus/1/galerie/0`;
   return fetchPlayerList(paginateUrls(baseUrl, 10), "topScorers");
 }
 

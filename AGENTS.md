@@ -94,17 +94,21 @@ If TM ever blocks Cloudflare too (`[relay] upstream 200 len=0` in the Worker log
 **The refresh alert skips when any `scraper-broken` issue is open.** Close it when you fix the
 thing, or you're blind to the next failure.
 
-## Current Cache Tags
+**Every failed refresh run also pings Telegram** via `notify-refresh-failure.yml` — a
+`workflow_run` trigger, so it fires even for timeouts and runs GitHub's runner infra never
+picked up (which the in-job alert step can't see). Needs `TELEGRAM_BOT_TOKEN` +
+`TELEGRAM_CHAT_ID` secrets.
 
-This list must mirror `ALL_TAGS` in `/app/api/revalidate/route.ts` exactly — that's the
-fallback the header refresh button busts on any page without its own tag config.
+## Season Rollover
 
-- `form-analysis` - League form tables and player detail (`lib/form-analysis.ts`, `lib/player-detail.ts`)
-- `manager` - Manager info from mitarbeiterhistorie page
-- `team-form` - Team over/underperformers based on market value (route: `/expected-position`)
-- `injured` - Injured players across all leagues
-- `wc-teams` - World Cup squads
-- `wc-live` - World Cup fixtures, knockout schedule, and results
+TM keys seasons by starting year and flips its date-based ID on Aug 1 (`tmCurrentSeasonId`),
+weeks before the big leagues kick off. The refresh keeps aggregating the **previous** season
+until ≥35% of the pool has played games in the new one (`chooseSeason` in
+`lib/season-selection.ts`), then flips automatically — never edit a hardcoded season into the
+scrapers. The chosen season is committed to `data/season.txt`; when it changes, the
+old-vs-new regression guards skip for that one run (a flip legitimately resets every stat).
+ceapi payloads carry each player's full career, which is what makes aggregating a past season
+(and the "last-season coverage ≥70%" scraper-health guard) possible.
 
 ## Agent skills
 

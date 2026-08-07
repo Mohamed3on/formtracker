@@ -112,8 +112,12 @@ export const LEAGUE_NAMES: Record<string, string> = {
   GOCU: "Gold Cup",
 };
 
-/** Current Transfermarkt season ID (e.g. 2025 = the 25/26 season). */
-function currentSeasonId(): number {
+/** Date-based Transfermarkt season ID (e.g. 2025 = the 25/26 season). TM keys
+ *  a season by its starting year and rolls over on Aug 1. This is only the
+ *  *candidate* season: until the new season actually has games, the refresh
+ *  script keeps aggregating the previous one (see its season-coverage logic),
+ *  so never treat this value as "the season the data is for". */
+export function tmCurrentSeasonId(): number {
   const now = new Date();
   const year = now.getFullYear();
   return now.getMonth() >= 7 ? year : year - 1;
@@ -216,8 +220,8 @@ function aggregateSeasonStats(
   games: CeapiGame[],
   currentClubId: string,
   clubTypes: ClubTypes,
+  seasonId: number,
 ): AggregatedStats {
-  const seasonId = currentSeasonId();
   let goals = 0,
     topFlightGoals = 0,
     assists = 0,
@@ -359,11 +363,12 @@ function aggregateSeasonStats(
 export function reaggregatePlayerStats(
   prev: PlayerStatsResult,
   clubTypes: ClubTypes,
+  seasonId: number,
 ): PlayerStatsResult {
   const games = prev.rawGames;
   if (!games?.length) return prev;
   const currentClubId = extractClubIdFromLogoUrl(prev.clubLogoUrl) ?? "";
-  const stats = aggregateSeasonStats(games, currentClubId, clubTypes);
+  const stats = aggregateSeasonStats(games, currentClubId, clubTypes, seasonId);
   return { ...prev, ...stats };
 }
 
@@ -405,7 +410,7 @@ export async function fetchPlayerMinutesRaw(
   if (!Array.isArray(games)) {
     throw new Error(`ceapi returned no performance array for ${playerId}`);
   }
-  const stats = aggregateSeasonStats(games, header.clubId, clubTypes);
+  const stats = aggregateSeasonStats(games, header.clubId, clubTypes, tmCurrentSeasonId());
 
   // The alpha API is the canonical source for senior caps + whether the
   // player is in the current squad (the same data powers TM's green/yellow
