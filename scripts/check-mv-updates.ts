@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { tmFetch } from "@/lib/tm-relay";
+import { fetchPage } from "@/lib/fetch";
 
 /**
  * Checks if Transfermarkt has published market value updates within the last ~36 hours.
@@ -24,15 +24,9 @@ const HEADERS = {
 };
 
 async function main() {
-  const res = await tmFetch(URL, {
-    headers: HEADERS,
-  });
-  const html = await res.text();
-
-  if (html.length < 500) {
-    console.log("Rate limited or empty response, skipping.");
-    process.exit(1);
-  }
+  // fetchPage owns the rate-limit/blocked heuristic and retries; a page that
+  // never materializes throws and lands in the catch below (exit 1 = skip).
+  const html = await fetchPage(URL, undefined, HEADERS);
 
   const $ = cheerio.load(html);
 

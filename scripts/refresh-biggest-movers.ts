@@ -3,11 +3,8 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { parseMarketValue } from "@/lib/parse-market-value";
 import { BASE_URL } from "@/lib/constants";
-import { withSlot, setMaxConcurrent } from "@/lib/fetch";
-import { tmFetch } from "@/lib/tm-relay";
+import { fetchPage, setMaxConcurrent } from "@/lib/fetch";
 import type { MarketValueMover, MarketValueMoversResult } from "@/app/types";
-
-setMaxConcurrent(3);
 
 const AJAX_HEADERS = {
   "User-Agent":
@@ -19,8 +16,6 @@ const AJAX_HEADERS = {
   "sec-ch-ua-mobile": "?0",
 };
 
-const MAX_RETRIES = 5;
-const BASE_DELAY = 1000;
 const LOOKBACK_YEARS = 7;
 
 type Direction = "losers" | "winners";
@@ -53,31 +48,6 @@ function buildUrl(date: string, cfg: DirectionConfig): string {
 
 function buildReferer(date: string, cfg: DirectionConfig): string {
   return `${BASE_URL}/spieler-statistik/${cfg.urlPath}/marktwertetop/plus/0/galerie/0?datum=${date}&ausrichtung=alle&spielerposition_id=&altersklasse=alle&land_id=0&yt0=Show`;
-}
-
-async function fetchWithRetry(url: string, referer: string, label: string): Promise<string> {
-  return withSlot(async () => {
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const response = await tmFetch(url, {
-        headers: { ...AJAX_HEADERS, Referer: referer },
-      });
-      if (!response.ok) {
-        console.warn(`[${label}] HTTP ${response.status}, retry ${attempt + 1}/${MAX_RETRIES}`);
-      } else {
-        const html = await response.text();
-        if (html.length > 500) return html;
-        console.warn(
-          `[${label}] Rate limited (${html.length}b), retry ${attempt + 1}/${MAX_RETRIES}`,
-        );
-      }
-      if (attempt < MAX_RETRIES - 1) {
-        // Per-request jitter so retries don't burst in lockstep across periods
-        const jitter = Math.random() * BASE_DELAY * 2 ** attempt;
-        await new Promise((r) => setTimeout(r, BASE_DELAY * 2 ** attempt + jitter));
-      }
-    }
-    throw new Error(`[${label}] Failed after ${MAX_RETRIES} retries: ${url}`);
-  });
 }
 
 function parsePeriodMovers(html: string, date: string): MarketValueMover[] {
@@ -158,9 +128,10 @@ async function fetchAllPeriods(
 ): Promise<Map<string, MarketValueMover[]>> {
   const results = await Promise.allSettled(
     dates.map((d) =>
-      fetchWithRetry(buildUrl(d, cfg), buildReferer(d, cfg), cfg.label).then((html) =>
-        parsePeriodMovers(html, d),
-      ),
+      fetchPage(buildUrl(d, cfg), undefined, {
+        ...AJAX_HEADERS,
+        Referer: buildReferer(d, cfg),
+      }).then((html) => parsePeriodMovers(html, d)),
     ),
   );
   const map = new Map<string, MarketValueMover[]>();
@@ -224,6 +195,8 @@ async function writeResult(result: MarketValueMoversResult, cfg: DirectionConfig
 }
 
 async function main() {
+  // Movers pages rate-limit hard; keep the shared TM limiter low for this run.
+  setMaxConcurrent(3);
   await Promise.all([processDirection("losers"), processDirection("winners")]);
   const tsPath = join(process.cwd(), "data", "biggest-movers-updated-at.txt");
   await writeFile(tsPath, new Date().toISOString());

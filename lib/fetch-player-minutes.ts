@@ -1,7 +1,6 @@
 import { parseProfileHeader } from "@/lib/transfermarkt";
 import { BASE_URL } from "./constants";
-import { fetchPage, withSlot } from "./fetch";
-import { tmFetch } from "./tm-relay";
+import { fetchPage, fetchJson } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
 import {
   aggregateSeasonStats,
@@ -86,11 +85,6 @@ const ZERO_STATS: PlayerStatsResult = {
   age: 0,
 };
 
-const CEAPI_BASE_HEADERS: Record<string, string> = {
-  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-  Accept: "application/json",
-};
-
 /** Raw fetch — no caching. Used by the offline refresh script. */
 export async function fetchPlayerMinutesRaw(
   playerId: string,
@@ -100,16 +94,13 @@ export async function fetchPlayerMinutesRaw(
 
   // Fetch HTML (club/ribbon), ceapi (per-game stats), and the alpha-API senior
   // NT row in parallel. HTML + ceapi go through the shared TM concurrency
-  // limiter; the alpha API runs on a different host and small payload, so we
-  // don't slot it.
-  const [htmlContent, ceapiRes, seniorCareer] = await Promise.all([
+  // limiter; the alpha API runs on a different host and small payload, so it
+  // stays a plain fetch.
+  const [htmlContent, ceapi, seniorCareer] = await Promise.all([
     fetchPage(`${BASE_URL}/x/leistungsdaten/spieler/${playerId}`),
-    withSlot(() =>
-      tmFetch(`${BASE_URL}/ceapi/performance-game/${playerId}`, {
-        headers: CEAPI_BASE_HEADERS,
-        cache: "no-store",
-      }),
-    ),
+    fetchJson(`${BASE_URL}/ceapi/performance-game/${playerId}`) as Promise<{
+      data?: { performance?: CeapiGame[] };
+    }>,
     fetchSeniorCareer(playerId),
   ]);
 
@@ -119,10 +110,6 @@ export async function fetchPlayerMinutesRaw(
   const marketValue = parseMarketValue(header.marketValueText);
   const marketValueDisplay = header.marketValueText || "-";
 
-  if (!ceapiRes.ok) {
-    throw new Error(`ceapi ${ceapiRes.status} for ${playerId}`);
-  }
-  const ceapi = await ceapiRes.json();
   const games: CeapiGame[] | undefined = ceapi?.data?.performance;
   // TM occasionally returns 200 with a nullish `performance` under rate pressure.
   // Treat that as a failure so the retry loop fires instead of silently caching zeros.

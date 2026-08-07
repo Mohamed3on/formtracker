@@ -27,7 +27,6 @@ import {
 import type { MinutesValuePlayer } from "@/app/types";
 
 const FORCE_REFRESH = process.argv.includes("--force") || process.env.FORCE_REFRESH === "1";
-setMaxConcurrent(40);
 const CONCURRENCY = { max: 40, min: 10 };
 const DELAY = { base: 100, multiplier: 2 };
 const FAILURE_THRESHOLD = 0.3;
@@ -607,6 +606,9 @@ async function saveClubTypes(clubTypes: ClubTypes): Promise<void> {
 // --- Main pipeline ---
 
 async function main() {
+  // Batch script with its own adaptive backoff — raise the shared TM limit here
+  // (inside main, never at module scope: import order must not decide the limit).
+  setMaxConcurrent(CONCURRENCY.max);
   const markerSeason = await readSeasonMarker();
   const [mvList, clubTypes, fetchState] = await Promise.all([
     loadMvPool(),
