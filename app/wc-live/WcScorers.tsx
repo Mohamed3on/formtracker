@@ -7,6 +7,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { NationalityFlag } from "@/components/NationalityFlag";
 import { getPlayerDetailHref } from "@/lib/format";
 import type { WcScorer } from "@/lib/wc/scorers";
+import { npga } from "@/lib/stats-toggles";
 
 type SortKey = "npga" | "goals" | "assists" | "mins";
 
@@ -22,7 +23,7 @@ export function WcScorers({ scorers, started }: { scorers: WcScorer[]; started: 
   const rows = useMemo(() => {
     const withVals = scorers.map((s) => {
       const goals = s.goals - (includePen ? 0 : s.penaltyGoals);
-      return { s, goals, assists: s.assists, npga: goals + s.assists };
+      return { s, goals, assists: s.assists, npga: npga(s, { includePenalties: includePen }) };
     });
     withVals.sort((a, b) => {
       let diff: number;

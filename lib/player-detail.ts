@@ -3,12 +3,13 @@ import { unstable_cache } from "next/cache";
 import type { MarketValueMover, MinutesValuePlayer, PlayerStats } from "@/app/types";
 import { findRepeatLosers, findRepeatWinners } from "@/lib/biggest-movers";
 import { getDataVersion } from "@/lib/data-version";
+import { getMinutesValueData } from "@/lib/fetch-minutes-value";
 import {
   applyStatsToggles,
-  getMinutesValueData,
   includeTournamentStats,
+  npga,
   toPlayerStats,
-} from "@/lib/fetch-minutes-value";
+} from "@/lib/stats-toggles";
 import {
   buildLeagueValues,
   filterMinutesBenchmark,
@@ -22,15 +23,17 @@ import {
 import { extractClubIdFromLogoUrl, formatMarketValue } from "@/lib/format";
 import { normalizeForSearch } from "@/lib/normalize";
 import {
-  canBeOutperformerAgainst,
-  canBeUnderperformerAgainst,
   effectivePosition,
   getBroadPositionGroup,
   getBroadPositionLabel,
   getBroadPositionShortLabel,
-  strictlyOutperforms,
 } from "@/lib/positions";
-import { MIN_COMPARISON_COUNT, countComparisons } from "@/lib/value-analysis";
+import {
+  MIN_COMPARISON_COUNT,
+  countComparisons,
+  outperformsTarget,
+  underperformsTarget,
+} from "@/lib/value-analysis";
 
 export interface PlayerRankings {
   marketValueOverall: number;
@@ -155,7 +158,7 @@ export interface PlayerDetailData {
 }
 
 export function seasonNpga(p: MinutesValuePlayer): number {
-  return p.goals - (p.penaltyGoals ?? 0) + p.assists;
+  return npga(p);
 }
 
 function compareByMetric(
@@ -346,21 +349,13 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
     comparisonPlayers.find((candidate) => candidate.playerId === player.playerId) ?? playerStats;
   const targetPosition = effectivePosition(comparisonTarget);
   const underperformers = sortUnderperformers(
-    comparisonPlayers.filter(
-      (candidate) =>
-        candidate.playerId !== comparisonTarget.playerId &&
-        candidate.marketValue >= comparisonTarget.marketValue &&
-        strictlyOutperforms(comparisonTarget, candidate) &&
-        canBeUnderperformerAgainst(effectivePosition(candidate), targetPosition),
+    comparisonPlayers.filter((candidate) =>
+      underperformsTarget(candidate, comparisonTarget, targetPosition),
     ),
   );
   const outperformers = sortOutperformers(
-    comparisonPlayers.filter(
-      (candidate) =>
-        candidate.playerId !== comparisonTarget.playerId &&
-        candidate.marketValue <= comparisonTarget.marketValue &&
-        strictlyOutperforms(candidate, comparisonTarget) &&
-        canBeOutperformerAgainst(effectivePosition(candidate), targetPosition),
+    comparisonPlayers.filter((candidate) =>
+      outperformsTarget(candidate, comparisonTarget, targetPosition),
     ),
   );
 

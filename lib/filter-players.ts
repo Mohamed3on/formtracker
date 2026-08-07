@@ -1,5 +1,6 @@
 import type { ComboboxGroup } from "@/components/Combobox";
 import { effectivePosition, getPositionClassRank } from "@/lib/positions";
+import { npga } from "@/lib/stats-toggles";
 
 export const TOP_5_LEAGUES = ["Premier League", "LaLiga", "Bundesliga", "Serie A", "Ligue 1"];
 
@@ -81,9 +82,7 @@ export function getFormNpga(
   player: { recentForm?: { goals: number; assists: number; penaltyGoals: number }[] },
   window: number,
 ): number {
-  return (player.recentForm ?? [])
-    .slice(0, window)
-    .reduce((s, g) => s + g.goals - (g.penaltyGoals ?? 0) + g.assists, 0);
+  return (player.recentForm ?? []).slice(0, window).reduce((s, g) => s + npga(g), 0);
 }
 
 /** Single-pass form stats for a window — avoids 4 separate traversals. */
@@ -97,16 +96,16 @@ export function getFormStats(
   let goals = 0,
     assists = 0,
     penaltyGoals = 0,
-    npga = 0,
+    npgaTotal = 0,
     minutes = 0;
   for (const g of games) {
     goals += g.goals;
     assists += g.assists;
     penaltyGoals += g.penaltyGoals ?? 0;
-    npga += g.goals - (g.penaltyGoals ?? 0) + g.assists;
+    npgaTotal += npga(g);
     minutes += g.minutes;
   }
-  return { goals, assists, penaltyGoals, npga, minutes };
+  return { goals, assists, penaltyGoals, npga: npgaTotal, minutes };
 }
 
 /** Total games the player's team has played this season. */

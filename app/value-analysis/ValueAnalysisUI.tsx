@@ -27,7 +27,12 @@ import {
   uniqueFilterOptions,
   type MinutesValueFilter,
 } from "@/lib/filter-players";
-import { countComparisons, MIN_COMPARISON_COUNT } from "@/lib/value-analysis";
+import {
+  countComparisons,
+  MIN_COMPARISON_COUNT,
+  outperformsTarget,
+  underperformsTarget,
+} from "@/lib/value-analysis";
 import { applyStatsToggles, toPlayerStats } from "@/lib/stats-toggles";
 import {
   formatReturnInfo,
@@ -37,12 +42,6 @@ import {
   getPlayerDetailHref,
 } from "@/lib/format";
 import { normalizeForSearch } from "@/lib/normalize";
-import {
-  effectivePosition,
-  strictlyOutperforms,
-  canBeUnderperformerAgainst,
-  canBeOutperformerAgainst,
-} from "@/lib/positions";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
 import { BenchmarkCard, BigNumber } from "./BenchmarkCard";
 import type { PlayerStats, MinutesValuePlayer, InjuryMap } from "@/app/types";
@@ -90,24 +89,11 @@ function computeBenchmark(players: PlayerStats[], id: string, name: string) {
     (name && players.find((p) => normalizeForSearch(p.name).includes(normalized))) ||
     null;
   if (!target) return null;
-  const tp = effectivePosition(target);
   return {
     targetPlayer: target,
-    underperformers: players.filter(
-      (p) =>
-        p.playerId !== target.playerId &&
-        p.marketValue >= target.marketValue &&
-        strictlyOutperforms(target, p) &&
-        canBeUnderperformerAgainst(effectivePosition(p), tp),
-    ),
+    underperformers: players.filter((p) => underperformsTarget(p, target)),
     outperformers: players
-      .filter(
-        (p) =>
-          p.playerId !== target.playerId &&
-          p.marketValue <= target.marketValue &&
-          strictlyOutperforms(p, target) &&
-          canBeOutperformerAgainst(effectivePosition(p), tp),
-      )
+      .filter((p) => outperformsTarget(p, target))
       .sort((a, b) => b.points - a.points || a.marketValue - b.marketValue),
     totalPlayers: players.length,
   };

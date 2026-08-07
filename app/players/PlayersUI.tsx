@@ -16,7 +16,12 @@ import { InfoTip } from "@/app/components/InfoTip";
 import { PositionDisplay, POS_ABBREV } from "@/components/PositionDisplay";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
 import { getLeagueUrl } from "@/lib/leagues";
-import { includeTournamentStats } from "@/lib/stats-toggles";
+import { includeTournamentStats, npga } from "@/lib/stats-toggles";
+import {
+  matchesPositionFilter,
+  positionFilterCategory,
+  positionsInFilterCategory,
+} from "@/lib/positions";
 import {
   filterPlayersByLeagueAndClub,
   getFormMinutes,
@@ -66,7 +71,7 @@ function getFormGA(
   if (window === "season") {
     const penAdj = includePen ? 0 : (player.penaltyGoals ?? 0);
     return {
-      total: player.goals - penAdj + player.assists,
+      total: npga(player, { includePenalties: includePen }),
       goals: player.goals - penAdj,
       assists: player.assists,
     };
@@ -491,36 +496,7 @@ function parseSigningFilter(v: string | null): SigningFilter {
   return null;
 }
 
-const POSITION_CATEGORIES: Record<string, string[]> = {
-  att: ["Centre-Forward", "Second Striker", "Left Winger", "Right Winger"],
-  mid: [
-    "Attacking Midfield",
-    "Central Midfield",
-    "Defensive Midfield",
-    "Left Midfield",
-    "Right Midfield",
-  ],
-  def: ["Centre-Back", "Left-Back", "Right-Back"],
-  gk: ["Goalkeeper"],
-};
-
 const CATEGORY_LABELS: Record<string, string> = { att: "ATT", mid: "MID", def: "DEF", gk: "GK" };
-
-function getPositionCategory(pos: string): string | null {
-  if (POSITION_CATEGORIES[pos]) return pos;
-  for (const [key, positions] of Object.entries(POSITION_CATEGORIES)) {
-    if (positions.includes(pos)) return key;
-  }
-  return null;
-}
-
-function matchesPositionFilter(player: MinutesValuePlayer, filter: string): boolean {
-  if (!filter) return true;
-  const pos = player.playedPosition || player.position;
-  const positions = POSITION_CATEGORIES[filter];
-  if (positions) return positions.includes(pos);
-  return pos === filter;
-}
 
 export function PlayersUI({
   initialData: rawPlayers,
@@ -542,9 +518,10 @@ export function PlayersUI({
   const clubFilter = params.get("club") || "all";
   const nationalityFilter = params.get("nat") || "all";
   const positionFilter = params.get("pos") || "";
-  const activeCategory = getPositionCategory(positionFilter);
+  const activeCategory = positionFilterCategory(positionFilter);
   const specificPosition =
-    activeCategory && !POSITION_CATEGORIES[positionFilter] ? positionFilter : null;
+    activeCategory && positionFilter !== activeCategory ? positionFilter : null;
+  const categoryPositions = activeCategory ? positionsInFilterCategory(activeCategory) : [];
   const signingFilter = parseSigningFilter(params.get("signing"));
   const includePen = params.get("pen") === "1";
   const excludeCurrentIntl = params.get("xcintl") === "1";
@@ -810,7 +787,7 @@ export function PlayersUI({
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-            {activeCategory && POSITION_CATEGORIES[activeCategory].length > 1 && (
+            {activeCategory && categoryPositions.length > 1 && (
               <ToggleGroup
                 type="single"
                 value={specificPosition ?? ""}
@@ -820,7 +797,7 @@ export function PlayersUI({
                 }}
                 className="rounded-lg overflow-hidden border border-border-subtle"
               >
-                {POSITION_CATEGORIES[activeCategory].map((p) => (
+                {categoryPositions.map((p) => (
                   <ToggleGroupItem
                     key={p}
                     value={p}

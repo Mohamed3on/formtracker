@@ -7,6 +7,7 @@ import { NationalityFlag } from "@/components/NationalityFlag";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerDetailHref } from "@/lib/format";
 import type { MinutesValuePlayer } from "@/app/types";
+import { npga } from "@/lib/stats-toggles";
 
 type SortKey = "value" | "mins" | "games" | "ga" | "pen";
 
@@ -17,10 +18,6 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "games", label: "Games" },
   { key: "pen", label: "Pen" },
 ];
-
-function npga(p: MinutesValuePlayer): number {
-  return p.goals - (p.penaltyGoals ?? 0) + p.assists;
-}
 
 function SquadPlayerRow({
   player,

@@ -1,5 +1,15 @@
 import type { PlayerStats, MinutesValuePlayer } from "@/app/types";
 
+/** Non-penalty goals + assists — the app's one scoring metric. Every surface
+ *  (home picks, squad tables, player detail, WC scorers, form windows) derives
+ *  it from here; pass `includePenalties` for toggles that keep pens in. */
+export function npga(
+  p: { goals: number; assists: number; penaltyGoals?: number },
+  opts?: { includePenalties?: boolean },
+): number {
+  return p.goals - (opts?.includePenalties ? 0 : (p.penaltyGoals ?? 0)) + p.assists;
+}
+
 export function toPlayerStats(p: MinutesValuePlayer): PlayerStats {
   return {
     name: p.name,

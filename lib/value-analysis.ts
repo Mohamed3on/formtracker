@@ -12,6 +12,45 @@ export type ValueCandidate = PlayerStats & { count: number };
 
 export const MIN_COMPARISON_COUNT = 3;
 
+type ValueComparable = {
+  playerId: string;
+  marketValue: number;
+  points: number;
+  minutes?: number;
+  position: string;
+  playedPosition?: string;
+};
+
+/** The bargain/overpriced rule, owned here and only here: `candidate` costs
+ *  equal-or-more than `target` yet is strictly outperformed by it (at a
+ *  position where that comparison is fair). */
+export function underperformsTarget(
+  candidate: ValueComparable,
+  target: ValueComparable,
+  targetPosition: string = pos(target),
+): boolean {
+  return (
+    candidate.playerId !== target.playerId &&
+    candidate.marketValue >= target.marketValue &&
+    strictlyOutperforms(target, candidate) &&
+    canBeUnderperformerAgainst(pos(candidate), targetPosition)
+  );
+}
+
+/** Mirror rule: `candidate` costs equal-or-less yet strictly outperforms `target`. */
+export function outperformsTarget(
+  candidate: ValueComparable,
+  target: ValueComparable,
+  targetPosition: string = pos(target),
+): boolean {
+  return (
+    candidate.playerId !== target.playerId &&
+    candidate.marketValue <= target.marketValue &&
+    strictlyOutperforms(candidate, target) &&
+    canBeOutperformerAgainst(pos(candidate), targetPosition)
+  );
+}
+
 /** Count how many players in `pool` the given player compares against. */
 export function countComparisons(
   player: PlayerStats,
@@ -19,16 +58,8 @@ export function countComparisons(
   candidateOutperforms: boolean,
 ): number {
   const ep = pos(player);
-  return pool.filter(
-    (p) =>
-      p.playerId !== player.playerId &&
-      (candidateOutperforms
-        ? p.marketValue >= player.marketValue &&
-          strictlyOutperforms(player, p) &&
-          canBeUnderperformerAgainst(pos(p), ep)
-        : p.marketValue <= player.marketValue &&
-          strictlyOutperforms(p, player) &&
-          canBeOutperformerAgainst(pos(p), ep)),
+  return pool.filter((p) =>
+    candidateOutperforms ? underperformsTarget(p, player, ep) : outperformsTarget(p, player, ep),
   ).length;
 }
 

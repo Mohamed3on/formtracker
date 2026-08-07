@@ -50,6 +50,8 @@ const BROAD_POSITION_MAP: Record<string, BroadPositionGroup> = {
   "Second Striker": "forwards",
   "Attacking Midfield": "midfielders",
   "Central Midfield": "midfielders",
+  "Left Midfield": "midfielders",
+  "Right Midfield": "midfielders",
   "Defensive Midfield": "midfielders",
   "Left Wing-Back": "defenders",
   "Right Wing-Back": "defenders",
@@ -93,8 +95,37 @@ const BROAD_POSITION_FILTER: Record<BroadPositionGroup, string> = {
   goalkeepers: "gk",
 };
 
+const FILTER_KEYS = new Set<string>(Object.values(BROAD_POSITION_FILTER));
+
 export function getBroadPositionFilter(position: string): string {
   return BROAD_POSITION_FILTER[getBroadPositionGroup(position)];
+}
+
+/** Category key for a players-page ?pos= value — either a category key itself
+ *  (att/mid/def/gk) or any position name; null when unrecognized. */
+export function positionFilterCategory(filter: string): string | null {
+  if (FILTER_KEYS.has(filter)) return filter;
+  return filter in BROAD_POSITION_MAP ? getBroadPositionFilter(filter) : null;
+}
+
+/** Position names under a players-page filter key, for sub-filter dropdowns.
+ *  Derived from the same map as filtering, so the two can't disagree. */
+export function positionsInFilterCategory(category: string): string[] {
+  return Object.keys(BROAD_POSITION_MAP).filter((p) => getBroadPositionFilter(p) === category);
+}
+
+/** True when the player belongs under a players-page ?pos= filter — a category
+ *  key (att/mid/def/gk) or an exact position name. The single owner of this
+ *  rule: profile links built from getBroadPositionFilter and list filtering
+ *  must agree, or a player's own profile links to a list that excludes them. */
+export function matchesPositionFilter(
+  p: { position: string; playedPosition?: string },
+  filter: string,
+): boolean {
+  if (!filter) return true;
+  const position = effectivePosition(p);
+  if (FILTER_KEYS.has(filter)) return getBroadPositionFilter(position) === filter;
+  return position === filter;
 }
 
 /** Effective position — prefers the most-played position this season over the registered position. */

@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createPageMetadata } from "@/lib/metadata";
+import { npga } from "@/lib/stats-toggles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -296,13 +297,9 @@ function formatMinutes(value?: number): string {
   return value.toLocaleString();
 }
 
-function getNpga(player: Pick<MinutesValuePlayer, "goals" | "assists" | "penaltyGoals">): number {
-  return player.goals - (player.penaltyGoals ?? 0) + player.assists;
-}
-
 function sortByNpgaDesc(players: MinutesValuePlayer[]): MinutesValuePlayer[] {
   return [...players].sort((a, b) => {
-    const npgaDiff = getNpga(b) - getNpga(a);
+    const npgaDiff = npga(b) - npga(a);
     if (npgaDiff !== 0) return npgaDiff;
     return a.minutes - b.minutes;
   });
@@ -724,14 +721,14 @@ async function fetchHomeData(): Promise<{
 
   const playersByNpga = sortByNpgaDesc(players);
   const byFewerMins = (a: MinutesValuePlayer, b: MinutesValuePlayer) => a.minutes - b.minutes;
-  const mostNpgaPlayers = pickWithTies(playersByNpga, (player) => getNpga(player), "top", {
+  const mostNpgaPlayers = pickWithTies(playersByNpga, (player) => npga(player), "top", {
     sort: byFewerMins,
     max: 1,
   });
   const mostNpgaPlayer = mostNpgaPlayers[0] ?? null;
   const mostNpgaSignings = pickWithTies(
     players.filter((p) => p.isNewSigning),
-    (player) => getNpga(player),
+    (player) => npga(player),
     "top",
     { sort: byFewerMins, max: 1 },
   );
@@ -739,7 +736,7 @@ async function fetchHomeData(): Promise<{
     players.filter((p) => p.isOnLoan),
     (player) => player.marketValue,
     "top",
-    { sort: (a, b) => getNpga(b) - getNpga(a) || a.minutes - b.minutes, max: 1 },
+    { sort: (a, b) => npga(b) - npga(a) || a.minutes - b.minutes, max: 1 },
   );
 
   const zeroCapsPlayers = players.filter((p) => (p.intlCareerCaps ?? 0) === 0);
@@ -747,11 +744,11 @@ async function fetchHomeData(): Promise<{
     zeroCapsPlayers,
     (player) => player.marketValue,
     "top",
-    { sort: (a, b) => getNpga(b) - getNpga(a) || a.minutes - b.minutes, max: 1 },
+    { sort: (a, b) => npga(b) - npga(a) || a.minutes - b.minutes, max: 1 },
   );
   const mostNpgaZeroCapsPlayers = pickWithTies(
     sortByNpgaDesc(zeroCapsPlayers),
-    (player) => getNpga(player),
+    (player) => npga(player),
     "top",
     { sort: byFewerMins, max: 1 },
   );
@@ -855,7 +852,7 @@ async function fetchHomeData(): Promise<{
         mostNpgaPlayer,
         "Top scorer (npG+A)",
         "/players?sort=ga",
-        `${mostNpgaPlayer.club} · ${getNpga(mostNpgaPlayer)} G+A (excl. pens)`,
+        `${mostNpgaPlayer.club} · ${npga(mostNpgaPlayer)} G+A (excl. pens)`,
         { tone: "green" },
       ),
   ].filter(Boolean) as SnapshotItem[];
@@ -948,7 +945,7 @@ async function fetchHomeData(): Promise<{
           "Top scorer (last 5 & 10)",
           "/players?sort=ga&fw=5",
           `${p5.club} · ${getFormNpga(p5, 5)} npG+A (5) · ${getFormNpga(p5, 10)} npG+A (10)`,
-          { metrics: [`Season ${getNpga(p5)} npG+A`, p5.marketValueDisplay], tone: "green" },
+          { metrics: [`Season ${npga(p5)} npG+A`, p5.marketValueDisplay], tone: "green" },
         ),
       ]);
     } else {
@@ -958,7 +955,7 @@ async function fetchHomeData(): Promise<{
           "Top scorer (last 10)",
           "/players?sort=ga&fw=10",
           `${p10.club} · ${getFormNpga(p10, 10)} G+A (excl. pens) in last 10`,
-          { metrics: [`Season ${getNpga(p10)} npG+A`, p10.marketValueDisplay], tone: "green" },
+          { metrics: [`Season ${npga(p10)} npG+A`, p10.marketValueDisplay], tone: "green" },
         ),
       ]);
       formScorerItems.push([
@@ -967,7 +964,7 @@ async function fetchHomeData(): Promise<{
           "Top scorer (last 5)",
           "/players?sort=ga&fw=5",
           `${p5.club} · ${getFormNpga(p5, 5)} G+A (excl. pens) in last 5`,
-          { metrics: [`Season ${getNpga(p5)} npG+A`, p5.marketValueDisplay], tone: "green" },
+          { metrics: [`Season ${npga(p5)} npG+A`, p5.marketValueDisplay], tone: "green" },
         ),
       ]);
     }
@@ -979,7 +976,7 @@ async function fetchHomeData(): Promise<{
         p,
         "Top scorer (npG+A)",
         "/players?sort=ga",
-        `${p.club} · ${getNpga(p)} G+A (excl. pens)`,
+        `${p.club} · ${npga(p)} G+A (excl. pens)`,
         { metrics: [`${formatMinutes(p.minutes)} mins`, p.marketValueDisplay] },
       ),
     ),
@@ -989,7 +986,7 @@ async function fetchHomeData(): Promise<{
         p,
         "Top scoring signing",
         "/players?signing=transfer&sort=ga",
-        `${p.club} · ${getNpga(p)} G+A (excl. pens)`,
+        `${p.club} · ${npga(p)} G+A (excl. pens)`,
         { metrics: [`${formatMinutes(p.minutes)} mins`, p.marketValueDisplay] },
       ),
     ),
@@ -999,7 +996,7 @@ async function fetchHomeData(): Promise<{
         "Most valuable loan",
         "/players?signing=loan&sort=value",
         `${p.club} · ${p.marketValueDisplay}`,
-        { metrics: [`npG+A ${getNpga(p)}`, `${formatMinutes(p.minutes)} mins`] },
+        { metrics: [`npG+A ${npga(p)}`, `${formatMinutes(p.minutes)} mins`] },
       ),
     ),
     mostValuableZeroCapsPlayers.map((p) =>
@@ -1008,7 +1005,7 @@ async function fetchHomeData(): Promise<{
         "Most valuable uncapped",
         "/players?sort=value&maxcaps=0",
         `${p.club}${p.nationality ? ` · ${p.nationality}` : ""} · ${p.marketValueDisplay}`,
-        { metrics: [`npG+A ${getNpga(p)}`, `${formatMinutes(p.minutes)} mins`] },
+        { metrics: [`npG+A ${npga(p)}`, `${formatMinutes(p.minutes)} mins`] },
       ),
     ),
     mostNpgaZeroCapsPlayers.map((p) =>
@@ -1016,7 +1013,7 @@ async function fetchHomeData(): Promise<{
         p,
         "Top scoring uncapped",
         "/players?sort=ga&maxcaps=0",
-        `${p.club}${p.nationality ? ` · ${p.nationality}` : ""} · ${getNpga(p)} G+A (excl. pens)`,
+        `${p.club}${p.nationality ? ` · ${p.nationality}` : ""} · ${npga(p)} G+A (excl. pens)`,
         { metrics: [`${formatMinutes(p.minutes)} mins`, p.marketValueDisplay] },
       ),
     ),
