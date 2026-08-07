@@ -1,4 +1,4 @@
-import type { CeapiGame } from "@/app/types";
+import type { CeapiGame } from "./player-aggregation";
 
 // TM's date-based season flips Aug 1 while the big leagues are still weeks from
 // kickoff. Keep aggregating the previous season until this share of fetched

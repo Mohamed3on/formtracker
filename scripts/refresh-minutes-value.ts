@@ -6,12 +6,13 @@ import {
   fetchTopForwardsRaw,
 } from "@/lib/fetch-minutes-value";
 import { fetchTopScorersRaw, fetchYearlyScorersRaw } from "@/lib/fetch-top-scorers";
+import { fetchPlayerMinutesRaw } from "@/lib/fetch-player-minutes";
 import {
-  fetchPlayerMinutesRaw,
   reaggregatePlayerStats,
   tmCurrentSeasonId,
   type ClubTypes,
-} from "@/lib/fetch-player-minutes";
+  type PlayerStatsResult,
+} from "@/lib/player-aggregation";
 import { chooseSeason } from "@/lib/season-selection";
 import { extractClubIdFromLogoUrl } from "@/lib/format";
 import { crestUrl, flagUrl } from "@/lib/transfermarkt/image";
@@ -23,7 +24,7 @@ import {
   MINUTES_DROP_TOLERANCE,
   sampleRegressionDrops,
 } from "@/lib/minutes-regression";
-import type { MinutesValuePlayer, PlayerStatsResult } from "@/app/types";
+import type { MinutesValuePlayer } from "@/app/types";
 
 const FORCE_REFRESH = process.argv.includes("--force") || process.env.FORCE_REFRESH === "1";
 setMaxConcurrent(40);

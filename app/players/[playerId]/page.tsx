@@ -34,7 +34,7 @@ import { SectionPanel } from "@/components/SectionPanel";
 import { SignalBadge } from "@/components/SignalBadge";
 import { TeamLogo } from "@/components/TeamLogo";
 import type { MinutesValuePlayer, RecentGameStats } from "@/app/types";
-import { POSITION_NAMES } from "@/lib/fetch-player-minutes";
+import { POSITION_NAMES } from "@/lib/player-aggregation";
 import { PlayerInjuryBadge } from "./PlayerInjuryBadge";
 import { effectivePosition, getBroadPositionFilter } from "@/lib/positions";
 import { JsonLd } from "@/components/JsonLd";

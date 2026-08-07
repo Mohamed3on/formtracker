@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { chooseSeason, seasonCoverage, type SeasonSource } from "./season-selection";
-import type { CeapiGame } from "@/app/types";
+import type { CeapiGame } from "./player-aggregation";
 
 function game(seasonId: number, playedMinutes: number): CeapiGame {
   return {

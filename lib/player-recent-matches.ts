@@ -1,5 +1,4 @@
-import type { RecentGameStats } from "@/app/types";
-import { LEAGUE_NAMES } from "./fetch-player-minutes";
+import { LEAGUE_NAMES, type RecentGameStats } from "./player-aggregation";
 
 /**
  * Returns enriched recent matches for a player.

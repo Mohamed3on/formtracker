@@ -1,3 +1,5 @@
+import type { CeapiGame, RecentGameStats } from "@/lib/player-aggregation";
+
 export interface TeamStats {
   name: string;
   league: string;
@@ -214,40 +216,6 @@ export interface MinutesValuePlayer {
   fetchedAt?: number;
 }
 
-export interface CeapiGame {
-  gameInformation: {
-    gameId?: string;
-    seasonId: number;
-    competitionTypeId: number;
-    competitionId: string;
-    gameDay?: number;
-    isNationalGame?: boolean;
-    date?: { dateTimeUTC?: string };
-  };
-  clubsInformation?: {
-    club?: {
-      clubId?: string;
-      venue?: "home" | "away";
-      goalsTotal?: number | null;
-      opponentGoalsTotal?: number | null;
-    };
-    opponent?: { clubId?: string };
-  };
-  statistics: {
-    generalStatistics: {
-      positionId?: number | null;
-      participationState?: string | null;
-    };
-    goalStatistics: {
-      goalsScoredTotal?: number | null;
-      assists?: number | null;
-      penaltyShooterGoalsScored?: number | null;
-      penaltyShooterMisses?: number | null;
-    };
-    playingTimeStatistics: { playedMinutes?: number | null };
-  };
-}
-
 export type InjuryMap = Record<string, { injury: string; returnDate: string; injurySince: string }>;
 
 export interface MarketValueMover {
@@ -272,66 +240,7 @@ export interface MarketValueMoversResult {
   periods: { date: string; movers: MarketValueMover[] }[];
 }
 
-export interface RecentGameStats {
-  goals: number;
-  assists: number;
-  penaltyGoals: number;
-  minutes: number;
-  positionId?: number;
-  date: string;
-  gameId?: string;
-  gameDay?: number;
-  competitionId?: string;
-  competitionName?: string;
-  venue?: "home" | "away";
-  teamGoals?: number;
-  opponentGoals?: number;
-  opponentClubId?: string;
-  opponentName?: string;
-  opponentLogoUrl?: string;
-  matchReportUrl?: string;
-}
-
-export interface PlayerStatsResult {
-  minutes: number;
-  appearances: number;
-  goals: number;
-  /** Goals in top-flight leagues, cups & continental only (excludes 2nd-tier-and-below
-   *  league goals). Used to gate scorer-pool players in the refresh. */
-  topFlightGoals: number;
-  assists: number;
-  penaltyGoals: number;
-  penaltyMisses: number;
-  intlGoals: number;
-  intlAssists: number;
-  intlMinutes: number;
-  intlAppearances: number;
-  intlPenaltyGoals: number;
-  club: string;
-  clubLogoUrl: string;
-  league: string;
-  intlCareerCaps: number;
-  isCurrentIntl: boolean;
-  isNewSigning: boolean;
-  isOnLoan: boolean;
-  playedPosition: string;
-  contractExpiry?: string;
-  gamesMissed: number;
-  totalGames: number;
-  positionStats?: {
-    positionId: number;
-    position: string;
-    minutes: number;
-    goals: number;
-    assists: number;
-    appearances: number;
-  }[];
-  nationality?: string;
-  nationalityFlagUrl?: string;
-  leagueLogoUrl?: string;
-  recentForm?: RecentGameStats[];
-  marketValue: number;
-  marketValueDisplay: string;
-  age: number;
-  rawGames?: CeapiGame[];
-}
+// The pipeline wire types (CeapiGame, PlayerStatsResult, RecentGameStats)
+// live with the pure aggregation module in lib/player-aggregation.ts and are
+// re-exported below so existing app-side imports keep working.
+export type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/lib/player-aggregation";
