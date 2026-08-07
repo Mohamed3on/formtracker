@@ -26,9 +26,11 @@ import { formatMarketValue } from "@/lib/format";
 import { JsonLd } from "@/components/JsonLd";
 import { absoluteUrl } from "@/lib/site-config";
 
-export function generateStaticParams() {
-  return LEAGUES.map((l) => ({ slug: l.slug }));
-}
+// Request-rendered like every other Transfermarkt-backed page: prerendering
+// this at build meant live team-form/form-analysis fetches whose retry ladders
+// blow the 60s static-generation timeout whenever TM is down, failing deploys.
+// The data layer underneath is unstable_cache'd, so request renders stay cheap.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
