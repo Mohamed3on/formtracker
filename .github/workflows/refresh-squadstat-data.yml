@@ -65,8 +65,10 @@ jobs:
           key: player-cache-${{ github.run_id }}
 
       - name: Commit and push
+        # The file list lives in scripts/outputs.ts, next to the script that
+        # writes them — never enumerate data files here by hand.
         run: |
-          bash scripts/ci-push.sh "chore: refresh minutes-value data" data/minutes-value.json data/updated-at.txt data/player-pool-mv.json data/player-pool-mv-updated-at.txt data/player-pool-scorers.json data/season.txt
+          bash scripts/ci-push.sh "chore: refresh minutes-value data" $(bun run scripts/outputs.ts minutes-value)
 
       - name: Alert on failure
         # 'cancelled' covers the job hitting its timeout, which failure() does not catch.
@@ -140,4 +142,4 @@ jobs:
 
       - name: Commit and push
         run: |
-          bash scripts/ci-push.sh "chore: refresh biggest-movers data" data/biggest-winners.json data/biggest-losers.json data/biggest-movers-updated-at.txt
+          bash scripts/ci-push.sh "chore: refresh biggest-movers data" $(bun run scripts/outputs.ts biggest-movers)

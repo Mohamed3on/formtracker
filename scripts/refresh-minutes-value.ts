@@ -285,11 +285,15 @@ async function fetchStats(
       console.log(
         `[refresh] ${done}/${playerIds.length} fetched (batch: ${batch.length - failures}/${batch.length} ok)`,
       );
-      await writeFile(CACHE_PATH, JSON.stringify({ ...staleCache, ...cache }));
 
       if (i + state.concurrency < remaining.length) {
         await new Promise((r) => setTimeout(r, state.delay));
       }
+    }
+    // Persist once per retry round, not per batch: the serialized cache is
+    // ~800 MB, and per-batch writes meant ~34 full re-serializations a run.
+    if (failed.length < remaining.length) {
+      await writeFile(CACHE_PATH, JSON.stringify({ ...staleCache, ...cache }));
     }
     remaining = failed;
   }
