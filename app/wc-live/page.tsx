@@ -26,7 +26,7 @@ export default async function WcLivePage() {
     getMinutesValueData(),
   ]);
   const live = buildLiveModel(teams, results);
-  const [links, managers] = await Promise.all([playerLinks(teams), getWcManagers(live.tracker)]);
+  const [links, managers] = await Promise.all([playerLinks(teams), getWcManagers()]);
   const scorers = buildWcScorers(players);
   return (
     <div className="py-6 sm:py-10">

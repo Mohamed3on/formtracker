@@ -1,7 +1,8 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-const ALL_TAGS = ["form-analysis", "manager", "team-form", "injured", "wc-teams", "wc-live"];
+// wc-* tags are gone: the World Cup pages read frozen data/wc/*.json snapshots.
+const ALL_TAGS = ["form-analysis", "manager", "team-form", "injured"];
 
 export async function POST(request: NextRequest) {
   try {

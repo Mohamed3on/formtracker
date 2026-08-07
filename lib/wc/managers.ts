@@ -1,31 +1,17 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { cache } from "react";
 import type { ManagerInfo } from "@/app/types";
-import { getManagerInfo } from "@/lib/fetch-manager";
-import type { TrackerRow } from "./live";
-import { wcTeamTmId } from "./tm-team-links";
 
-/**
- * Managers for the nations in the over/under table (those off their value seeding),
- * keyed by team name. National-team pages expose the same `mitarbeiterhistorie` table
- * as clubs, so `getManagerInfo` works unchanged — each scrape is cached 6h. We pass
- * `officialOnly` so PPG counts competitive games only (friendlies stripped out), which
- * matters far more for national teams than clubs. allSettled keeps one nation's failure
- * from breaking the page.
- */
-export async function getWcManagers(tracker: TrackerRow[]): Promise<Record<string, ManagerInfo>> {
-  const names = tracker.filter((r) => r.projStage !== r.expStage).map((r) => r.team.name);
-
-  const results = await Promise.allSettled(
-    names.map(async (name) => {
-      const id = wcTeamTmId(name);
-      return id ? ([name, await getManagerInfo(String(id), true)] as const) : null;
-    }),
-  );
-
-  const managers: Record<string, ManagerInfo> = {};
-  for (const r of results) {
-    if (r.status === "fulfilled" && r.value && r.value[1]) {
-      managers[r.value[0]] = r.value[1];
-    }
+/** Managers for the nations that finished off their value seeding, frozen at
+ *  tournament end by scripts/snapshot-wc.ts. Replaces what used to be the
+ *  repo's biggest prerender cost: ~2 live scrapes per comparable manager,
+ *  ~140 requests per /wc-live build. */
+export const getWcManagers = cache(async (): Promise<Record<string, ManagerInfo>> => {
+  try {
+    return JSON.parse(await readFile(join(process.cwd(), "data", "wc", "managers.json"), "utf-8"));
+  } catch (err) {
+    console.error("[wc] missing managers snapshot:", err);
+    return {};
   }
-  return managers;
-}
+});
