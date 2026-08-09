@@ -1,0 +1,194 @@
+{
+ "R32-1": {
+  "kickoff": 202606282100,
+  "dow": "Sun",
+  "dayLabel": "28 Jun",
+  "timeLabel": "9:00 PM"
+ },
+ "R32-4": {
+  "kickoff": 202606291900,
+  "dow": "Mon",
+  "dayLabel": "29 Jun",
+  "timeLabel": "7:00 PM"
+ },
+ "R32-2": {
+  "kickoff": 202606292230,
+  "dow": "Mon",
+  "dayLabel": "29 Jun",
+  "timeLabel": "10:30 PM"
+ },
+ "R32-3": {
+  "kickoff": 202606300300,
+  "dow": "Tue",
+  "dayLabel": "30 Jun",
+  "timeLabel": "3:00 AM"
+ },
+ "R32-6": {
+  "kickoff": 202606301900,
+  "dow": "Tue",
+  "dayLabel": "30 Jun",
+  "timeLabel": "7:00 PM"
+ },
+ "R32-5": {
+  "kickoff": 202606302300,
+  "dow": "Tue",
+  "dayLabel": "30 Jun",
+  "timeLabel": "11:00 PM"
+ },
+ "R32-7": {
+  "kickoff": 202607010300,
+  "dow": "Wed",
+  "dayLabel": "1 Jul",
+  "timeLabel": "3:00 AM"
+ },
+ "R32-8": {
+  "kickoff": 202607011800,
+  "dow": "Wed",
+  "dayLabel": "1 Jul",
+  "timeLabel": "6:00 PM"
+ },
+ "R32-10": {
+  "kickoff": 202607012200,
+  "dow": "Wed",
+  "dayLabel": "1 Jul",
+  "timeLabel": "10:00 PM"
+ },
+ "R32-9": {
+  "kickoff": 202607020200,
+  "dow": "Thu",
+  "dayLabel": "2 Jul",
+  "timeLabel": "2:00 AM"
+ },
+ "R32-12": {
+  "kickoff": 202607022100,
+  "dow": "Thu",
+  "dayLabel": "2 Jul",
+  "timeLabel": "9:00 PM"
+ },
+ "R32-11": {
+  "kickoff": 202607030100,
+  "dow": "Fri",
+  "dayLabel": "3 Jul",
+  "timeLabel": "1:00 AM"
+ },
+ "R32-13": {
+  "kickoff": 202607030500,
+  "dow": "Fri",
+  "dayLabel": "3 Jul",
+  "timeLabel": "5:00 AM"
+ },
+ "R32-16": {
+  "kickoff": 202607032000,
+  "dow": "Fri",
+  "dayLabel": "3 Jul",
+  "timeLabel": "8:00 PM"
+ },
+ "R32-14": {
+  "kickoff": 202607040000,
+  "dow": "Sat",
+  "dayLabel": "4 Jul",
+  "timeLabel": "12:00 AM"
+ },
+ "R32-15": {
+  "kickoff": 202607040330,
+  "dow": "Sat",
+  "dayLabel": "4 Jul",
+  "timeLabel": "3:30 AM"
+ },
+ "R16-2": {
+  "kickoff": 202607041900,
+  "dow": "Sat",
+  "dayLabel": "4 Jul",
+  "timeLabel": "7:00 PM"
+ },
+ "R16-1": {
+  "kickoff": 202607042300,
+  "dow": "Sat",
+  "dayLabel": "4 Jul",
+  "timeLabel": "11:00 PM"
+ },
+ "R16-3": {
+  "kickoff": 202607052200,
+  "dow": "Sun",
+  "dayLabel": "5 Jul",
+  "timeLabel": "10:00 PM"
+ },
+ "R16-4": {
+  "kickoff": 202607060200,
+  "dow": "Mon",
+  "dayLabel": "6 Jul",
+  "timeLabel": "2:00 AM"
+ },
+ "R16-5": {
+  "kickoff": 202607062100,
+  "dow": "Mon",
+  "dayLabel": "6 Jul",
+  "timeLabel": "9:00 PM"
+ },
+ "R16-6": {
+  "kickoff": 202607070200,
+  "dow": "Tue",
+  "dayLabel": "7 Jul",
+  "timeLabel": "2:00 AM"
+ },
+ "R16-7": {
+  "kickoff": 202607071800,
+  "dow": "Tue",
+  "dayLabel": "7 Jul",
+  "timeLabel": "6:00 PM"
+ },
+ "R16-8": {
+  "kickoff": 202607072200,
+  "dow": "Tue",
+  "dayLabel": "7 Jul",
+  "timeLabel": "10:00 PM"
+ },
+ "QF-1": {
+  "kickoff": 202607092200,
+  "dow": "Thu",
+  "dayLabel": "9 Jul",
+  "timeLabel": "10:00 PM"
+ },
+ "QF-2": {
+  "kickoff": 202607102100,
+  "dow": "Fri",
+  "dayLabel": "10 Jul",
+  "timeLabel": "9:00 PM"
+ },
+ "QF-4": {
+  "kickoff": 202607112300,
+  "dow": "Sat",
+  "dayLabel": "11 Jul",
+  "timeLabel": "11:00 PM"
+ },
+ "QF-3": {
+  "kickoff": 202607120300,
+  "dow": "Sun",
+  "dayLabel": "12 Jul",
+  "timeLabel": "3:00 AM"
+ },
+ "SF-1": {
+  "kickoff": 202607142100,
+  "dow": "Tue",
+  "dayLabel": "14 Jul",
+  "timeLabel": "9:00 PM"
+ },
+ "SF-2": {
+  "kickoff": 202607152100,
+  "dow": "Wed",
+  "dayLabel": "15 Jul",
+  "timeLabel": "9:00 PM"
+ },
+ "3RD": {
+  "kickoff": 202607182300,
+  "dow": "Sat",
+  "dayLabel": "18 Jul",
+  "timeLabel": "11:00 PM"
+ },
+ "F-1": {
+  "kickoff": 202607192100,
+  "dow": "Sun",
+  "dayLabel": "19 Jul",
+  "timeLabel": "9:00 PM"
+ }
+}

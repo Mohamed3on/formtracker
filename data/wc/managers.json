@@ -1,0 +1,718 @@
+{
+ "France": {
+  "name": "Zinédine Zidane",
+  "profileUrl": "https://www.transfermarkt.com/zinedine-zidane/profil/trainer/21284",
+  "appointedDate": "01/08/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 7,
+  "bestManager": {
+   "name": "Jacques Santini",
+   "profileUrl": "https://www.transfermarkt.com/jacques-santini/profil/trainer/1647",
+   "ppg": 2.7058823529411766,
+   "matches": 17,
+   "years": "2002-2004"
+  },
+  "worstManager": {
+   "name": "Laurent Blanc",
+   "profileUrl": "https://www.transfermarkt.com/laurent-blanc/profil/trainer/4589",
+   "ppg": 1.7857142857142858,
+   "matches": 14,
+   "years": "2010-2012"
+  },
+  "officialOnly": true
+ },
+ "England": {
+  "name": "Thomas Tuchel",
+  "profileUrl": "https://www.transfermarkt.com/thomas-tuchel/profil/trainer/7471",
+  "appointedDate": "01/01/2025",
+  "matches": 16,
+  "ppg": 2.6875,
+  "isCurrentManager": true,
+  "ppgRank": 1,
+  "totalComparableManagers": 7,
+  "bestManager": {
+   "name": "Thomas Tuchel",
+   "profileUrl": "https://www.transfermarkt.com/thomas-tuchel/profil/trainer/7471",
+   "ppg": 2.6875,
+   "matches": 16,
+   "years": "2025-2026"
+  },
+  "worstManager": {
+   "name": "Glenn Hoddle",
+   "profileUrl": "https://www.transfermarkt.com/glenn-hoddle/profil/trainer/459",
+   "ppg": 1.9333333333333333,
+   "matches": 15,
+   "years": "1996-1999"
+  },
+  "officialOnly": true
+ },
+ "Spain": {
+  "name": "Luis de la Fuente",
+  "profileUrl": "https://www.transfermarkt.com/luis-de-la-fuente/profil/trainer/20031",
+  "appointedDate": "01/01/2023",
+  "matches": 41,
+  "ppg": 2.658536585365854,
+  "isCurrentManager": true,
+  "ppgRank": 1,
+  "totalComparableManagers": 4,
+  "bestManager": {
+   "name": "Luis de la Fuente",
+   "profileUrl": "https://www.transfermarkt.com/luis-de-la-fuente/profil/trainer/20031",
+   "ppg": 2.658536585365854,
+   "matches": 41,
+   "years": "2023-2026"
+  },
+  "worstManager": {
+   "name": "Javier Clemente",
+   "profileUrl": "https://www.transfermarkt.com/javier-clemente/profil/trainer/2661",
+   "ppg": 2.1136363636363638,
+   "matches": 44,
+   "years": "1992-1998"
+  },
+  "officialOnly": true
+ },
+ "Portugal": {
+  "name": "Jorge Jesus",
+  "profileUrl": "https://www.transfermarkt.com/jorge-jesus/profil/trainer/2145",
+  "appointedDate": "10/07/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 12,
+  "bestManager": {
+   "name": "Humberto Coelho",
+   "profileUrl": "https://www.transfermarkt.com/humberto-coelho/profil/trainer/6566",
+   "ppg": 2.3333333333333335,
+   "matches": 15,
+   "years": "1998-2000"
+  },
+  "worstManager": {
+   "name": "Nelo Vingada",
+   "profileUrl": "https://www.transfermarkt.com/nelo-vingada/profil/trainer/1967",
+   "ppg": 1,
+   "matches": 2,
+   "years": "1993-1994"
+  },
+  "officialOnly": true
+ },
+ "Germany": {
+  "name": "Jürgen Klopp",
+  "profileUrl": "https://www.transfermarkt.com/jurgen-klopp/profil/trainer/118",
+  "appointedDate": "15/08/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 7,
+  "bestManager": {
+   "name": "Rudi Völler",
+   "profileUrl": "https://www.transfermarkt.com/rudi-voller/profil/trainer/680",
+   "ppg": 3,
+   "matches": 1,
+   "years": "2023"
+  },
+  "worstManager": {
+   "name": "Erich Ribbeck",
+   "profileUrl": "https://www.transfermarkt.com/erich-ribbeck/profil/trainer/882",
+   "ppg": 1.6428571428571428,
+   "matches": 14,
+   "years": "1998-2000"
+  },
+  "officialOnly": true
+ },
+ "Brazil": {
+  "name": "Carlo Ancelotti",
+  "profileUrl": "https://www.transfermarkt.com/carlo-ancelotti/profil/trainer/523",
+  "appointedDate": "26/05/2025",
+  "matches": 9,
+  "ppg": 1.8888888888888888,
+  "isCurrentManager": true,
+  "ppgRank": 8,
+  "totalComparableManagers": 10,
+  "bestManager": {
+   "name": "Tite",
+   "profileUrl": "https://www.transfermarkt.com/tite/profil/trainer/6623",
+   "ppg": 2.4615384615384617,
+   "matches": 52,
+   "years": "2016-2022"
+  },
+  "worstManager": {
+   "name": "Mano Menezes",
+   "profileUrl": "https://www.transfermarkt.com/mano-menezes/profil/trainer/4734",
+   "ppg": 1.25,
+   "matches": 4,
+   "years": "2010-2012"
+  },
+  "officialOnly": true
+ },
+ "Argentina": {
+  "name": "Lionel Scaloni",
+  "profileUrl": "https://www.transfermarkt.com/lionel-scaloni/profil/trainer/62271",
+  "appointedDate": "02/08/2018",
+  "matches": 70,
+  "ppg": 2.3714285714285714,
+  "isCurrentManager": true,
+  "ppgRank": 1,
+  "totalComparableManagers": 1,
+  "bestManager": {
+   "name": "Lionel Scaloni",
+   "profileUrl": "https://www.transfermarkt.com/lionel-scaloni/profil/trainer/62271",
+   "ppg": 2.3714285714285714,
+   "matches": 70,
+   "years": "2018-2026"
+  },
+  "worstManager": {
+   "name": "Lionel Scaloni",
+   "profileUrl": "https://www.transfermarkt.com/lionel-scaloni/profil/trainer/62271",
+   "ppg": 2.3714285714285714,
+   "matches": 70,
+   "years": "2018-2026"
+  },
+  "officialOnly": true
+ },
+ "Netherlands": {
+  "name": "Ronald Koeman",
+  "profileUrl": "https://www.transfermarkt.com/ronald-koeman/profil/trainer/439",
+  "appointedDate": "01/01/2023",
+  "matches": 36,
+  "ppg": 1.8055555555555556,
+  "isCurrentManager": false,
+  "ppgRank": 3,
+  "totalComparableManagers": 3,
+  "bestManager": {
+   "name": "Bert van Marwijk",
+   "profileUrl": "https://www.transfermarkt.com/bert-van-marwijk/profil/trainer/502",
+   "ppg": 2.4642857142857144,
+   "matches": 28,
+   "years": "2008-2012"
+  },
+  "worstManager": {
+   "name": "Ronald Koeman",
+   "profileUrl": "https://www.transfermarkt.com/ronald-koeman/profil/trainer/439",
+   "ppg": 1.8055555555555556,
+   "matches": 36,
+   "years": "2023-2026"
+  },
+  "officialOnly": true
+ },
+ "Norway": {
+  "name": "Ståle Solbakken",
+  "profileUrl": "https://www.transfermarkt.com/stale-solbakken/profil/trainer/3419",
+  "appointedDate": "07/12/2020",
+  "matches": 44,
+  "ppg": 2,
+  "isCurrentManager": true,
+  "ppgRank": 1,
+  "totalComparableManagers": 2,
+  "bestManager": {
+   "name": "Ståle Solbakken",
+   "profileUrl": "https://www.transfermarkt.com/stale-solbakken/profil/trainer/3419",
+   "ppg": 2,
+   "matches": 44,
+   "years": "2020-2026"
+  },
+  "worstManager": {
+   "name": "Nils Johan Semb",
+   "profileUrl": "https://www.transfermarkt.com/nils-johan-semb/profil/trainer/17789",
+   "ppg": 1.606060606060606,
+   "matches": 33,
+   "years": "1998-2003"
+  },
+  "officialOnly": true
+ },
+ "Belgium": {
+  "name": "Mark van Bommel",
+  "profileUrl": "https://www.transfermarkt.com/mark-van-bommel/profil/trainer/33479",
+  "appointedDate": "15/08/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 12,
+  "bestManager": {
+   "name": "Roberto Martínez",
+   "profileUrl": "https://www.transfermarkt.com/roberto-martinez/profil/trainer/4328",
+   "ppg": 2.3934426229508197,
+   "matches": 61,
+   "years": "2016-2022"
+  },
+  "worstManager": {
+   "name": "Frank Vercauteren",
+   "profileUrl": "https://www.transfermarkt.com/frank-vercauteren/profil/trainer/707",
+   "ppg": 0,
+   "matches": 2,
+   "years": "2009"
+  },
+  "officialOnly": true
+ },
+ "Ivory Coast": {
+  "name": "Hervé Renard",
+  "profileUrl": "https://www.transfermarkt.com/herve-renard/profil/trainer/6480",
+  "appointedDate": "04/08/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 25,
+  "bestManager": {
+   "name": "Emerse Faé",
+   "profileUrl": "https://www.transfermarkt.com/emerse-fae/profil/trainer/63806",
+   "ppg": 3,
+   "matches": 4,
+   "years": "2024"
+  },
+  "worstManager": {
+   "name": "Uli Stielike",
+   "profileUrl": "https://www.transfermarkt.com/uli-stielike/profil/trainer/1464",
+   "ppg": 0,
+   "matches": 1,
+   "years": "2008"
+  },
+  "officialOnly": true
+ },
+ "Morocco": {
+  "name": "Mohamed Ouahbi",
+  "profileUrl": "https://www.transfermarkt.com/mohamed-ouahbi/profil/trainer/36751",
+  "appointedDate": "05/03/2026",
+  "matches": 6,
+  "ppg": 2.1666666666666665,
+  "isCurrentManager": true,
+  "ppgRank": 5,
+  "totalComparableManagers": 12,
+  "bestManager": {
+   "name": "Vahid Halilhodzic",
+   "profileUrl": "https://www.transfermarkt.com/vahid-halilhodzic/profil/trainer/1231",
+   "ppg": 2.4761904761904763,
+   "matches": 21,
+   "years": "2019-2022"
+  },
+  "worstManager": {
+   "name": "Blinda",
+   "profileUrl": "https://www.transfermarkt.com/blinda/profil/trainer/9237",
+   "ppg": 0,
+   "matches": 3,
+   "years": "1993-1994"
+  },
+  "officialOnly": true
+ },
+ "Senegal": {
+  "name": "Pape Thiaw",
+  "profileUrl": "https://www.transfermarkt.com/pape-thiaw/profil/trainer/112222",
+  "appointedDate": "13/12/2024",
+  "matches": 17,
+  "ppg": 2.0588235294117645,
+  "isCurrentManager": false,
+  "ppgRank": 2,
+  "totalComparableManagers": 2,
+  "bestManager": {
+   "name": "Aliou Cissé",
+   "profileUrl": "https://www.transfermarkt.com/aliou-cisse/profil/trainer/22939",
+   "ppg": 2.24,
+   "matches": 75,
+   "years": "2015-2024"
+  },
+  "worstManager": {
+   "name": "Pape Thiaw",
+   "profileUrl": "https://www.transfermarkt.com/pape-thiaw/profil/trainer/112222",
+   "ppg": 2.0588235294117645,
+   "matches": 17,
+   "years": "2024-2026"
+  },
+  "officialOnly": true
+ },
+ "Turkiye": {
+  "name": "Vincenzo Montella",
+  "profileUrl": "https://www.transfermarkt.com/vincenzo-montella/profil/trainer/11795",
+  "appointedDate": "21/09/2023",
+  "matches": 27,
+  "ppg": 2.037037037037037,
+  "isCurrentManager": true,
+  "ppgRank": 1,
+  "totalComparableManagers": 4,
+  "bestManager": {
+   "name": "Vincenzo Montella",
+   "profileUrl": "https://www.transfermarkt.com/vincenzo-montella/profil/trainer/11795",
+   "ppg": 2.037037037037037,
+   "matches": 27,
+   "years": "2023-2026"
+  },
+  "worstManager": {
+   "name": "Fatih Terim",
+   "profileUrl": "https://www.transfermarkt.com/fatih-terim/profil/trainer/253",
+   "ppg": 1.7777777777777777,
+   "matches": 27,
+   "years": "2006-2009"
+  },
+  "officialOnly": true
+ },
+ "Sweden": {
+  "name": "Graham Potter",
+  "profileUrl": "https://www.transfermarkt.com/graham-potter/profil/trainer/23954",
+  "appointedDate": "20/10/2025",
+  "matches": 8,
+  "ppg": 1.375,
+  "isCurrentManager": true,
+  "ppgRank": 6,
+  "totalComparableManagers": 6,
+  "bestManager": {
+   "name": "Lars Lagerbäck",
+   "profileUrl": "https://www.transfermarkt.com/lars-lagerback/profil/trainer/2540",
+   "ppg": 2.107142857142857,
+   "matches": 56,
+   "years": "2000-2009"
+  },
+  "worstManager": {
+   "name": "Graham Potter",
+   "profileUrl": "https://www.transfermarkt.com/graham-potter/profil/trainer/23954",
+   "ppg": 1.375,
+   "matches": 8,
+   "years": "2025-2026"
+  },
+  "officialOnly": true
+ },
+ "Croatia": {
+  "name": "Slaven Bilic",
+  "profileUrl": "https://www.transfermarkt.com/slaven-bilic/profil/trainer/3598",
+  "appointedDate": "13/07/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 10,
+  "bestManager": {
+   "name": "Slaven Bilic",
+   "profileUrl": "https://www.transfermarkt.com/slaven-bilic/profil/trainer/3598",
+   "ppg": 2.1463414634146343,
+   "matches": 41,
+   "years": "2006-2012"
+  },
+  "worstManager": {
+   "name": "Stanko Poklepovic",
+   "profileUrl": "https://www.transfermarkt.com/stanko-poklepovic/profil/trainer/12990",
+   "ppg": 1,
+   "matches": 4,
+   "years": "1992"
+  },
+  "officialOnly": true
+ },
+ "United States": {
+  "name": "Mauricio Pochettino",
+  "profileUrl": "https://www.transfermarkt.com/mauricio-pochettino/profil/trainer/9044",
+  "appointedDate": "10/09/2024",
+  "matches": 15,
+  "ppg": 2,
+  "isCurrentManager": true,
+  "ppgRank": 2,
+  "totalComparableManagers": 6,
+  "bestManager": {
+   "name": "Gregg Berhalter",
+   "profileUrl": "https://www.transfermarkt.com/gregg-berhalter/profil/trainer/22272",
+   "ppg": 2.1578947368421053,
+   "matches": 38,
+   "years": "2018-2022"
+  },
+  "worstManager": {
+   "name": "Steve Sampson",
+   "profileUrl": "https://www.transfermarkt.com/steve-sampson/profil/trainer/3215",
+   "ppg": 1.7777777777777777,
+   "matches": 27,
+   "years": "1995-1998"
+  },
+  "officialOnly": true
+ },
+ "Uruguay": {
+  "name": "Diego Forlán",
+  "profileUrl": "https://www.transfermarkt.com/diego-forlan/profil/trainer/75562",
+  "appointedDate": "06/08/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 16,
+  "bestManager": {
+   "name": "Fabián Coito",
+   "profileUrl": "https://www.transfermarkt.com/fabian-coito/profil/trainer/19596",
+   "ppg": 3,
+   "matches": 1,
+   "years": "2018"
+  },
+  "worstManager": {
+   "name": "Gustavo Ferrín",
+   "profileUrl": "https://www.transfermarkt.com/gustavo-ferrin/profil/trainer/11444",
+   "ppg": 1,
+   "matches": 2,
+   "years": "2003"
+  },
+  "officialOnly": true
+ },
+ "Switzerland": {
+  "name": "Murat Yakin",
+  "profileUrl": "https://www.transfermarkt.com/murat-yakin/profil/trainer/3240",
+  "appointedDate": "09/08/2021",
+  "matches": 49,
+  "ppg": 1.653061224489796,
+  "isCurrentManager": true,
+  "ppgRank": 2,
+  "totalComparableManagers": 3,
+  "bestManager": {
+   "name": "Vladimir Petkovic",
+   "profileUrl": "https://www.transfermarkt.com/vladimir-petkovic/profil/trainer/1315",
+   "ppg": 1.8771929824561404,
+   "matches": 57,
+   "years": "2014-2021"
+  },
+  "worstManager": {
+   "name": "Jakob Kuhn",
+   "profileUrl": "https://www.transfermarkt.com/jakob-kuhn/profil/trainer/1153",
+   "ppg": 1.5161290322580645,
+   "matches": 31,
+   "years": "2001-2008"
+  },
+  "officialOnly": true
+ },
+ "Colombia": {
+  "name": "Néstor Lorenzo",
+  "profileUrl": "https://www.transfermarkt.com/nestor-lorenzo/profil/trainer/34086",
+  "appointedDate": "09/07/2022",
+  "matches": 29,
+  "ppg": 1.7586206896551724,
+  "isCurrentManager": true,
+  "ppgRank": 1,
+  "totalComparableManagers": 3,
+  "bestManager": {
+   "name": "Néstor Lorenzo",
+   "profileUrl": "https://www.transfermarkt.com/nestor-lorenzo/profil/trainer/34086",
+   "ppg": 1.7586206896551724,
+   "matches": 29,
+   "years": "2022-2026"
+  },
+  "worstManager": {
+   "name": "Hernán Gómez",
+   "profileUrl": "https://www.transfermarkt.com/hernan-gomez/profil/trainer/2548",
+   "ppg": 1.5172413793103448,
+   "matches": 29,
+   "years": "1995-1998"
+  },
+  "officialOnly": true
+ },
+ "Mexico": {
+  "name": "Rafa Márquez",
+  "profileUrl": "https://www.transfermarkt.com/rafa-marquez/profil/trainer/62407",
+  "appointedDate": "08/07/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 25,
+  "bestManager": {
+   "name": "Ricardo Ferretti",
+   "profileUrl": "https://www.transfermarkt.com/ricardo-ferretti/profil/trainer/5092",
+   "ppg": 3,
+   "matches": 1,
+   "years": "2015"
+  },
+  "worstManager": {
+   "name": "Luis Fernando Tena",
+   "profileUrl": "https://www.transfermarkt.com/luis-fernando-tena/profil/trainer/3718",
+   "ppg": 0,
+   "matches": 1,
+   "years": "2013"
+  },
+  "officialOnly": true
+ },
+ "Canada": {
+  "name": "Jesse Marsch",
+  "profileUrl": "https://www.transfermarkt.com/jesse-marsch/profil/trainer/17275",
+  "appointedDate": "13/05/2024",
+  "matches": 18,
+  "ppg": 1.6111111111111112,
+  "isCurrentManager": true,
+  "ppgRank": 2,
+  "totalComparableManagers": 4,
+  "bestManager": {
+   "name": "John Herdman",
+   "profileUrl": "https://www.transfermarkt.com/john-herdman/profil/trainer/58420",
+   "ppg": 1.98,
+   "matches": 50,
+   "years": "2018-2023"
+  },
+  "worstManager": {
+   "name": "Bob Lenarduzzi",
+   "profileUrl": "https://www.transfermarkt.com/bob-lenarduzzi/profil/trainer/21333",
+   "ppg": 1.4,
+   "matches": 35,
+   "years": "1992-1997"
+  },
+  "officialOnly": true
+ },
+ "Czechia": {
+  "name": "Santi Denia",
+  "profileUrl": "https://www.transfermarkt.com/santi-denia/profil/trainer/9230",
+  "appointedDate": "01/08/2026",
+  "matches": 0,
+  "ppg": null,
+  "isCurrentManager": true,
+  "totalComparableManagers": 15,
+  "bestManager": {
+   "name": "Jaroslav Köstl",
+   "profileUrl": "https://www.transfermarkt.com/jaroslav-kostl/profil/trainer/70124",
+   "ppg": 3,
+   "matches": 1,
+   "years": "2025"
+  },
+  "worstManager": {
+   "name": "David Holoubek",
+   "profileUrl": "https://www.transfermarkt.com/david-holoubek/profil/trainer/49283",
+   "ppg": 0,
+   "matches": 1,
+   "years": "2020"
+  },
+  "officialOnly": true
+ },
+ "Scotland": {
+  "name": "Steve Clarke",
+  "profileUrl": "https://www.transfermarkt.com/steve-clarke/profil/trainer/2638",
+  "appointedDate": "20/05/2019",
+  "matches": 64,
+  "ppg": 1.703125,
+  "isCurrentManager": false,
+  "ppgRank": 1,
+  "totalComparableManagers": 1,
+  "bestManager": {
+   "name": "Steve Clarke",
+   "profileUrl": "https://www.transfermarkt.com/steve-clarke/profil/trainer/2638",
+   "ppg": 1.703125,
+   "matches": 64,
+   "years": "2019-2026"
+  },
+  "worstManager": {
+   "name": "Steve Clarke",
+   "profileUrl": "https://www.transfermarkt.com/steve-clarke/profil/trainer/2638",
+   "ppg": 1.703125,
+   "matches": 64,
+   "years": "2019-2026"
+  },
+  "officialOnly": true
+ },
+ "Paraguay": {
+  "name": "Gustavo Alfaro",
+  "profileUrl": "https://www.transfermarkt.com/gustavo-alfaro/profil/trainer/4871",
+  "appointedDate": "16/08/2024",
+  "matches": 17,
+  "ppg": 1.7647058823529411,
+  "isCurrentManager": true,
+  "ppgRank": 1,
+  "totalComparableManagers": 6,
+  "bestManager": {
+   "name": "Gustavo Alfaro",
+   "profileUrl": "https://www.transfermarkt.com/gustavo-alfaro/profil/trainer/4871",
+   "ppg": 1.7647058823529411,
+   "matches": 17,
+   "years": "2024-2026"
+  },
+  "worstManager": {
+   "name": "Eduardo Berizzo",
+   "profileUrl": "https://www.transfermarkt.com/eduardo-berizzo/profil/trainer/22079",
+   "ppg": 0.9523809523809523,
+   "matches": 21,
+   "years": "2019-2021"
+  },
+  "officialOnly": true
+ },
+ "Egypt": {
+  "name": "Hossam Hassan",
+  "profileUrl": "https://www.transfermarkt.com/hossam-hassan/profil/trainer/6120",
+  "appointedDate": "06/02/2024",
+  "matches": 26,
+  "ppg": 2.1153846153846154,
+  "isCurrentManager": true,
+  "ppgRank": 2,
+  "totalComparableManagers": 3,
+  "bestManager": {
+   "name": "Hassan Shehata",
+   "profileUrl": "https://www.transfermarkt.com/hassan-shehata/profil/trainer/5621",
+   "ppg": 2.142857142857143,
+   "matches": 49,
+   "years": "2004-2011"
+  },
+  "worstManager": {
+   "name": "Héctor Cúper",
+   "profileUrl": "https://www.transfermarkt.com/hector-cuper/profil/trainer/526",
+   "ppg": 1.826086956521739,
+   "matches": 23,
+   "years": "2015-2018"
+  },
+  "officialOnly": true
+ },
+ "Australia": {
+  "name": "Tony Popovic",
+  "profileUrl": "https://www.transfermarkt.com/tony-popovic/profil/trainer/20038",
+  "appointedDate": "23/09/2024",
+  "matches": 12,
+  "ppg": 1.8333333333333333,
+  "isCurrentManager": true,
+  "ppgRank": 6,
+  "totalComparableManagers": 6,
+  "bestManager": {
+   "name": "Frank Farina",
+   "profileUrl": "https://www.transfermarkt.com/frank-farina/profil/trainer/2185",
+   "ppg": 2.161290322580645,
+   "matches": 31,
+   "years": "1999-2005"
+  },
+  "worstManager": {
+   "name": "Tony Popovic",
+   "profileUrl": "https://www.transfermarkt.com/tony-popovic/profil/trainer/20038",
+   "ppg": 1.8333333333333333,
+   "matches": 12,
+   "years": "2024-2026"
+  },
+  "officialOnly": true
+ },
+ "Cape Verde": {
+  "name": "Bubista",
+  "profileUrl": "https://www.transfermarkt.com/bubista/profil/trainer/84856",
+  "appointedDate": "29/01/2020",
+  "matches": 45,
+  "ppg": 1.6222222222222222,
+  "isCurrentManager": false,
+  "ppgRank": 1,
+  "totalComparableManagers": 1,
+  "bestManager": {
+   "name": "Bubista",
+   "profileUrl": "https://www.transfermarkt.com/bubista/profil/trainer/84856",
+   "ppg": 1.6222222222222222,
+   "matches": 45,
+   "years": "2020-2026"
+  },
+  "worstManager": {
+   "name": "Bubista",
+   "profileUrl": "https://www.transfermarkt.com/bubista/profil/trainer/84856",
+   "ppg": 1.6222222222222222,
+   "matches": 45,
+   "years": "2020-2026"
+  },
+  "officialOnly": true
+ },
+ "South Africa": {
+  "name": "Molefi Ntseki",
+  "profileUrl": "https://www.transfermarkt.com/molefi-ntseki/profil/trainer/41896",
+  "appointedDate": "27/07/2025",
+  "matches": 4,
+  "ppg": 1.5,
+  "isCurrentManager": false,
+  "ppgRank": 10,
+  "totalComparableManagers": 17,
+  "bestManager": {
+   "name": "Trott Moloto",
+   "profileUrl": "https://www.transfermarkt.com/trott-moloto/profil/trainer/13331",
+   "ppg": 2.4444444444444446,
+   "matches": 9,
+   "years": "1998-2001"
+  },
+  "worstManager": {
+   "name": "Philippe Troussier",
+   "profileUrl": "https://www.transfermarkt.com/philippe-troussier/profil/trainer/1041",
+   "ppg": 0.6666666666666666,
+   "matches": 3,
+   "years": "1998"
+  },
+  "officialOnly": true
+ }
+}

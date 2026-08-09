@@ -1,0 +1,338 @@
+[
+ {
+  "group": "A",
+  "name": "Mexico",
+  "mv": 214.6,
+  "flag": "🇲🇽",
+  "landId": 110
+ },
+ {
+  "group": "A",
+  "name": "Czechia",
+  "mv": 188.18,
+  "flag": "🇨🇿",
+  "landId": 172
+ },
+ {
+  "group": "A",
+  "name": "South Korea",
+  "mv": 139.05,
+  "flag": "🇰🇷",
+  "landId": 87
+ },
+ {
+  "group": "A",
+  "name": "South Africa",
+  "mv": 53.7,
+  "flag": "🇿🇦",
+  "landId": 159
+ },
+ {
+  "group": "B",
+  "name": "Switzerland",
+  "mv": 350.5,
+  "flag": "🇨🇭",
+  "landId": 148
+ },
+ {
+  "group": "B",
+  "name": "Canada",
+  "mv": 207.15,
+  "flag": "🇨🇦",
+  "landId": 80
+ },
+ {
+  "group": "B",
+  "name": "Bosnia-Herzegovina",
+  "mv": 165.4,
+  "flag": "🇧🇦",
+  "landId": 24
+ },
+ {
+  "group": "B",
+  "name": "Qatar",
+  "mv": 20.13,
+  "flag": "🇶🇦",
+  "landId": 137
+ },
+ {
+  "group": "C",
+  "name": "Brazil",
+  "mv": 928.2,
+  "flag": "🇧🇷",
+  "landId": 26
+ },
+ {
+  "group": "C",
+  "name": "Morocco",
+  "mv": 512.7,
+  "flag": "🇲🇦",
+  "landId": 107
+ },
+ {
+  "group": "C",
+  "name": "Scotland",
+  "mv": 170.2,
+  "flag": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "landId": 190
+ },
+ {
+  "group": "C",
+  "name": "Haiti",
+  "mv": 55.85,
+  "flag": "🇭🇹",
+  "landId": 62
+ },
+ {
+  "group": "D",
+  "name": "Turkiye",
+  "mv": 473.7,
+  "flag": "🇹🇷",
+  "landId": 174
+ },
+ {
+  "group": "D",
+  "name": "United States",
+  "mv": 402.15,
+  "flag": "🇺🇸",
+  "landId": 184
+ },
+ {
+  "group": "D",
+  "name": "Paraguay",
+  "mv": 160.15,
+  "flag": "🇵🇾",
+  "landId": 132
+ },
+ {
+  "group": "D",
+  "name": "Australia",
+  "mv": 89.45,
+  "flag": "🇦🇺",
+  "landId": 12
+ },
+ {
+  "group": "E",
+  "name": "Germany",
+  "mv": 962,
+  "flag": "🇩🇪",
+  "landId": 40
+ },
+ {
+  "group": "E",
+  "name": "Ivory Coast",
+  "mv": 538,
+  "flag": "🇨🇮",
+  "landId": 38
+ },
+ {
+  "group": "E",
+  "name": "Ecuador",
+  "mv": 368.7,
+  "flag": "🇪🇨",
+  "landId": 44
+ },
+ {
+  "group": "E",
+  "name": "Curaçao",
+  "mv": 25.78,
+  "flag": "🇨🇼",
+  "landId": 260
+ },
+ {
+  "group": "F",
+  "name": "Netherlands",
+  "mv": 789.2,
+  "flag": "🇳🇱",
+  "landId": 122
+ },
+ {
+  "group": "F",
+  "name": "Sweden",
+  "mv": 414.08,
+  "flag": "🇸🇪",
+  "landId": 147
+ },
+ {
+  "group": "F",
+  "name": "Japan",
+  "mv": 295.85,
+  "flag": "🇯🇵",
+  "landId": 77
+ },
+ {
+  "group": "F",
+  "name": "Tunisia",
+  "mv": 69.95,
+  "flag": "🇹🇳",
+  "landId": 173
+ },
+ {
+  "group": "G",
+  "name": "Belgium",
+  "mv": 567.5,
+  "flag": "🇧🇪",
+  "landId": 19
+ },
+ {
+  "group": "G",
+  "name": "Egypt",
+  "mv": 122.78,
+  "flag": "🇪🇬",
+  "landId": 2
+ },
+ {
+  "group": "G",
+  "name": "New Zealand",
+  "mv": 35.3,
+  "flag": "🇳🇿",
+  "landId": 120
+ },
+ {
+  "group": "G",
+  "name": "Iran",
+  "mv": 32.05,
+  "flag": "🇮🇷",
+  "landId": 71
+ },
+ {
+  "group": "H",
+  "name": "Spain",
+  "mv": 1290,
+  "flag": "🇪🇸",
+  "landId": 157
+ },
+ {
+  "group": "H",
+  "name": "Uruguay",
+  "mv": 364.3,
+  "flag": "🇺🇾",
+  "landId": 179
+ },
+ {
+  "group": "H",
+  "name": "Cape Verde",
+  "mv": 61.65,
+  "flag": "🇨🇻",
+  "landId": 32
+ },
+ {
+  "group": "H",
+  "name": "Saudi Arabia",
+  "mv": 40.68,
+  "flag": "🇸🇦",
+  "landId": 146
+ },
+ {
+  "group": "I",
+  "name": "France",
+  "mv": 1590,
+  "flag": "🇫🇷",
+  "landId": 50
+ },
+ {
+  "group": "I",
+  "name": "Norway",
+  "mv": 638.9,
+  "flag": "🇳🇴",
+  "landId": 125
+ },
+ {
+  "group": "I",
+  "name": "Senegal",
+  "mv": 483.1,
+  "flag": "🇸🇳",
+  "landId": 149
+ },
+ {
+  "group": "I",
+  "name": "Iraq",
+  "mv": 21.2,
+  "flag": "🇮🇶",
+  "landId": 70
+ },
+ {
+  "group": "J",
+  "name": "Argentina",
+  "mv": 852.5,
+  "flag": "🇦🇷",
+  "landId": 9
+ },
+ {
+  "group": "J",
+  "name": "Algeria",
+  "mv": 261.9,
+  "flag": "🇩🇿",
+  "landId": 4
+ },
+ {
+  "group": "J",
+  "name": "Austria",
+  "mv": 243.2,
+  "flag": "🇦🇹",
+  "landId": 127
+ },
+ {
+  "group": "J",
+  "name": "Jordan",
+  "mv": 20.3,
+  "flag": "🇯🇴",
+  "landId": 78
+ },
+ {
+  "group": "K",
+  "name": "Portugal",
+  "mv": 1030,
+  "flag": "🇵🇹",
+  "landId": 136
+ },
+ {
+  "group": "K",
+  "name": "Colombia",
+  "mv": 310.35,
+  "flag": "🇨🇴",
+  "landId": 83
+ },
+ {
+  "group": "K",
+  "name": "DR Congo",
+  "mv": 144.95,
+  "flag": "🇨🇩",
+  "landId": 193
+ },
+ {
+  "group": "K",
+  "name": "Uzbekistan",
+  "mv": 86.38,
+  "flag": "🇺🇿",
+  "landId": 180
+ },
+ {
+  "group": "L",
+  "name": "England",
+  "mv": 1470,
+  "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+  "landId": 189
+ },
+ {
+  "group": "L",
+  "name": "Croatia",
+  "mv": 407.3,
+  "flag": "🇭🇷",
+  "landId": 37
+ },
+ {
+  "group": "L",
+  "name": "Ghana",
+  "mv": 244.45,
+  "flag": "🇬🇭",
+  "landId": 54
+ },
+ {
+  "group": "L",
+  "name": "Panama",
+  "mv": 34.55,
+  "flag": "🇵🇦",
+  "landId": 130
+ }
+]
