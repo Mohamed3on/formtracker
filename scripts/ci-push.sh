@@ -23,7 +23,9 @@ for attempt in 1 2 3; do
   for f in "${files[@]}"; do
     [[ "$f" == *.json ]] || continue
     new_size=$(wc -c < "$f" | tr -d ' ')
-    old_size=$(git show "origin/main:$f" 2>/dev/null | wc -c | tr -d ' ')
+    # `|| true`: a brand-new file has no origin baseline — git show exits 128,
+    # which set -eo pipefail would otherwise turn fatal. Missing baseline → 0.
+    old_size=$(git show "origin/main:$f" 2>/dev/null | wc -c | tr -d ' ' || true)
     if [ "$new_size" -lt 200 ] && [ "$old_size" -gt 1000 ]; then
       echo "Refusing to shrink $f from $old_size to $new_size bytes — looks like an empty/stub write."
       exit 1
