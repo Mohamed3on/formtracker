@@ -3,7 +3,7 @@ import { fetchPage } from "@/lib/fetch";
 
 /**
  * Checks if Transfermarkt has published market value updates within the last ~36 hours.
- * Exits 0 if recent updates found (should trigger refresh), 1 if not.
+ * Exits 0 if recent updates are found, 1 if not, and 2 if the check itself fails.
  */
 
 const URL =
@@ -25,7 +25,7 @@ const HEADERS = {
 
 async function main() {
   // fetchPage owns the rate-limit/blocked heuristic and retries; a page that
-  // never materializes throws and lands in the catch below (exit 1 = skip).
+  // never materializes throws and lands in the catch below (exit 2 = failure).
   const html = await fetchPage(URL, undefined, HEADERS);
 
   const $ = cheerio.load(html);
@@ -37,6 +37,10 @@ async function main() {
     const lastTd = $(row).children("td").last().text().trim();
     if (datePattern.test(lastTd)) dates.add(lastTd);
   });
+
+  if (dates.size === 0) {
+    throw new Error("Parsed no market-value update dates; the page may be blocked or changed");
+  }
 
   // Check if any date is within the last ~36 hours
   const now = Date.now();
@@ -66,5 +70,5 @@ async function main() {
 
 main().catch((err) => {
   console.error("Check failed:", err);
-  process.exit(1);
+  process.exit(2);
 });
