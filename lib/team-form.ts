@@ -119,10 +119,11 @@ async function fetchLeagueData(league: (typeof LEAGUES)[number]): Promise<TeamFo
       });
     });
 
-    const pointsByPosition = new Map<number, number>();
-    standings.forEach((team) => {
-      pointsByPosition.set(team.position, team.points);
-    });
+    // TM shares one position number across tied teams (on matchday 1 sixteen
+    // clubs are all "3rd"), so a position -> points map has holes at most ranks.
+    // Rank the points themselves: the Nth-most-valuable squad is expected to
+    // post the Nth-best points total in the league.
+    const pointsByRank = standings.map((team) => team.points).sort((a, b) => b - a);
 
     const results: TeamFormEntry[] = [];
     for (const team of standings) {
@@ -130,7 +131,7 @@ async function fetchLeagueData(league: (typeof LEAGUES)[number]): Promise<TeamFo
       if (!mvData) continue;
 
       const expectedPosition = mvData.rank;
-      const expectedPoints = pointsByPosition.get(expectedPosition) || team.points;
+      const expectedPoints = pointsByRank[expectedPosition - 1] ?? team.points;
       const deltaPts = team.points - expectedPoints;
 
       results.push({
