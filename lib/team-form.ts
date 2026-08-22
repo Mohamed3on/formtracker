@@ -119,19 +119,18 @@ async function fetchLeagueData(league: (typeof LEAGUES)[number]): Promise<TeamFo
       });
     });
 
-    // TM shares one position number across tied teams (on matchday 1 sixteen
-    // clubs are all "3rd"), so a position -> points map has holes at most ranks.
-    // Rank the points themselves: the Nth-most-valuable squad is expected to
-    // post the Nth-best points total in the league.
-    const pointsByRank = standings.map((team) => team.points).sort((a, b) => b - a);
-
+    // TM prints one shared position number for tied teams (on matchday 1
+    // sixteen clubs are all "3rd"), so keying off that label leaves most ranks
+    // with no entry. The rows themselves still arrive in TM's own ranked order,
+    // tiebreakers applied, so row N is the Nth-best side: the Nth-most-valuable
+    // squad is expected to post the points total sitting in row N.
     const results: TeamFormEntry[] = [];
     for (const team of standings) {
       const mvData = mvRankMap.get(team.clubId);
       if (!mvData) continue;
 
       const expectedPosition = mvData.rank;
-      const expectedPoints = pointsByRank[expectedPosition - 1] ?? team.points;
+      const expectedPoints = standings[expectedPosition - 1]?.points ?? team.points;
       const deltaPts = team.points - expectedPoints;
 
       results.push({
