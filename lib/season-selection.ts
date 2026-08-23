@@ -39,13 +39,12 @@ export function seasonCoverage(
  *  full-career payloads mean last-season coverage stays near 100% forever, so
  *  a low value is broken ceapi data, not a young season.
  *
- *  `committed` is the season the last successful run wrote to data/season.txt;
- *  pass it so an already-flipped season stays flipped. */
+ *  Purely coverage-driven, in both directions: a season that flipped early on a
+ *  thin sample walks back to the previous one until the bar is properly met. */
 export function chooseSeason(
   cache: Record<string, SeasonSource>,
   playerIds: string[],
   candidate: number,
-  committed: number | null = null,
 ): number {
   const candCoverage = seasonCoverage(cache, playerIds, candidate);
   const prevCoverage = seasonCoverage(cache, playerIds, candidate - 1);
@@ -58,10 +57,5 @@ export function chooseSeason(
       `Only ${(prevCoverage * 100).toFixed(0)}% of players have last-season stats — ceapi payloads look broken.`,
     );
   }
-  // Coverage is the trigger for the flip, not a standing condition for it. Once
-  // the candidate is committed, a later dip below the threshold (an expanded
-  // player pool, a partial scrape) must not drag every stat back a season.
-  if (committed === candidate) return candidate;
-
   return candCoverage >= SEASON_FLIP_COVERAGE ? candidate : candidate - 1;
 }

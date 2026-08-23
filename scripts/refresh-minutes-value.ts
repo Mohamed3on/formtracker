@@ -624,7 +624,7 @@ async function main() {
   console.log(`[refresh] Phase 1: fetching stats for ${mvPlayerIds.length} MV-pool players...`);
   await fetchStats(fetchState, mvPlayerIds, clubTypes);
 
-  const season = chooseSeason(fetchState.cache, mvPlayerIds, tmCurrentSeasonId(), markerSeason);
+  const season = chooseSeason(fetchState.cache, mvPlayerIds, tmCurrentSeasonId());
   const seasonChanged = markerSeason !== null && markerSeason !== season;
   console.log(
     `[refresh] Aggregating season ${season}${seasonChanged ? ` (flipped from ${markerSeason})` : ""}`,

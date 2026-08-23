@@ -105,9 +105,9 @@ TM keys seasons by starting year and flips its date-based ID on Aug 1 (`tmCurren
 weeks before the big leagues kick off. The refresh keeps aggregating the **previous** season
 until ≥60% of the pool has played games in the new one (`chooseSeason` in
 `lib/season-selection.ts`), then flips automatically — never edit a hardcoded season into the
-scrapers. The chosen season is committed to `data/season.txt` and fed back in as `committed`,
-which makes the flip one-way: coverage is the trigger, so a later dip below the threshold
-can't drag every stat back a season. When the season changes, the old-vs-new regression
+scrapers. The choice is purely coverage-driven in both directions — a season that flipped
+early on a thin sample walks back to the previous one until the bar is properly met. The
+chosen season is committed to `data/season.txt`; when it changes, the old-vs-new regression
 guards skip for that one run (a flip legitimately resets every stat).
 ceapi payloads carry each player's full career, which is what makes aggregating a past season
 (and the "last-season coverage ≥70%" scraper-health guard) possible.
