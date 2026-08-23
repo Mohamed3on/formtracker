@@ -58,13 +58,23 @@ describe("chooseSeason", () => {
   });
 
   it("flips once the new season crosses the coverage threshold", () => {
-    const { cache, ids } = makeCache(100, 40, 2026);
+    const { cache, ids } = makeCache(100, 60, 2026);
     expect(chooseSeason(cache, ids, 2026)).toBe(2026);
   });
 
   it("stays put just under the threshold", () => {
-    const { cache, ids } = makeCache(100, 34, 2026);
+    const { cache, ids } = makeCache(100, 59, 2026);
     expect(chooseSeason(cache, ids, 2026)).toBe(2025);
+  });
+
+  it("keeps a committed season when coverage dips back under the threshold", () => {
+    const { cache, ids } = makeCache(100, 59, 2026);
+    expect(chooseSeason(cache, ids, 2026, 2026)).toBe(2026);
+  });
+
+  it("does not flip early just because last season is committed", () => {
+    const { cache, ids } = makeCache(100, 59, 2026);
+    expect(chooseSeason(cache, ids, 2026, 2025)).toBe(2025);
   });
 
   it("throws when last-season coverage collapses (broken ceapi payloads)", () => {

@@ -2,8 +2,8 @@ import type { CeapiGame } from "./player-aggregation";
 
 // TM's date-based season flips Aug 1 while the big leagues are still weeks from
 // kickoff. Keep aggregating the previous season until this share of fetched
-// players have stats in the new one (~the first full round of league games).
-export const SEASON_FLIP_COVERAGE = 0.35;
+// players have stats in the new one (~two full rounds of league games).
+export const SEASON_FLIP_COVERAGE = 0.6;
 // ceapi returns each player's full career, so a healthy scrape carries
 // last-season stats for nearly everyone. Below this the payloads themselves are
 // broken (the old ">30% zero stats" guard, made season-rollover-proof).
@@ -37,11 +37,15 @@ export function seasonCoverage(
 /** Pick the season to aggregate: the date-based candidate once it has real
  *  coverage, else the previous one. Doubles as the scraper-health check:
  *  full-career payloads mean last-season coverage stays near 100% forever, so
- *  a low value is broken ceapi data, not a young season. */
+ *  a low value is broken ceapi data, not a young season.
+ *
+ *  `committed` is the season the last successful run wrote to data/season.txt;
+ *  pass it so an already-flipped season stays flipped. */
 export function chooseSeason(
   cache: Record<string, SeasonSource>,
   playerIds: string[],
   candidate: number,
+  committed: number | null = null,
 ): number {
   const candCoverage = seasonCoverage(cache, playerIds, candidate);
   const prevCoverage = seasonCoverage(cache, playerIds, candidate - 1);
@@ -54,5 +58,10 @@ export function chooseSeason(
       `Only ${(prevCoverage * 100).toFixed(0)}% of players have last-season stats — ceapi payloads look broken.`,
     );
   }
+  // Coverage is the trigger for the flip, not a standing condition for it. Once
+  // the candidate is committed, a later dip below the threshold (an expanded
+  // player pool, a partial scrape) must not drag every stat back a season.
+  if (committed === candidate) return candidate;
+
   return candCoverage >= SEASON_FLIP_COVERAGE ? candidate : candidate - 1;
 }
