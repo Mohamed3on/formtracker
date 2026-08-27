@@ -52,3 +52,6 @@ data/player-cache.json
 
 # local agent state
 .claude/scheduled_tasks.lock
+
+# local TM page dumps (scripts/dump-tm-page.ts)
+/tmp/
