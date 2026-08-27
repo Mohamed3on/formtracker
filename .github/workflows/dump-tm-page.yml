@@ -1,0 +1,40 @@
+name: Dump Transfermarkt Page
+
+# Development escape hatch: fetches one Transfermarkt URL through the relay and
+# uploads the raw HTML as an artifact, so a WAF-blocked dev machine can get a
+# fixture to write a parser against. Reads nothing, writes nothing, commits
+# nothing — dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "www.transfermarkt.com URL to fetch"
+        type: string
+        required: true
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bash scripts/ci-install.sh
+
+      - name: Fetch page
+        env:
+          TM_RELAY_URL: ${{ secrets.TM_RELAY_URL }}
+          TM_RELAY_SECRET: ${{ secrets.TM_RELAY_SECRET }}
+          TM_DUMP_URL: ${{ inputs.url }}
+        run: bun run scripts/dump-tm-page.ts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tm-dump
+          path: tmp/tm-dump.html
+          retention-days: 1
