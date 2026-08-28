@@ -39,9 +39,12 @@ function SquadPlayerRow({
   return (
     <Link
       href={getPlayerDetailHref(player.playerId)}
-      className="flex items-center gap-3 rounded-xl border border-border-subtle bg-elevated p-2.5 transition-colors hover:border-border-medium hover:bg-card-hover"
+      className="flex items-center gap-2 rounded-xl border border-border-subtle bg-elevated p-2.5 transition-colors hover:border-border-medium hover:bg-card-hover sm:gap-3"
     >
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/20 text-xs font-value text-text-muted">
+      {/* At 320px the fixed furniture left the name and market value only 66px of the
+          254px row. The rank chip is the one piece the list's own order already tells
+          you, so it goes first on the narrowest screens. */}
+      <div className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/20 text-xs font-value text-text-muted sm:flex">
         {rank}
       </div>
       <PlayerAvatar
@@ -97,7 +100,7 @@ function SquadPlayerRow({
         </div>
       </div>
       {/* Mobile stats */}
-      <div className="flex shrink-0 items-center gap-3 text-right sm:hidden">
+      <div className="flex shrink-0 items-center gap-2 text-right sm:hidden">
         <span className="text-sm font-value text-accent-hot">{playerNpga}</span>
         <span className="text-xs font-value text-text-muted">
           {player.minutes.toLocaleString()}&apos;
