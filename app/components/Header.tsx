@@ -26,6 +26,8 @@ const PAGE_CACHE_MAP: Record<string, { tags?: string[]; workflow?: boolean }> = 
   "/players": { workflow: true },
   "/value-analysis": { workflow: true },
   "/biggest-movers": { workflow: true },
+  // File-backed like biggest-movers, but its own refresh flow — no tags to bust.
+  "/fee-vs-value": { workflow: true },
 };
 
 async function refreshPage(pathname: string) {
@@ -96,7 +98,16 @@ const navItems = [
   { href: "/form", label: "Recent Form" },
   { href: "/expected-position", label: "Value vs Table" },
   { href: "/players", label: "Players" },
-  { href: "/value-analysis", label: "Over/Under" },
+  // Grouped, not top-level: an eighth desktop nav item overflows the bar into
+  // the logo at the xl breakpoint, which is exactly where the bar first appears.
+  {
+    href: "/value-analysis",
+    label: "Over/Under",
+    children: [
+      { href: "/value-analysis", label: "Over/Under" },
+      { href: "/fee-vs-value", label: "Fee vs Value" },
+    ],
+  },
   { href: "/injured", label: "Injury Impact" },
   { href: "/biggest-movers", label: "Biggest Movers" },
   {

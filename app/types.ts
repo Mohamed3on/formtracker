@@ -244,3 +244,28 @@ export interface MarketValueMoversResult {
 // live with the pure aggregation module in lib/player-aggregation.ts and are
 // re-exported below so existing app-side imports keep working.
 export type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/lib/player-aggregation";
+
+export interface TransferClub {
+  name: string;
+  clubId: string;
+  logoUrl: string;
+  league: string;
+  country: string;
+}
+
+export interface TopTransfer {
+  rank: number;
+  playerId: string;
+  name: string;
+  position: string;
+  age: number;
+  imageUrl: string;
+  nationality: string;
+  nationalityFlagUrl: string;
+  marketValue: number;
+  fee: number;
+  feeText: string;
+  isLoan: boolean;
+  from: TransferClub;
+  to: TransferClub;
+}
