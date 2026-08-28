@@ -8,14 +8,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Menu, HelpCircle, ChevronDown } from "lucide-react";
+import { Menu, HelpCircle } from "lucide-react";
 import { PlayerSearch } from "./PlayerSearch";
 import { LEAGUES, getLeagueLogoUrl } from "@/lib/leagues";
 
@@ -101,24 +95,7 @@ const navItems = [
   { href: "/injured", label: "Injury Impact" },
   { href: "/biggest-movers", label: "Biggest Movers" },
   { href: "/transfer-balance", label: "Transfer Balance" },
-  {
-    href: "/wc-live",
-    label: "World Cup",
-    children: [
-      { href: "/wc-live", label: "Final Results" },
-      { href: "/wc-schedule", label: "Full Schedule" },
-    ],
-  },
 ] as const;
-
-type NavLink = { href: string; label: string };
-
-// Mobile sheet is a flat list — surface dropdown children as their own rows.
-const mobileNavItems = navItems.flatMap((i): NavLink[] =>
-  "children" in i
-    ? [{ href: i.href, label: i.label }, ...i.children.filter((c) => c.href !== i.href)]
-    : [{ href: i.href, label: i.label }],
-);
 
 const LEAGUE_NAV = LEAGUES.map((l) => ({
   slug: l.slug,
@@ -175,44 +152,6 @@ function MainNavLink({
     >
       {label}
     </Link>
-  );
-}
-
-// Desktop-only: a nav item whose children open in a dropdown (e.g. World Cup → Live / Schedule).
-function NavDropdown({
-  item,
-  pathname,
-}: {
-  item: { label: string; children: readonly { href: string; label: string }[] };
-  pathname: string;
-}) {
-  const isActive = item.children.some((c) => c.href === pathname);
-  return (
-    // Non-modal: don't lock body scroll / strip the scrollbar (that's what shifts the page).
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn(
-            "h-auto gap-1 px-2 py-1.5 text-sm",
-            isActive && "bg-elevated text-text-primary",
-          )}
-        >
-          {item.label}
-          <ChevronDown className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {item.children.map((c) => (
-          <DropdownMenuItem key={c.href} asChild>
-            <Link href={c.href} aria-current={pathname === c.href ? "page" : undefined}>
-              {c.label}
-            </Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -280,9 +219,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border-subtle bg-black/90 backdrop-blur-xl">
-      <div className="page-container flex items-center justify-between py-3 sm:py-4">
+      <div className="page-container flex items-center justify-between gap-2 py-3 sm:py-4">
         {/* Logo */}
-        <Link href="/" className="group flex items-center gap-2">
+        {/* shrink-0: without it flex squeezes the logo below its text width and
+            "SquadStat" overflows into the first nav item. */}
+        <Link href="/" className="group flex shrink-0 items-center gap-2">
           <Image
             src="/icon.png"
             alt="SquadStat"
@@ -299,23 +240,19 @@ export function Header() {
         <nav className="hidden items-center gap-0.5 xl:flex">
           {navItems
             .filter((i) => !("desktopHidden" in i && i.desktopHidden))
-            .map((item) =>
-              "children" in item ? (
-                <NavDropdown key={item.href} item={item} pathname={pathname} />
-              ) : (
-                <MainNavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  variant="desktop"
-                  isActive={pathname === item.href}
-                />
-              ),
-            )}
+            .map((item) => (
+              <MainNavLink
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                variant="desktop"
+                isActive={pathname === item.href}
+              />
+            ))}
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <PlayerSearch />
           <Button
             asChild
@@ -363,7 +300,7 @@ export function Header() {
             <SheetContent side="right" className="w-64 border-border-subtle bg-background">
               <SheetTitle className="sr-only">Navigation</SheetTitle>
               <nav className="mt-8 flex flex-col gap-1">
-                {[...mobileNavItems, { href: "/how-it-works", label: "How It Works" }].map(
+                {[...navItems, { href: "/how-it-works", label: "How It Works" }].map(
                   ({ href, label }) => (
                     <SheetClose key={href} asChild>
                       <MainNavLink

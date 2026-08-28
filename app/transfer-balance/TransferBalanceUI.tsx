@@ -96,25 +96,21 @@ export function TransferBalanceUI({ data }: { data: TransferBalanceResult }) {
 
   return (
     <div className="space-y-6">
-      <ToggleGroup
-        type="single"
-        value={String(seasons)}
-        onValueChange={(v) => v && setSeasons(Number(v))}
-        className="w-full sm:w-auto"
-      >
-        {data.windows.map((w) => (
-          <ToggleGroupItem
-            key={w.seasons}
-            value={String(w.seasons)}
-            className="flex-1 sm:flex-none"
-          >
-            <span className="font-value">{w.seasons}</span>
-            <span className="ml-1 text-xs text-text-muted">
-              {w.seasons === 1 ? "season" : "seasons"}
-            </span>
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      {/* Number-only items behind a standing label — four "N seasons" chips overflow a 320px phone. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="text-xs tracking-wide text-text-muted uppercase">Seasons</span>
+        <ToggleGroup
+          type="single"
+          value={String(seasons)}
+          onValueChange={(v) => v && setSeasons(Number(v))}
+        >
+          {data.windows.map((w) => (
+            <ToggleGroupItem key={w.seasons} value={String(w.seasons)} className="px-4">
+              <span className="font-value">{w.seasons}</span>
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
 
       <p className="text-sm text-text-muted">
         <span className="font-value">{window.label}</span> ·{" "}
