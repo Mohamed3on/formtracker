@@ -9,9 +9,16 @@
  * `plus/1` is the wide variant of the view: it adds the "Left" club column that
  * the default `plus/0` omits, at no extra request cost.
  *
- * TM paginates this at 25 rows/page and rate-limits the endpoint per source IP,
- * so pages go one at a time with a pause between rather than through fetchPage's
- * concurrency pool.
+ * TM paginates this at 25 rows/page. Unlike the einnahmenausgaben endpoint (see
+ * scrape-transfer-balance.ts), this one serves concurrent requests happily, so
+ * every page goes at once through fetchPage's pool. Measured on the 8 pages of a
+ * top-200 run: 2.1s all-at-once, against 2.2s for a single page — the whole
+ * scrape costs what one request costs. (At concurrency 4 it was 4.1s, at 2 it
+ * was 7.8s, so the pool's default of 10 is doing the work here.)
+ *
+ * TM does answer 503 to the odd page under that load. fetchPage retries with
+ * backoff and they come good; one unlucky run took a minute rather than two
+ * seconds, which is still the right trade against a guaranteed 45s of pauses.
  */
 import { readFile, mkdir, writeFile } from "fs/promises";
 import { readdirSync } from "fs";
@@ -23,7 +30,6 @@ import { tmCurrentSeasonId } from "@/lib/player-aggregation";
 import type { AnyNode } from "domhandler";
 import type { TopTransfer, TransferClub } from "@/app/types";
 
-const PAGE_PAUSE_MS = 4000;
 const PAGE_SIZE = 25;
 
 const pageUrl = (season: number, page: number) =>
@@ -97,7 +103,7 @@ async function main() {
   // stats refresh there is nothing to wait for — the new window's moves are
   // filed under the new ID immediately.
   const season = Number(process.argv[2] || tmCurrentSeasonId());
-  const limit = Number(process.argv[3] ?? 100);
+  const limit = Number(process.argv[3] ?? 200);
   const out = join(process.cwd(), "data", "top-transfers.json");
   const glob = process.env.TM_FIXTURE_GLOB;
 
@@ -112,12 +118,22 @@ async function main() {
     console.log(`Fixtures ${files.join(", ")}: ${all.length} transfers`);
   } else {
     const pages = Math.ceil(limit / PAGE_SIZE);
-    for (let p = 1; p <= pages; p++) {
-      if (p > 1) await new Promise((r) => setTimeout(r, PAGE_PAUSE_MS));
-      const rows = parseTopTransfers(await fetchPage(pageUrl(season, p)));
-      all.push(...rows);
-      console.log(`page ${p}/${pages}: ${rows.length} transfers (${all.length} total)`);
-      if (!rows.length) break;
+    const started = Date.now();
+    const perPage = await Promise.all(
+      Array.from({ length: pages }, async (_, i) => {
+        const rows = parseTopTransfers(await fetchPage(pageUrl(season, i + 1)));
+        console.log(`page ${i + 1}/${pages}: ${rows.length} transfers`);
+        return rows;
+      }),
+    );
+    for (const rows of perPage) all.push(...rows);
+    console.log(`${all.length} transfers in ${((Date.now() - started) / 1000).toFixed(1)}s`);
+
+    // A short page in the middle means TM served a partial table, not the end of
+    // the list — trimming to `limit` below would silently ship a gap.
+    const short = perPage.findIndex((rows) => rows.length < PAGE_SIZE);
+    if (short !== -1 && short < pages - 1) {
+      throw new Error(`Page ${short + 1} returned ${perPage[short].length}/${PAGE_SIZE} rows`);
     }
   }
 

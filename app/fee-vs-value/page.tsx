@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getFeeVsValueData, rank } from "@/lib/fee-vs-value";
+import { leaders, rank } from "@/lib/fee-vs-value";
+import { getFeeVsValueData } from "@/lib/top-transfers";
 import { formatMarketValue, getTeamDetailHref } from "@/lib/format";
 import { createPageMetadata } from "@/lib/metadata";
 import { DataLastUpdated } from "@/app/components/DataLastUpdated";
@@ -15,7 +16,7 @@ import { formatPremium, formatRatio, TransferRow } from "./TransferRow";
 export const metadata = createPageMetadata({
   title: "Fee vs Value",
   description:
-    "Which clubs paid over the odds and which got a bargain in the season's 100 biggest transfers. Every fee held up against the player's Transfermarkt market value, in cash and times value.",
+    "Which clubs paid over the odds and which got a bargain in the season's 200 biggest transfers. Every fee held up against the player's Transfermarkt market value, in cash and times value.",
   path: "/fee-vs-value",
   keywords: [
     "most overpriced transfer",
@@ -53,46 +54,54 @@ const HEADLINES = [
     side: "over" as const,
     cash: {
       label: "Biggest overpay — cash",
-      hint: "The widest gap in euros between what a club paid and what the player was worth.",
+      hint: "How much more than his value the club paid.",
     },
     times: {
       label: "Biggest overpay — times value",
-      hint: "The fee that covers the player's value the most times over. Smaller deals win this one.",
+      hint: "How many times his value the club paid. 2.00× means they paid double.",
     },
     both: {
       label: "Biggest overpay — cash and times value",
-      hint: "One deal took both: the widest gap in euros and the most times over the player's value.",
+      hint: "The same deal tops both lists.",
     },
   },
   {
     side: "under" as const,
     cash: {
       label: "Biggest bargain — cash",
-      hint: "The most value a buyer picked up below the asking price.",
+      hint: "How much less than his value the club paid.",
     },
     times: {
       label: "Biggest bargain — times value",
-      hint: "The lowest fee next to what the player was worth — cents on the euro.",
+      hint: "What share of his value the club paid. 0.50× means half price.",
     },
     both: {
       label: "Biggest bargain — cash and times value",
-      hint: "One deal took both: the most value off the asking price, and the lowest fee next to it.",
+      hint: "The same deal tops both lists.",
     },
   },
 ];
 
-/** The two deals topping a side, plus whether they're the same one. Cash and
- *  times value normally crown different players; a sweep is a real finding and
- *  gets one card carrying both figures instead of two identical ones. */
+/** The deals topping a side on each measure — lists, because ties are joint.
+ *  Cash and times value normally crown different players; when a single deal
+ *  takes both outright it gets one card carrying both figures, since two
+ *  identical cards read as a rendering bug rather than as the finding it is. */
 function headlineWinners(ranked: ReturnType<typeof rank>, side: "over" | "under") {
-  const cash = side === "over" ? ranked.overpaidAbsolute[0] : ranked.underpaidAbsolute[0];
-  const times = side === "over" ? ranked.overpaidRatio[0] : ranked.underpaidRatio[0];
-  return { cash, times, sweep: Boolean(cash && times && cash.playerId === times.playerId) };
+  const cash = leaders(
+    side === "over" ? ranked.overpaidAbsolute : ranked.underpaidAbsolute,
+    (t) => t.premium,
+  );
+  const times = leaders(
+    side === "over" ? ranked.overpaidRatio : ranked.underpaidRatio,
+    (t) => t.ratio,
+  );
+  const sweep = cash.length === 1 && times.length === 1 && cash[0].playerId === times[0].playerId;
+  return { cash, times, sweep };
 }
 
 export default async function FeeVsValuePage() {
   const data = await getFeeVsValueData();
-  const ranked = rank(data.paid);
+  const ranked = rank(data.paid, data.free);
   const { totals } = data;
 
   const overpayers = data.clubs.filter((c) => c.premium > 0).slice(0, 5);
@@ -112,7 +121,7 @@ export default async function FeeVsValuePage() {
               key={side}
               label={both.label}
               hint={both.hint}
-              transfer={winners.cash}
+              transfers={winners.cash}
               metrics={["premium", "ratio"]}
               tone={side}
               className="lg:col-span-2"
@@ -123,7 +132,7 @@ export default async function FeeVsValuePage() {
                 key={`${side}-cash`}
                 label={cash.label}
                 hint={cash.hint}
-                transfer={winners.cash}
+                transfers={winners.cash}
                 metrics={["premium"]}
                 tone={side}
               />,
@@ -131,7 +140,7 @@ export default async function FeeVsValuePage() {
                 key={`${side}-times`}
                 label={times.label}
                 hint={times.hint}
-                transfer={winners.times}
+                transfers={winners.times}
                 metrics={["ratio"]}
                 tone={side}
               />,
@@ -145,23 +154,23 @@ export default async function FeeVsValuePage() {
           <SummaryStat
             label="Total spent"
             value={formatMarketValue(totals.fees)}
-            sub={`across ${data.paid.length} deals with a fee`}
+            sub={`on ${data.paid.length + data.free.length} permanent signings`}
           />
           <SummaryStat
             label="What they're worth"
             value={formatMarketValue(totals.marketValue)}
-            sub="those same players, added up"
+            sub="what those players were worth"
           />
           <SummaryStat
             label="Paid over the odds"
             value={formatPremium(totals.premium)}
-            sub="spent above their value"
+            sub="more than they were worth"
             accentClass={totals.premium > 0 ? "text-accent-cold" : "text-accent-hot"}
           />
           <SummaryStat
             label="Times their value"
             value={formatRatio(totals.ratio)}
-            sub="what the market paid"
+            sub="what clubs paid, all in"
             accentClass={totals.ratio > 1 ? "text-accent-cold" : "text-accent-hot"}
           />
         </CardContent>
@@ -169,13 +178,19 @@ export default async function FeeVsValuePage() {
 
       <Leaderboard ranked={ranked} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SectionPanel title="Clubs that paid over the odds">
-          <ClubTable rows={overpayers} tone="over" />
-        </SectionPanel>
-        <SectionPanel title="Clubs that found bargains">
-          <ClubTable rows={bargainHunters} tone="under" />
-        </SectionPanel>
+      <div>
+        <p className="text-sm text-text-muted">
+          Loans and free transfers count here too. What matters is who a club ended up with and what
+          they paid — and a player who arrives for free is the best deal there is.
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <SectionPanel title="Clubs that paid over the odds">
+            <ClubTable rows={overpayers} tone="over" />
+          </SectionPanel>
+          <SectionPanel title="Clubs that shopped best">
+            <ClubTable rows={bargainHunters} tone="under" />
+          </SectionPanel>
+        </div>
       </div>
 
       {data.free.length > 0 && (
@@ -183,7 +198,7 @@ export default async function FeeVsValuePage() {
           title="Free transfers"
           aside={
             <span className="text-xs text-text-muted">
-              nothing paid, so nothing to compare — kept out of the lists above
+              in the cash lists above; no fee means there is no multiplier
             </span>
           }
         >
@@ -193,6 +208,7 @@ export default async function FeeVsValuePage() {
                 key={t.playerId}
                 transfer={t}
                 tone="under"
+                showPrice
                 metric={formatMarketValue(t.marketValue)}
                 metricLabel="walked for nothing"
               />
@@ -206,7 +222,7 @@ export default async function FeeVsValuePage() {
           title="Loans"
           aside={
             <span className="text-xs text-text-muted">
-              Transfermarkt lists no loan fee — kept out of the lists above
+              a loan is not a signing — kept out of the lists, counted for their club
             </span>
           }
         >
@@ -216,6 +232,7 @@ export default async function FeeVsValuePage() {
                 key={t.playerId}
                 transfer={t}
                 tone="neutral"
+                showPrice
                 metric={formatMarketValue(t.marketValue)}
                 metricLabel="market value"
               />
@@ -227,15 +244,17 @@ export default async function FeeVsValuePage() {
       <section className="rounded-lg border border-border-subtle bg-card p-4">
         <h2 className="text-sm font-medium text-text-secondary">How to read this</h2>
         <p className="mt-2 text-sm text-text-muted">
-          Every row is one of the season&apos;s 100 biggest moves. Sort by <strong>cash</strong> and
-          you get the fee minus what Transfermarkt reckoned the player was worth. Sort by{" "}
-          <strong>times value</strong> and you get the same gap as a multiplier — a 2.00× means the
-          club paid double. Cash favours the blockbuster deals, times value favours the ones that
-          were furthest out of proportion, which is why the two rarely name the same player.
+          Every row is one of the {data.paid.length + data.free.length + data.loans.length} biggest
+          transfers this season. Sort by <strong>cash</strong> to see how much more, or less, than
+          his value a club paid. Sort by <strong>times value</strong> to see it as a multiplier:
+          2.00× means they paid double, 0.50× means half price. Big transfers lead the cash list and
+          small ones lead the times value list, so the two rarely name the same player.
         </p>
         <p className="mt-2 text-sm text-text-muted">
-          Loans and frees have no fee to speak of, so they get their own sections instead of sitting
-          top of every bargain list on a technicality.
+          A free transfer is still a signing, so it counts in the cash lists — picking up a €45M
+          defender for nothing is the best bargain there is. It is left out of the times value
+          lists, where every free comes to 0.00× and they would fill the top in a dead heat. A loan
+          is not a signing at all, so it stays out of both.
         </p>
       </section>
 
@@ -272,8 +291,14 @@ function ClubTable({
               <span className="truncate text-sm font-bold text-text-primary">{c.club.name}</span>
             )}
             <p className="mt-0.5 font-value text-xs text-text-secondary">
-              {formatMarketValue(c.fees)} on {c.signings}{" "}
-              {c.signings === 1 ? "signing" : "signings"}
+              {formatMarketValue(c.fees)} on {c.signings} {c.signings === 1 ? "player" : "players"}
+              {c.loans > 0 && (
+                <span className="text-text-muted">
+                  {" "}
+                  · {c.loans} {c.loans === 1 ? "loan" : "loans"}
+                </span>
+              )}
+              {c.frees > 0 && <span className="text-text-muted"> · {c.frees} free</span>}
             </p>
           </div>
           <div className="shrink-0 text-right">

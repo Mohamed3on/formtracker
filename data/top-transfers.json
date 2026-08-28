@@ -2800,6 +2800,2806 @@
         "league": "Premier League",
         "country": "England"
       }
+    },
+    {
+      "rank": 101,
+      "playerId": "819636",
+      "name": "Dzenan Pejcinovic",
+      "position": "Centre-Forward",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/819636-1787317917.jpg?lm=4711",
+      "nationality": "Germany",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/40.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Wolfsburg",
+        "clubId": "82",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/82.png?lm=4711",
+        "league": "2. Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Stuttgart",
+        "clubId": "79",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/79.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 102,
+      "playerId": "659543",
+      "name": "Matthis Abline",
+      "position": "Centre-Forward",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/659543-1704213657.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "FC Nantes",
+        "clubId": "995",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/995.png?lm=4711",
+        "league": "Ligue 2",
+        "country": "France"
+      },
+      "to": {
+        "name": "Monaco",
+        "clubId": "162",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/162.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "Monaco"
+      }
+    },
+    {
+      "rank": 103,
+      "playerId": "1171981",
+      "name": "Mathys Detourbet",
+      "position": "Left Winger",
+      "age": 19,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1171981-1749199277.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Troyes",
+        "clubId": "1095",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1095.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Man City",
+        "clubId": "281",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/281.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 104,
+      "playerId": "1063338",
+      "name": "Carlos Espí",
+      "position": "Centre-Forward",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1063338-1759409131.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Levante",
+        "clubId": "3368",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3368.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Real Madrid",
+        "clubId": "418",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/418.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      }
+    },
+    {
+      "rank": 105,
+      "playerId": "855308",
+      "name": "Arthur Atta",
+      "position": "Central Midfield",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/855308-1752140643.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Udinese",
+        "clubId": "410",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/410.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Fiorentina",
+        "clubId": "430",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/430.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 106,
+      "playerId": "559328",
+      "name": "Emmanuel Emegha",
+      "position": "Centre-Forward",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/559328-1732575392.png?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "R. Strasbourg",
+        "clubId": "667",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/667.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Chelsea",
+        "clubId": "631",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/631.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 107,
+      "playerId": "948275",
+      "name": "Álvaro Rodríguez",
+      "position": "Centre-Forward",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/948275-1660124773.jpg?lm=4711",
+      "nationality": "Uruguay",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/179.png?lm=4711",
+      "marketValue": 10000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Elche CF",
+        "clubId": "1531",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1531.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Bournemouth",
+        "clubId": "989",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/989.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 108,
+      "playerId": "650568",
+      "name": "António Silva",
+      "position": "Centre-Back",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/650568-1700235534.jpg?lm=4711",
+      "nationality": "Portugal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/136.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Benfica",
+        "clubId": "294",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/294.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      },
+      "to": {
+        "name": "Bournemouth",
+        "clubId": "989",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/989.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 109,
+      "playerId": "1363293",
+      "name": "Patrick Zabi",
+      "position": "Central Midfield",
+      "age": 19,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1363293-1756736469.jpg?lm=4711",
+      "nationality": "Cote d'Ivoire",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/38.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 25000000,
+      "feeText": "€25.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Stade Reims",
+        "clubId": "1421",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1421.png?lm=4711",
+        "league": "Ligue 2",
+        "country": "France"
+      },
+      "to": {
+        "name": "Paris FC",
+        "clubId": "10004",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/10004.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 110,
+      "playerId": "401578",
+      "name": "Exequiel Palacios",
+      "position": "Central Midfield",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/401578-1695368200.jpg?lm=4711",
+      "nationality": "Argentina",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/9.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 22500000,
+      "feeText": "€22.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Leverkusen",
+        "clubId": "15",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/15.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Ipswich",
+        "clubId": "677",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/677.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 111,
+      "playerId": "408574",
+      "name": "Joey Veerman",
+      "position": "Central Midfield",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/408574-1682332276.jpg?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 22000000,
+      "feeText": "€22.00m",
+      "isLoan": false,
+      "from": {
+        "name": "PSV",
+        "clubId": "383",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/383.png?lm=4711",
+        "league": "Eredivisie",
+        "country": "Netherlands"
+      },
+      "to": {
+        "name": "Dortmund",
+        "clubId": "16",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/16.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 112,
+      "playerId": "515744",
+      "name": "Eduard Spertsyan",
+      "position": "Attacking Midfield",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/515744-1753530814.png?lm=4711",
+      "nationality": "Armenia",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/10.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 21900000,
+      "feeText": "€21.90m",
+      "isLoan": false,
+      "from": {
+        "name": "Krasnodar",
+        "clubId": "16704",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/16704.png?lm=4711",
+        "league": "Premier Liga",
+        "country": "Russia"
+      },
+      "to": {
+        "name": "Al-Ahli",
+        "clubId": "18487",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/18487.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      }
+    },
+    {
+      "rank": 113,
+      "playerId": "623325",
+      "name": "Georgiy Sudakov",
+      "position": "Attacking Midfield",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/623325-1758058526.jpg?lm=4711",
+      "nationality": "Ukraine",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/177.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 20250000,
+      "feeText": "€20.25m",
+      "isLoan": false,
+      "from": {
+        "name": "Shakhtar D.",
+        "clubId": "660",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/660.png?lm=4711",
+        "league": "Premier Liga",
+        "country": "Ukraine"
+      },
+      "to": {
+        "name": "Benfica",
+        "clubId": "294",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/294.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      }
+    },
+    {
+      "rank": 114,
+      "playerId": "321528",
+      "name": "Denzel Dumfries",
+      "position": "Right-Back",
+      "age": 30,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/321528-1746042223.jpg?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 20000000,
+      "feeText": "€20.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Inter",
+        "clubId": "46",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/46.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Real Madrid",
+        "clubId": "418",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/418.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      }
+    },
+    {
+      "rank": 115,
+      "playerId": "982575",
+      "name": "Gustavo Sá",
+      "position": "Attacking Midfield",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/982575-1785411045.png?lm=4711",
+      "nationality": "Portugal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/136.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 20000000,
+      "feeText": "€20.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Famalicão",
+        "clubId": "3329",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3329.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      },
+      "to": {
+        "name": "Nott'm Forest",
+        "clubId": "703",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/703.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 116,
+      "playerId": "669380",
+      "name": "Konstantinos Koulierakis",
+      "position": "Centre-Back",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/669380-1752736071.jpg?lm=4711",
+      "nationality": "Greece",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/56.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 16500000,
+      "feeText": "€16.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Wolfsburg",
+        "clubId": "82",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/82.png?lm=4711",
+        "league": "2. Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Roma",
+        "clubId": "12",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/12.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 117,
+      "playerId": "552655",
+      "name": "Troy Parrott",
+      "position": "Centre-Forward",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/552655-1721657549.jpg?lm=4711",
+      "nationality": "Ireland",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/72.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 16000000,
+      "feeText": "€16.00m",
+      "isLoan": false,
+      "from": {
+        "name": "AZ Alkmaar",
+        "clubId": "1090",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1090.png?lm=4711",
+        "league": "Eredivisie",
+        "country": "Netherlands"
+      },
+      "to": {
+        "name": "Real Betis",
+        "clubId": "150",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/150.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      }
+    },
+    {
+      "rank": 118,
+      "playerId": "368887",
+      "name": "Loïs Openda",
+      "position": "Centre-Forward",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/368887-1713944805.jpg?lm=4711",
+      "nationality": "Belgium",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/19.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 3500000,
+      "feeText": "Loan fee:€3.50m",
+      "isLoan": true,
+      "from": {
+        "name": "Juventus",
+        "clubId": "506",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/506.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Lyon",
+        "clubId": "1041",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1041.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 119,
+      "playerId": "718303",
+      "name": "Ernest Poku",
+      "position": "Right Winger",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/718303-1758703071.jpg?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 3000000,
+      "feeText": "Loan fee:€3.00m",
+      "isLoan": true,
+      "from": {
+        "name": "Leverkusen",
+        "clubId": "15",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/15.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Besiktas",
+        "clubId": "114",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/114.png?lm=4711",
+        "league": "Süper Lig",
+        "country": "Türkiye"
+      }
+    },
+    {
+      "rank": 120,
+      "playerId": "344381",
+      "name": "Christopher Nkunku",
+      "position": "Centre-Forward",
+      "age": 28,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/344381-1663686834.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 3000000,
+      "feeText": "Loan fee:€3.00m",
+      "isLoan": true,
+      "from": {
+        "name": "AC Milan",
+        "clubId": "5",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/5.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Leipzig",
+        "clubId": "23826",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/23826.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 121,
+      "playerId": "597659",
+      "name": "Charlie Cresswell",
+      "position": "Centre-Back",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/597659-1641461698.jpg?lm=4711",
+      "nationality": "England",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/189.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 2500000,
+      "feeText": "Loan fee:€2.50m",
+      "isLoan": true,
+      "from": {
+        "name": "Toulouse",
+        "clubId": "415",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/415.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Stade Rennais",
+        "clubId": "273",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/273.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 122,
+      "playerId": "526845",
+      "name": "Noah Atubolu",
+      "position": "Goalkeeper",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/526845-1753984204.jpg?lm=4711",
+      "nationality": "Germany",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/40.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 1000000,
+      "feeText": "Loan fee:€1.00m",
+      "isLoan": true,
+      "from": {
+        "name": "Freiburg",
+        "clubId": "60",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/60.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Frankfurt",
+        "clubId": "24",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/24.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 123,
+      "playerId": "469781",
+      "name": "Marcos Senesi",
+      "position": "Centre-Back",
+      "age": 29,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/469781-1738824319.jpg?lm=4711",
+      "nationality": "Argentina",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/9.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 0,
+      "feeText": "free transfer",
+      "isLoan": false,
+      "from": {
+        "name": "Bournemouth",
+        "clubId": "989",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/989.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Tottenham",
+        "clubId": "148",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/148.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 124,
+      "playerId": "279455",
+      "name": "Harry Wilson",
+      "position": "Right Winger",
+      "age": 29,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/279455-1782301614.jpg?lm=4711",
+      "nationality": "Wales",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/191.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 0,
+      "feeText": "free transfer",
+      "isLoan": false,
+      "from": {
+        "name": "Fulham",
+        "clubId": "931",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/931.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Leeds",
+        "clubId": "399",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/399.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 125,
+      "playerId": "982575",
+      "name": "Gustavo Sá",
+      "position": "Attacking Midfield",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/982575-1785411045.png?lm=4711",
+      "nationality": "Portugal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/136.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Nott'm Forest",
+        "clubId": "703",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/703.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Olympiacos",
+        "clubId": "683",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/683.png?lm=4711",
+        "league": "Super League 1",
+        "country": "Greece"
+      }
+    },
+    {
+      "rank": 126,
+      "playerId": "569366",
+      "name": "Enzo Millot",
+      "position": "Attacking Midfield",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/569366-1723707547.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 25000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Al-Ahli",
+        "clubId": "18487",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/18487.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      },
+      "to": {
+        "name": "Al-Diriyah",
+        "clubId": "52358",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/52358.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      }
+    },
+    {
+      "rank": 127,
+      "playerId": "945021",
+      "name": "Anan Khalaili",
+      "position": "Right Midfield",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/945021-1772107050.jpg?lm=4711",
+      "nationality": "Israel",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/74.png?lm=4711",
+      "marketValue": 23000000,
+      "fee": 24500000,
+      "feeText": "€24.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Union SG",
+        "clubId": "3948",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3948.png?lm=4711",
+        "league": "Jupiler Pro League",
+        "country": "Belgium"
+      },
+      "to": {
+        "name": "Crystal Palace",
+        "clubId": "873",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/873.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 128,
+      "playerId": "986288",
+      "name": "Sidiki Chérif",
+      "position": "Centre-Forward",
+      "age": 19,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/986288-1770977210.jpg?lm=4711",
+      "nationality": "Guinea",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/59.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 24500000,
+      "feeText": "€24.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Fenerbahçe",
+        "clubId": "36",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/36.png?lm=4711",
+        "league": "Süper Lig",
+        "country": "Türkiye"
+      },
+      "to": {
+        "name": "Coventry",
+        "clubId": "990",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/990.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 129,
+      "playerId": "357162",
+      "name": "Florentino",
+      "position": "Defensive Midfield",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/357162-1701295561.jpg?lm=4711",
+      "nationality": "Portugal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/136.png?lm=4711",
+      "marketValue": 16000000,
+      "fee": 24000000,
+      "feeText": "€24.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Benfica",
+        "clubId": "294",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/294.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      },
+      "to": {
+        "name": "Burnley",
+        "clubId": "1132",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1132.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 130,
+      "playerId": "1111063",
+      "name": "Sean Steur",
+      "position": "Central Midfield",
+      "age": 18,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1111063-1758310610.jpg?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 7000000,
+      "fee": 23500000,
+      "feeText": "€23.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Ajax",
+        "clubId": "610",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/610.png?lm=4711",
+        "league": "Eredivisie",
+        "country": "Netherlands"
+      },
+      "to": {
+        "name": "Newcastle",
+        "clubId": "762",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/762.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 131,
+      "playerId": "864121",
+      "name": "Abdul Fatawu",
+      "position": "Right Winger",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/864121-1780562246.jpg?lm=4711",
+      "nationality": "Ghana",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/54.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 23450000,
+      "feeText": "€23.45m",
+      "isLoan": false,
+      "from": {
+        "name": "Leicester",
+        "clubId": "1003",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1003.png?lm=4711",
+        "league": "League One",
+        "country": "England"
+      },
+      "to": {
+        "name": "Ipswich",
+        "clubId": "677",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/677.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 132,
+      "playerId": "1034853",
+      "name": "Nobel Mendy",
+      "position": "Centre-Back",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1034853-1736244947.jpg?lm=4711",
+      "nationality": "Senegal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/149.png?lm=4711",
+      "marketValue": 7500000,
+      "fee": 23400000,
+      "feeText": "€23.40m",
+      "isLoan": false,
+      "from": {
+        "name": "Rayo Vallecano",
+        "clubId": "367",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/367.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Hull City",
+        "clubId": "3008",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3008.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 133,
+      "playerId": "554389",
+      "name": "Konstantinos Tzolakis",
+      "position": "Goalkeeper",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/554389-1784896791.png?lm=4711",
+      "nationality": "Greece",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/56.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 23300000,
+      "feeText": "€23.30m",
+      "isLoan": false,
+      "from": {
+        "name": "Olympiacos",
+        "clubId": "683",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/683.png?lm=4711",
+        "league": "Super League 1",
+        "country": "Greece"
+      },
+      "to": {
+        "name": "Hull City",
+        "clubId": "3008",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3008.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 134,
+      "playerId": "410708",
+      "name": "Pascal Struijk",
+      "position": "Centre-Back",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/410708-1708002225.jpg?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 23200000,
+      "feeText": "€23.20m",
+      "isLoan": false,
+      "from": {
+        "name": "Leeds",
+        "clubId": "399",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/399.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Brighton",
+        "clubId": "1237",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1237.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 135,
+      "playerId": "474800",
+      "name": "Facundo Medina",
+      "position": "Centre-Back",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/474800-1653402999.jpg?lm=4711",
+      "nationality": "Argentina",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/9.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 23000000,
+      "feeText": "€23.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Marseille",
+        "clubId": "244",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/244.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Leverkusen",
+        "clubId": "15",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/15.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 136,
+      "playerId": "607226",
+      "name": "Loum Tchaouna",
+      "position": "Right Winger",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/607226-1695710683.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 13000000,
+      "fee": 23000000,
+      "feeText": "€23.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Burnley",
+        "clubId": "1132",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1132.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      },
+      "to": {
+        "name": "Coventry",
+        "clubId": "990",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/990.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 137,
+      "playerId": "699783",
+      "name": "Raphael Onyedika",
+      "position": "Defensive Midfield",
+      "age": 25,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/699783-1787909998.jpg?lm=4711",
+      "nationality": "Nigeria",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/124.png?lm=4711",
+      "marketValue": 23000000,
+      "fee": 9000000,
+      "feeText": "€9.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Club Brugge",
+        "clubId": "2282",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/2282.png?lm=4711",
+        "league": "Jupiler Pro League",
+        "country": "Belgium"
+      },
+      "to": {
+        "name": "Frankfurt",
+        "clubId": "24",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/24.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 138,
+      "playerId": "856530",
+      "name": "Mateo Pellegrino",
+      "position": "Centre-Forward",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/856530-1751532694.jpg?lm=4711",
+      "nationality": "Argentina",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/9.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 22500000,
+      "feeText": "€22.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Parma",
+        "clubId": "130",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/130.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Fiorentina",
+        "clubId": "430",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/430.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 139,
+      "playerId": "967346",
+      "name": "Eliezer Mayenda",
+      "position": "Centre-Forward",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/967346-1724772065.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 16000000,
+      "fee": 22000000,
+      "feeText": "€22.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Sunderland",
+        "clubId": "289",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/289.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Stade Rennais",
+        "clubId": "273",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/273.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 140,
+      "playerId": "657430",
+      "name": "Samú Costa",
+      "position": "Defensive Midfield",
+      "age": 25,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/657430-1753960841.jpg?lm=4711",
+      "nationality": "Portugal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/136.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 22000000,
+      "feeText": "€22.00m",
+      "isLoan": false,
+      "from": {
+        "name": "RCD Mallorca",
+        "clubId": "237",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/237.png?lm=4711",
+        "league": "LaLiga2",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Al-Nassr",
+        "clubId": "18544",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/18544.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      }
+    },
+    {
+      "rank": 141,
+      "playerId": "413565",
+      "name": "Jhon Lucumí",
+      "position": "Centre-Back",
+      "age": 28,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/413565-1753445789.jpg?lm=4711",
+      "nationality": "Colombia",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/83.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 20100000,
+      "feeText": "€20.10m",
+      "isLoan": false,
+      "from": {
+        "name": "Bologna",
+        "clubId": "1025",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1025.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Juventus",
+        "clubId": "506",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/506.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 142,
+      "playerId": "741257",
+      "name": "Álex Jiménez",
+      "position": "Right-Back",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/741257-1751532035.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 18500000,
+      "feeText": "€18.50m",
+      "isLoan": false,
+      "from": {
+        "name": "AC Milan",
+        "clubId": "5",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/5.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Bournemouth",
+        "clubId": "989",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/989.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 143,
+      "playerId": "929994",
+      "name": "Kerim Alajbegovic",
+      "position": "Left Winger",
+      "age": 18,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/929994-1754993481.png?lm=4711",
+      "nationality": "Bosnia-Herzegovina",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/24.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 8000000,
+      "feeText": "€8.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Salzburg",
+        "clubId": "409",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/409.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Austria"
+      },
+      "to": {
+        "name": "Leverkusen",
+        "clubId": "15",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/15.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 144,
+      "playerId": "345911",
+      "name": "Ladislav Krejci",
+      "position": "Centre-Back",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/345911-1716965804.jpg?lm=4711",
+      "nationality": "Czech Republic",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/172.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 7500000,
+      "feeText": "€7.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Girona",
+        "clubId": "12321",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/12321.png?lm=4711",
+        "league": "LaLiga2",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Wolves",
+        "clubId": "543",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/543.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 145,
+      "playerId": "394300",
+      "name": "Davide Frattesi",
+      "position": "Central Midfield",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/394300-1730126974.jpg?lm=4711",
+      "nationality": "Italy",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/75.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 5000000,
+      "feeText": "Loan fee:€5.00m",
+      "isLoan": true,
+      "from": {
+        "name": "Inter",
+        "clubId": "46",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/46.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Lazio",
+        "clubId": "398",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/398.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 146,
+      "playerId": "711999",
+      "name": "Lesley Ugochukwu",
+      "position": "Defensive Midfield",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/711999-1784202406.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 3520000,
+      "feeText": "Loan fee:€3.52m",
+      "isLoan": true,
+      "from": {
+        "name": "Burnley",
+        "clubId": "1132",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1132.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      },
+      "to": {
+        "name": "Galatasaray",
+        "clubId": "141",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/141.png?lm=4711",
+        "league": "Süper Lig",
+        "country": "Türkiye"
+      }
+    },
+    {
+      "rank": 147,
+      "playerId": "241641",
+      "name": "Bernardo Silva",
+      "position": "Attacking Midfield",
+      "age": 31,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/241641-1684311533.jpg?lm=4711",
+      "nationality": "Portugal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/136.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 0,
+      "feeText": "free transfer",
+      "isLoan": false,
+      "from": {
+        "name": "Man City",
+        "clubId": "281",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/281.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Real Madrid",
+        "clubId": "418",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/418.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      }
+    },
+    {
+      "rank": 148,
+      "playerId": "741257",
+      "name": "Álex Jiménez",
+      "position": "Right-Back",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/741257-1751532035.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Bournemouth",
+        "clubId": "989",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/989.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Fiorentina",
+        "clubId": "430",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/430.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 149,
+      "playerId": "148455",
+      "name": "Mohamed Salah",
+      "position": "Right Winger",
+      "age": 34,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/148455-1727337594.jpg?lm=4711",
+      "nationality": "Egypt",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/2.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 0,
+      "feeText": "free transfer",
+      "isLoan": false,
+      "from": {
+        "name": "Liverpool",
+        "clubId": "31",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/31.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Trabzonspor",
+        "clubId": "449",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/449.png?lm=1787748980",
+        "league": "Süper Lig",
+        "country": "Türkiye"
+      }
+    },
+    {
+      "rank": 150,
+      "playerId": "910905",
+      "name": "Mamadou Sarr",
+      "position": "Centre-Back",
+      "age": 20,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/910905-1773787147.jpg?lm=4711",
+      "nationality": "Senegal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/149.png?lm=4711",
+      "marketValue": 22000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Chelsea",
+        "clubId": "631",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/631.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Real Sociedad",
+        "clubId": "681",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/681.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      }
+    },
+    {
+      "rank": 151,
+      "playerId": "923757",
+      "name": "Ewen Jaouen",
+      "position": "Goalkeeper",
+      "age": 20,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/923757-1781091704.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 12000000,
+      "fee": 21500000,
+      "feeText": "€21.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Stade Reims",
+        "clubId": "1421",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1421.png?lm=4711",
+        "league": "Ligue 2",
+        "country": "France"
+      },
+      "to": {
+        "name": "Newcastle",
+        "clubId": "762",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/762.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 152,
+      "playerId": "1191154",
+      "name": "Ibrahima Ba",
+      "position": "Centre-Back",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1191154-1758311322.jpg?lm=4711",
+      "nationality": "Senegal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/149.png?lm=4711",
+      "marketValue": 12000000,
+      "fee": 21250000,
+      "feeText": "€21.25m",
+      "isLoan": false,
+      "from": {
+        "name": "Famalicão",
+        "clubId": "3329",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3329.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      },
+      "to": {
+        "name": "Sporting",
+        "clubId": "336",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/336.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      }
+    },
+    {
+      "rank": 153,
+      "playerId": "936874",
+      "name": "Tyrique George",
+      "position": "Left Winger",
+      "age": 20,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/936874-1731016609.jpg?lm=4711",
+      "nationality": "England",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/189.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 21000000,
+      "feeText": "€21.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Chelsea",
+        "clubId": "631",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/631.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Everton",
+        "clubId": "29",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/29.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 154,
+      "playerId": "924349",
+      "name": "Issa Doumbia",
+      "position": "Central Midfield",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/924349-1730186334.jpg?lm=4711",
+      "nationality": "Italy",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/75.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 20530000,
+      "feeText": "€20.53m",
+      "isLoan": false,
+      "from": {
+        "name": "Venezia",
+        "clubId": "607",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/607.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Sporting",
+        "clubId": "336",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/336.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      }
+    },
+    {
+      "rank": 155,
+      "playerId": "576028",
+      "name": "Thiago Almada",
+      "position": "Attacking Midfield",
+      "age": 25,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/576028-1773174386.jpg?lm=4711",
+      "nationality": "Argentina",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/9.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 20000000,
+      "feeText": "€20.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Atlético",
+        "clubId": "13",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/13.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "River Plate",
+        "clubId": "209",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/209.png?lm=4711",
+        "league": "Torneo Clausura",
+        "country": "Argentina"
+      }
+    },
+    {
+      "rank": 156,
+      "playerId": "991487",
+      "name": "Abdoul Ouattara",
+      "position": "Right-Back",
+      "age": 20,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/991487-1732487466.png?lm=4711",
+      "nationality": "Cote d'Ivoire",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/38.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 20000000,
+      "feeText": "€20.00m",
+      "isLoan": false,
+      "from": {
+        "name": "R. Strasbourg",
+        "clubId": "667",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/667.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Ipswich",
+        "clubId": "677",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/677.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 157,
+      "playerId": "467434",
+      "name": "Rocco Reitz",
+      "position": "Central Midfield",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/467434-1760966939.jpg?lm=4711",
+      "nationality": "Germany",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/40.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 20000000,
+      "feeText": "€20.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Mönchengladbach",
+        "clubId": "18",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/18.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Leipzig",
+        "clubId": "23826",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/23826.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 158,
+      "playerId": "668267",
+      "name": "Marcos Leonardo",
+      "position": "Centre-Forward",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/668267-1706201941.jpg?lm=4711",
+      "nationality": "Brazil",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/26.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 19900000,
+      "feeText": "€19.90m",
+      "isLoan": false,
+      "from": {
+        "name": "Al-Hilal",
+        "clubId": "1114",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1114.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      },
+      "to": {
+        "name": "Ajax",
+        "clubId": "610",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/610.png?lm=4711",
+        "league": "Eredivisie",
+        "country": "Netherlands"
+      }
+    },
+    {
+      "rank": 159,
+      "playerId": "1075577",
+      "name": "Joane Gadou",
+      "position": "Centre-Back",
+      "age": 19,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1075577-1754993513.png?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 19500000,
+      "feeText": "€19.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Salzburg",
+        "clubId": "409",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/409.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Austria"
+      },
+      "to": {
+        "name": "Dortmund",
+        "clubId": "16",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/16.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 160,
+      "playerId": "466801",
+      "name": "Sergi Altimira",
+      "position": "Defensive Midfield",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/466801-1744375696.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 18250000,
+      "feeText": "€18.25m",
+      "isLoan": false,
+      "from": {
+        "name": "Real Betis",
+        "clubId": "150",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/150.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Sporting",
+        "clubId": "336",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/336.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      }
+    },
+    {
+      "rank": 161,
+      "playerId": "684210",
+      "name": "Jaidon Anthony",
+      "position": "Left Winger",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/684210-1784821258.jpg?lm=4711",
+      "nationality": "England",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/189.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 17500000,
+      "feeText": "€17.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Burnley",
+        "clubId": "1132",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1132.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      },
+      "to": {
+        "name": "Brentford",
+        "clubId": "1148",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1148.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 162,
+      "playerId": "193082",
+      "name": "Alejandro Grimaldo",
+      "position": "Left-Back",
+      "age": 30,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/193082-1689710805.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 15000000,
+      "feeText": "€15.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Leverkusen",
+        "clubId": "15",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/15.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Atlético",
+        "clubId": "13",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/13.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      }
+    },
+    {
+      "rank": 163,
+      "playerId": "370846",
+      "name": "Timothy Weah",
+      "position": "Right-Back",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/370846-1692277669.jpg?lm=4711",
+      "nationality": "United States",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/184.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 14400000,
+      "feeText": "€14.40m",
+      "isLoan": false,
+      "from": {
+        "name": "Juventus",
+        "clubId": "506",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/506.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Marseille",
+        "clubId": "244",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/244.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 164,
+      "playerId": "1214123",
+      "name": "Kennet Eichhorn",
+      "position": "Defensive Midfield",
+      "age": 16,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1214123-1760384326.jpg?lm=4711",
+      "nationality": "Germany",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/40.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 9000000,
+      "feeText": "€9.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Hertha BSC",
+        "clubId": "44",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/44.png?lm=4711",
+        "league": "2. Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Leverkusen",
+        "clubId": "15",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/15.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 165,
+      "playerId": "257474",
+      "name": "Vanja Milinković-Savić",
+      "position": "Goalkeeper",
+      "age": 29,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/257474-1730125139.jpg?lm=4711",
+      "nationality": "Serbia",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/215.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 6000000,
+      "feeText": "€6.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Torino",
+        "clubId": "416",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/416.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Napoli",
+        "clubId": "6195",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/6195.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 166,
+      "playerId": "420210",
+      "name": "Lutsharel Geertruida",
+      "position": "Right-Back",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/420210-1729520430.jpg?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 1500000,
+      "feeText": "Loan fee:€1.50m",
+      "isLoan": true,
+      "from": {
+        "name": "Leipzig",
+        "clubId": "23826",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/23826.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "PSV",
+        "clubId": "383",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/383.png?lm=4711",
+        "league": "Eredivisie",
+        "country": "Netherlands"
+      }
+    },
+    {
+      "rank": 167,
+      "playerId": "480267",
+      "name": "Ronald Araujo",
+      "position": "Centre-Back",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/480267-1736431980.jpg?lm=4711",
+      "nationality": "Uruguay",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/179.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Barcelona",
+        "clubId": "131",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/131.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Liverpool",
+        "clubId": "31",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/31.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 168,
+      "playerId": "683571",
+      "name": "Tolu Arokodare",
+      "position": "Centre-Forward",
+      "age": 25,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/683571-1714038632.png?lm=4711",
+      "nationality": "Nigeria",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/124.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Wolves",
+        "clubId": "543",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/543.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      },
+      "to": {
+        "name": "Ajax",
+        "clubId": "610",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/610.png?lm=4711",
+        "league": "Eredivisie",
+        "country": "Netherlands"
+      }
+    },
+    {
+      "rank": 169,
+      "playerId": "344596",
+      "name": "Malang Sarr",
+      "position": "Centre-Back",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/344596-1606395203.png?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 0,
+      "feeText": "free transfer",
+      "isLoan": false,
+      "from": {
+        "name": "Lens",
+        "clubId": "826",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/826.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "NEOM SC",
+        "clubId": "34911",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/34911.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      }
+    },
+    {
+      "rank": 170,
+      "playerId": "546543",
+      "name": "Darwin Núñez",
+      "position": "Centre-Forward",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/546543-1681827179.jpg?lm=4711",
+      "nationality": "Uruguay",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/179.png?lm=4711",
+      "marketValue": 20000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Al-Hilal",
+        "clubId": "1114",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1114.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      },
+      "to": {
+        "name": "Al-Diriyah",
+        "clubId": "52358",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/52358.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      }
+    },
+    {
+      "rank": 171,
+      "playerId": "596122",
+      "name": "Pep Chavarría",
+      "position": "Left-Back",
+      "age": 28,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/596122-1744713547.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 10000000,
+      "fee": 19000000,
+      "feeText": "€19.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Rayo Vallecano",
+        "clubId": "367",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/367.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Chelsea",
+        "clubId": "631",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/631.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 172,
+      "playerId": "357162",
+      "name": "Florentino",
+      "position": "Defensive Midfield",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/357162-1701295561.jpg?lm=4711",
+      "nationality": "Portugal",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/136.png?lm=4711",
+      "marketValue": 16000000,
+      "fee": 18700000,
+      "feeText": "€18.70m",
+      "isLoan": false,
+      "from": {
+        "name": "Burnley",
+        "clubId": "1132",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1132.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      },
+      "to": {
+        "name": "Ipswich",
+        "clubId": "677",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/677.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 173,
+      "playerId": "1240763",
+      "name": "Caleb Yirenkyi",
+      "position": "Central Midfield",
+      "age": 20,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/1240763-1780386444.jpg?lm=4711",
+      "nationality": "Ghana",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/54.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 27000000,
+      "feeText": "€27.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Nordsjaelland",
+        "clubId": "2778",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/2778.png?lm=4711",
+        "league": "Superliga",
+        "country": "Denmark"
+      },
+      "to": {
+        "name": "Coventry",
+        "clubId": "990",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/990.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 174,
+      "playerId": "986288",
+      "name": "Sidiki Chérif",
+      "position": "Centre-Forward",
+      "age": 19,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/986288-1770977210.jpg?lm=4711",
+      "nationality": "Guinea",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/59.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 18000000,
+      "feeText": "€18.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Angers SCO",
+        "clubId": "1420",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1420.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Fenerbahçe",
+        "clubId": "36",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/36.png?lm=4711",
+        "league": "Süper Lig",
+        "country": "Türkiye"
+      }
+    },
+    {
+      "rank": 175,
+      "playerId": "144028",
+      "name": "Leandro Trossard",
+      "position": "Left Winger",
+      "age": 31,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/144028-1784210518.png?lm=4711",
+      "nationality": "Belgium",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/19.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 18000000,
+      "feeText": "€18.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Arsenal",
+        "clubId": "11",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/11.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Besiktas",
+        "clubId": "114",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/114.png?lm=4711",
+        "league": "Süper Lig",
+        "country": "Türkiye"
+      }
+    },
+    {
+      "rank": 176,
+      "playerId": "474800",
+      "name": "Facundo Medina",
+      "position": "Centre-Back",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/474800-1653402999.jpg?lm=4711",
+      "nationality": "Argentina",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/9.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 18000000,
+      "feeText": "€18.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Lens",
+        "clubId": "826",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/826.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Marseille",
+        "clubId": "244",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/244.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 177,
+      "playerId": "867137",
+      "name": "Alessandro Circati",
+      "position": "Centre-Back",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/867137-1780322535.jpg?lm=4711",
+      "nationality": "Australia",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/12.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 18000000,
+      "feeText": "€18.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Parma",
+        "clubId": "130",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/130.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Benfica",
+        "clubId": "294",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/294.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      }
+    },
+    {
+      "rank": 178,
+      "playerId": "635645",
+      "name": "Aurèle Amenda",
+      "position": "Centre-Back",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/635645-1724772426.jpg?lm=4711",
+      "nationality": "Switzerland",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/148.png?lm=4711",
+      "marketValue": 10000000,
+      "fee": 18000000,
+      "feeText": "€18.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Frankfurt",
+        "clubId": "24",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/24.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Coventry",
+        "clubId": "990",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/990.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 179,
+      "playerId": "915418",
+      "name": "Jannik Schuster",
+      "position": "Centre-Back",
+      "age": 20,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/915418-1754993245.png?lm=4711",
+      "nationality": "Austria",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/127.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 18000000,
+      "feeText": "€18.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Salzburg",
+        "clubId": "409",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/409.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Austria"
+      },
+      "to": {
+        "name": "Brentford",
+        "clubId": "1148",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1148.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 180,
+      "playerId": "660860",
+      "name": "Diego Coppola",
+      "position": "Centre-Back",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/660860-1663671800.jpg?lm=4711",
+      "nationality": "Italy",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/75.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 17500000,
+      "feeText": "€17.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Brighton",
+        "clubId": "1237",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1237.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Paris FC",
+        "clubId": "10004",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/10004.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 181,
+      "playerId": "934878",
+      "name": "Jeff Ekhator",
+      "position": "Centre-Forward",
+      "age": 19,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/934878-1757663221.jpg?lm=4711",
+      "nationality": "Italy",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/75.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 16399999.999999998,
+      "feeText": "€16.40m",
+      "isLoan": false,
+      "from": {
+        "name": "Genoa",
+        "clubId": "252",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/252.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Juventus",
+        "clubId": "506",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/506.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 182,
+      "playerId": "701819",
+      "name": "Daniele Ghilardi",
+      "position": "Centre-Back",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/701819-1725530673.jpg?lm=4711",
+      "nationality": "Italy",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/75.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 8000000,
+      "feeText": "€8.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Hellas Verona",
+        "clubId": "276",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/276.png?lm=4711",
+        "league": "Serie B",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Roma",
+        "clubId": "12",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/12.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 183,
+      "playerId": "746712",
+      "name": "Pietro Comuzzo",
+      "position": "Centre-Back",
+      "age": 21,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/746712-1730183199.jpg?lm=4711",
+      "nationality": "Italy",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/75.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 1000000,
+      "feeText": "Loan fee:€1.00m",
+      "isLoan": true,
+      "from": {
+        "name": "Fiorentina",
+        "clubId": "430",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/430.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      },
+      "to": {
+        "name": "Torino",
+        "clubId": "416",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/416.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 184,
+      "playerId": "659542",
+      "name": "Elye Wahi",
+      "position": "Centre-Forward",
+      "age": 23,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/659542-1753984614.jpg?lm=4711",
+      "nationality": "Cote d'Ivoire",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/38.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Frankfurt",
+        "clubId": "24",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/24.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Nice",
+        "clubId": "417",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/417.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      }
+    },
+    {
+      "rank": 185,
+      "playerId": "286047",
+      "name": "Guglielmo Vicario",
+      "position": "Goalkeeper",
+      "age": 29,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/286047-1725874745.jpg?lm=4711",
+      "nationality": "Italy",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/75.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Tottenham",
+        "clubId": "148",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/148.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Juventus",
+        "clubId": "506",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/506.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 186,
+      "playerId": "331505",
+      "name": "Óscar Mingueza",
+      "position": "Right-Back",
+      "age": 27,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/331505-1698852962.jpg?lm=4711",
+      "nationality": "Spain",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/157.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 0,
+      "feeText": "free transfer",
+      "isLoan": false,
+      "from": {
+        "name": "Celta de Vigo",
+        "clubId": "940",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/940.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Crystal Palace",
+        "clubId": "873",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/873.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 187,
+      "playerId": "323704",
+      "name": "Malcom",
+      "position": "Right Winger",
+      "age": 29,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/323704-1697052788.png?lm=4711",
+      "nationality": "Brazil",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/26.png?lm=4711",
+      "marketValue": 18000000,
+      "fee": 0,
+      "feeText": "free transfer",
+      "isLoan": false,
+      "from": {
+        "name": "Al-Hilal",
+        "clubId": "1114",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1114.png?lm=4711",
+        "league": "Saudi Pro League",
+        "country": "Saudi Arabia"
+      },
+      "to": {
+        "name": "Al-Jazira",
+        "clubId": "2524",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/2524.png?lm=4711",
+        "league": "UAE Pro League",
+        "country": "United Arab Emirates"
+      }
+    },
+    {
+      "rank": 188,
+      "playerId": "407098",
+      "name": "Jakub Kamiński",
+      "position": "Left Winger",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/407098-1752743041.jpg?lm=4711",
+      "nationality": "Poland",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/135.png?lm=4711",
+      "marketValue": 17000000,
+      "fee": 17000000,
+      "feeText": "€17.00m",
+      "isLoan": false,
+      "from": {
+        "name": "1.FC Köln",
+        "clubId": "3",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Benfica",
+        "clubId": "294",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/294.png?lm=4711",
+        "league": "Liga Portugal",
+        "country": "Portugal"
+      }
+    },
+    {
+      "rank": 189,
+      "playerId": "237662",
+      "name": "Breel Embolo",
+      "position": "Centre-Forward",
+      "age": 29,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/237662-1779793638.jpg?lm=4711",
+      "nationality": "Switzerland",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/148.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 17000000,
+      "feeText": "€17.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Stade Rennais",
+        "clubId": "273",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/273.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Atlanta",
+        "clubId": "51663",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/51663.png?lm=4711",
+        "league": "MLS",
+        "country": "United States"
+      }
+    },
+    {
+      "rank": 190,
+      "playerId": "284730",
+      "name": "Manuel Akanji",
+      "position": "Centre-Back",
+      "age": 30,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/284730-1684165752.jpg?lm=4711",
+      "nationality": "Switzerland",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/148.png?lm=4711",
+      "marketValue": 17000000,
+      "fee": 15000000,
+      "feeText": "€15.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Man City",
+        "clubId": "281",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/281.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Inter",
+        "clubId": "46",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/46.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 191,
+      "playerId": "407098",
+      "name": "Jakub Kamiński",
+      "position": "Left Winger",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/407098-1752743041.jpg?lm=4711",
+      "nationality": "Poland",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/135.png?lm=4711",
+      "marketValue": 17000000,
+      "fee": 5500000,
+      "feeText": "€5.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Wolfsburg",
+        "clubId": "82",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/82.png?lm=4711",
+        "league": "2. Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "1.FC Köln",
+        "clubId": "3",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
+    },
+    {
+      "rank": 192,
+      "playerId": "627228",
+      "name": "Yan Couto",
+      "position": "Right-Back",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/627228-1723922216.jpg?lm=4711",
+      "nationality": "Brazil",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/26.png?lm=4711",
+      "marketValue": 17000000,
+      "fee": 3000000,
+      "feeText": "Loan fee:€3.00m",
+      "isLoan": true,
+      "from": {
+        "name": "Dortmund",
+        "clubId": "16",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/16.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      },
+      "to": {
+        "name": "Como",
+        "clubId": "1047",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1047.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 193,
+      "playerId": "888785",
+      "name": "Promise David",
+      "position": "Centre-Forward",
+      "age": 25,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/888785-1772107518.jpg?lm=4711",
+      "nationality": "Canada",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/80.png?lm=4711",
+      "marketValue": 17000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Union SG",
+        "clubId": "3948",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3948.png?lm=4711",
+        "league": "Jupiler Pro League",
+        "country": "Belgium"
+      },
+      "to": {
+        "name": "Brighton",
+        "clubId": "1237",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1237.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 194,
+      "playerId": "607034",
+      "name": "Akor Adams",
+      "position": "Centre-Forward",
+      "age": 26,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/607034-1767008026.jpg?lm=4711",
+      "nationality": "Nigeria",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/124.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 16000000,
+      "feeText": "€16.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Sevilla FC",
+        "clubId": "368",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/368.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Venezia",
+        "clubId": "607",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/607.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 195,
+      "playerId": "568559",
+      "name": "Radu Drăgușin",
+      "position": "Centre-Back",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/568559-1704716630.jpg?lm=4711",
+      "nationality": "Romania",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/140.png?lm=4711",
+      "marketValue": 16000000,
+      "fee": 1500000,
+      "feeText": "Loan fee:€1.50m",
+      "isLoan": true,
+      "from": {
+        "name": "Tottenham",
+        "clubId": "148",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/148.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      },
+      "to": {
+        "name": "Fiorentina",
+        "clubId": "430",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/430.png?lm=4711",
+        "league": "Serie A",
+        "country": "Italy"
+      }
+    },
+    {
+      "rank": 196,
+      "playerId": "514285",
+      "name": "Quilindschy Hartman",
+      "position": "Left-Back",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/514285-1723820103.jpg?lm=4711",
+      "nationality": "Netherlands",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/122.png?lm=4711",
+      "marketValue": 16000000,
+      "fee": 0,
+      "feeText": "loan transfer",
+      "isLoan": true,
+      "from": {
+        "name": "Burnley",
+        "clubId": "1132",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/1132.png?lm=4711",
+        "league": "Championship",
+        "country": "England"
+      },
+      "to": {
+        "name": "Espanyol",
+        "clubId": "714",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/714.png?lm=4711",
+        "league": "LaLiga",
+        "country": "Spain"
+      }
+    },
+    {
+      "rank": 197,
+      "playerId": "256267",
+      "name": "Vedat Muriqi",
+      "position": "Centre-Forward",
+      "age": 32,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/256267-1779287008.jpg?lm=4711",
+      "nationality": "Kosovo",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/244.png?lm=4711",
+      "marketValue": 4500000,
+      "fee": 15500000,
+      "feeText": "€15.50m",
+      "isLoan": false,
+      "from": {
+        "name": "RCD Mallorca",
+        "clubId": "237",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/237.png?lm=4711",
+        "league": "LaLiga2",
+        "country": "Spain"
+      },
+      "to": {
+        "name": "Fenerbahçe",
+        "clubId": "36",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/36.png?lm=4711",
+        "league": "Süper Lig",
+        "country": "Türkiye"
+      }
+    },
+    {
+      "rank": 198,
+      "playerId": "919262",
+      "name": "André Luiz",
+      "position": "Right Winger",
+      "age": 24,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/919262-1784901412.png?lm=4711",
+      "nationality": "Brazil",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/26.png?lm=4711",
+      "marketValue": 6000000,
+      "fee": 15500000,
+      "feeText": "€15.50m",
+      "isLoan": false,
+      "from": {
+        "name": "Olympiacos",
+        "clubId": "683",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/683.png?lm=4711",
+        "league": "Super League 1",
+        "country": "Greece"
+      },
+      "to": {
+        "name": "Kansas City",
+        "clubId": "4284",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/4284.png?lm=4711",
+        "league": "MLS",
+        "country": "United States"
+      }
+    },
+    {
+      "rank": 199,
+      "playerId": "670847",
+      "name": "Mohamed-Ali Cho",
+      "position": "Right Winger",
+      "age": 22,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/670847-1756824395.jpg?lm=4711",
+      "nationality": "France",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/50.png?lm=4711",
+      "marketValue": 15000000,
+      "fee": 15150000,
+      "feeText": "€15.15m",
+      "isLoan": false,
+      "from": {
+        "name": "Nice",
+        "clubId": "417",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/417.png?lm=4711",
+        "league": "Ligue 1",
+        "country": "France"
+      },
+      "to": {
+        "name": "Hull City",
+        "clubId": "3008",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/3008.png?lm=4711",
+        "league": "Premier League",
+        "country": "England"
+      }
+    },
+    {
+      "rank": 200,
+      "playerId": "710886",
+      "name": "Leo Sauer",
+      "position": "Left Winger",
+      "age": 20,
+      "imageUrl": "https://img.a.transfermarkt.technology/portrait/medium/710886-1787316926.jpg?lm=4711",
+      "nationality": "Slovakia",
+      "nationalityFlagUrl": "https://img.a.transfermarkt.technology/flagge/verysmall/154.png?lm=4711",
+      "marketValue": 7000000,
+      "fee": 15000000,
+      "feeText": "€15.00m",
+      "isLoan": false,
+      "from": {
+        "name": "Feyenoord",
+        "clubId": "234",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/234.png?lm=4711",
+        "league": "Eredivisie",
+        "country": "Netherlands"
+      },
+      "to": {
+        "name": "Stuttgart",
+        "clubId": "79",
+        "logoUrl": "https://img.a.transfermarkt.technology/wappen/tiny/79.png?lm=4711",
+        "league": "Bundesliga",
+        "country": "Germany"
+      }
     }
   ]
 }
