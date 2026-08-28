@@ -12,6 +12,7 @@
     "fmt:check": "oxfmt --check .",
     "refresh:minutes-value": "bun run scripts/refresh-minutes-value.ts",
     "refresh:biggest-movers": "bun run scripts/refresh-biggest-movers.ts",
+    "refresh:transfer-balance": "bun run scripts/refresh-transfer-balance.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky"

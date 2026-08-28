@@ -20,6 +20,7 @@ export const REFRESH_OUTPUTS = {
     "data/biggest-losers.json",
     "data/biggest-movers-updated-at.txt",
   ],
+  "transfer-balance": ["data/transfer-balance.json", "data/transfer-balance-updated-at.txt"],
 } as const;
 
 // Invoked directly by the workflow: `bun run scripts/outputs.ts <flow>`.
