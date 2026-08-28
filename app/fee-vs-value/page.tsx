@@ -1,14 +1,11 @@
-import Link from "next/link";
 import { leaders, rank } from "@/lib/fee-vs-value";
 import { getFeeVsValueData } from "@/lib/top-transfers";
-import { formatMarketValue, getTeamDetailHref } from "@/lib/format";
+import { formatMarketValue } from "@/lib/format";
 import { createPageMetadata } from "@/lib/metadata";
-import { DataLastUpdated } from "@/app/components/DataLastUpdated";
 import { SectionPanel } from "@/components/SectionPanel";
-import { ClubLogo } from "@/components/ClubLogo";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { ClubTables } from "./ClubTables";
 import { HeadlineCard } from "./HeadlineCard";
 import { Leaderboard } from "./Leaderboard";
 import { formatPremium, formatRatio, TransferRow } from "./TransferRow";
@@ -104,13 +101,6 @@ export default async function FeeVsValuePage() {
   const ranked = rank(data.paid, data.free);
   const { totals } = data;
 
-  const overpayers = data.clubs.filter((c) => c.premium > 0).slice(0, 5);
-  const bargainHunters = data.clubs
-    .filter((c) => c.premium < 0)
-    .slice()
-    .reverse()
-    .slice(0, 5);
-
   return (
     <div className="space-y-8 sm:space-y-10">
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -178,20 +168,7 @@ export default async function FeeVsValuePage() {
 
       <Leaderboard ranked={ranked} />
 
-      <div>
-        <p className="text-sm text-text-muted">
-          Loans and free transfers count here too. What matters is who a club ended up with and what
-          they paid — and a player who arrives for free is the best deal there is.
-        </p>
-        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <SectionPanel title="Clubs that paid over the odds">
-            <ClubTable rows={overpayers} tone="over" />
-          </SectionPanel>
-          <SectionPanel title="Clubs that shopped best">
-            <ClubTable rows={bargainHunters} tone="under" />
-          </SectionPanel>
-        </div>
-      </div>
+      <ClubTables clubs={data.clubs} />
 
       {data.free.length > 0 && (
         <SectionPanel
@@ -257,65 +234,6 @@ export default async function FeeVsValuePage() {
           is not a signing at all, so it stays out of both.
         </p>
       </section>
-
-      <DataLastUpdated file="top-transfers-updated-at.txt" />
     </div>
-  );
-}
-
-function ClubTable({
-  rows,
-  tone,
-}: {
-  rows: Awaited<ReturnType<typeof getFeeVsValueData>>["clubs"];
-  tone: "over" | "under";
-}) {
-  if (rows.length === 0) return <p className="text-sm text-text-muted">No clubs qualify.</p>;
-  return (
-    <ul className="space-y-2">
-      {rows.map((c) => (
-        <li
-          key={c.club.clubId || c.club.name}
-          className="flex items-center gap-3 rounded-lg border border-border-subtle bg-card p-2.5"
-        >
-          {c.club.logoUrl && <ClubLogo src={c.club.logoUrl} />}
-          <div className="min-w-0 flex-1">
-            {c.club.clubId ? (
-              <Link
-                href={getTeamDetailHref(c.club.clubId)}
-                className="truncate text-sm font-bold text-text-primary hover:underline"
-              >
-                {c.club.name}
-              </Link>
-            ) : (
-              <span className="truncate text-sm font-bold text-text-primary">{c.club.name}</span>
-            )}
-            <p className="mt-0.5 font-value text-xs text-text-secondary">
-              {formatMarketValue(c.fees)} on {c.signings} {c.signings === 1 ? "player" : "players"}
-              {c.loans > 0 && (
-                <span className="text-text-muted">
-                  {" "}
-                  · {c.loans} {c.loans === 1 ? "loan" : "loans"}
-                </span>
-              )}
-              {c.frees > 0 && <span className="text-text-muted"> · {c.frees} free</span>}
-            </p>
-          </div>
-          <div className="shrink-0 text-right">
-            <p
-              className={cn(
-                "font-value text-sm",
-                tone === "over" ? "text-accent-cold" : "text-accent-hot",
-              )}
-            >
-              {formatPremium(c.premium)}
-            </p>
-            <Badge variant="outline" className="mt-0.5 font-value">
-              {formatRatio(c.ratio)}
-            </Badge>
-          </div>
-        </li>
-      ))}
-    </ul>
   );
 }

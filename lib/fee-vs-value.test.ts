@@ -87,11 +87,24 @@ describe("analyzeTransfers", () => {
   });
 
   it("counts loans and frees towards their club, unlike the player rankings", () => {
-    expect(data.clubs.map((c) => [c.club.name, c.signings, c.loans, c.frees, c.premium])).toEqual([
+    expect(
+      data.clubs.withLoans.map((c) => [c.club.name, c.signings, c.loans, c.frees, c.premium]),
+    ).toEqual([
       ["Buyer", 1, 0, 0, 20_000_000],
       ["Thrifty", 1, 0, 0, -20_000_000],
       // Freebie and Loanee arrived for nothing and still show up as a club's business.
       ["Gifted", 2, 1, 1, -95_000_000],
+    ]);
+  });
+
+  it("offers a loan-free cut of the same table", () => {
+    expect(
+      data.clubs.permanentOnly.map((c) => [c.club.name, c.signings, c.loans, c.premium]),
+    ).toEqual([
+      ["Buyer", 1, 0, 20_000_000],
+      ["Thrifty", 1, 0, -20_000_000],
+      // Only Freebie survives, so Gifted drops from -95m to -45m.
+      ["Gifted", 1, 0, -45_000_000],
     ]);
   });
 

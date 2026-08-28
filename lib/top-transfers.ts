@@ -1,13 +1,15 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { analyzeTransfers, type FeeVsValueData } from "./fee-vs-value";
-import type { TopTransfer } from "@/app/types";
+import { fetchTopTransfers } from "./fetch-top-transfers";
 
-// Plain per-request read, deduped with React cache. The JSON only changes via a
-// data-refresh deploy, so an unstable_cache could only ever serve it stale.
-export const getFeeVsValueData = cache(async (): Promise<FeeVsValueData> => {
-  const raw = await readFile(join(process.cwd(), "data", "top-transfers.json"), "utf-8");
-  const { season, transfers } = JSON.parse(raw) as { season: number; transfers: TopTransfer[] };
-  return analyzeTransfers(season, transfers);
-});
+/** Transfers move once a day at most outside a deadline, and the whole fetch is
+ *  8 pages, so a day's cache costs one scrape and keeps the page instant. Tagged
+ *  so the header's refresh button can bust it (see app/api/revalidate). */
+export const getFeeVsValueData = unstable_cache(
+  async (): Promise<FeeVsValueData> => {
+    const { season, transfers } = await fetchTopTransfers();
+    return analyzeTransfers(season, transfers);
+  },
+  ["fee-vs-value"],
+  { revalidate: 86400, tags: ["top-transfers"] },
+);

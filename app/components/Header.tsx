@@ -26,8 +26,7 @@ const PAGE_CACHE_MAP: Record<string, { tags?: string[]; workflow?: boolean }> = 
   "/players": { workflow: true },
   "/value-analysis": { workflow: true },
   "/biggest-movers": { workflow: true },
-  // File-backed like biggest-movers, but its own refresh flow — no tags to bust.
-  "/fee-vs-value": { workflow: true },
+  "/fee-vs-value": { tags: ["top-transfers"] },
 };
 
 async function refreshPage(pathname: string) {

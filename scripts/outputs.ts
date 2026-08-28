@@ -15,7 +15,6 @@ export const REFRESH_OUTPUTS = {
     "data/clubs.json",
     "data/club-types.json",
   ],
-  "top-transfers": ["data/top-transfers.json", "data/top-transfers-updated-at.txt"],
   "biggest-movers": [
     "data/biggest-winners.json",
     "data/biggest-losers.json",

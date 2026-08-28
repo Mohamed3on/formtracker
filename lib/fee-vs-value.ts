@@ -32,7 +32,11 @@ export interface FeeVsValueData {
   free: PricedTransfer[];
   loans: TopTransfer[];
   totals: { fees: number; marketValue: number; premium: number; ratio: number };
-  clubs: ClubPremium[];
+  /** Both cuts of the club tables, so the page can offer the choice without a
+   *  second pass on the client: a loan flatters a club's numbers (a €60m player
+   *  for a €3m fee, or none at all) and whether that counts as good business is
+   *  a matter of taste, not of fact. */
+  clubs: { withLoans: ClubPremium[]; permanentOnly: ClubPremium[] };
 }
 
 export interface ClubPremium {
@@ -120,7 +124,10 @@ export function analyzeTransfers(season: number, transfers: TopTransfer[]): FeeV
       premium: fees - marketValue,
       ratio: marketValue > 0 ? fees / marketValue : 0,
     },
-    clubs: byClub([...paid, ...free, ...loans]),
+    clubs: {
+      withLoans: byClub([...paid, ...free, ...loans]),
+      permanentOnly: byClub([...paid, ...free]),
+    },
   };
 }
 
