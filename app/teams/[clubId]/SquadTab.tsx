@@ -8,6 +8,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerDetailHref } from "@/lib/format";
 import type { MinutesValuePlayer } from "@/app/types";
 import { npga } from "@/lib/stats-toggles";
+import { getShortPosition } from "@/lib/positions";
 
 type SortKey = "value" | "mins" | "games" | "ga" | "pen";
 
@@ -62,7 +63,8 @@ function SquadPlayerRow({
           )}
           <NationalityFlag url={player.nationalityFlagUrl} name={player.nationality} />
           <span className="truncate">
-            {player.position} · {player.age}y · {player.marketValueDisplay}
+            <span title={player.position}>{getShortPosition(player.position)}</span> · {player.age}y
+            · {player.marketValueDisplay}
           </span>
         </p>
       </div>
