@@ -170,30 +170,6 @@ export default async function FeeVsValuePage() {
 
       <ClubTables clubs={data.clubs} />
 
-      {data.free.length > 0 && (
-        <SectionPanel
-          title="Free transfers"
-          aside={
-            <span className="text-xs text-text-muted">
-              in the cash lists above; no fee means there is no multiplier
-            </span>
-          }
-        >
-          <ol className="space-y-2">
-            {data.free.map((t) => (
-              <TransferRow
-                key={t.playerId}
-                transfer={t}
-                tone="under"
-                showPrice
-                metric={formatMarketValue(t.marketValue)}
-                metricLabel="walked for nothing"
-              />
-            ))}
-          </ol>
-        </SectionPanel>
-      )}
-
       {data.loans.length > 0 && (
         <SectionPanel
           title="Loans"
@@ -231,7 +207,7 @@ export default async function FeeVsValuePage() {
           A free transfer is still a signing, so it counts in the cash lists — picking up a €45M
           defender for nothing is the best bargain there is. It is left out of the times value
           lists, where every free comes to 0.00× and they would fill the top in a dead heat. A loan
-          is not a signing at all, so it stays out of both.
+          is not a signing at all, so it stays out of both and gets its own section below.
         </p>
       </section>
     </div>
