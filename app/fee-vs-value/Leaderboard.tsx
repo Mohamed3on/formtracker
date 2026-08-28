@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VirtualList } from "@/components/VirtualList";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { withRanks, type rank as rankTransfers } from "@/lib/fee-vs-value";
 import { formatMarketValue } from "@/lib/format";
@@ -96,23 +97,30 @@ const VIEWS: Record<
   },
 };
 
-const LIMIT = 15;
-
 const figure = (basis: Basis, t: Ranked["byFee"][number]) => {
   if (basis === "premium") return formatPremium(t.premium);
   if (basis === "ratio") return formatRatio(t.ratio);
   return formatMarketValue(basis === "fee" ? t.fee : t.marketValue);
 };
 
+/** Roughly a row at desktop width; the virtualizer measures each one for real
+ *  once mounted, so a wrapped three-line row on mobile corrects itself. */
+const ROW_ESTIMATE = 76;
+const ROW_GAP = 8;
+
 export function Leaderboard({ ranked }: { ranked: Ranked }) {
-  const [view, setView] = useState<View>("over");
-  // One index rather than one basis: switching tabs would otherwise leave a
-  // measure selected that the new tab has no list for.
-  const [option, setOption] = useState(0);
+  // Opens on the most valuable signings — the list that reads as the headline
+  // "who actually moved this window" before you go looking for mispricing.
+  const [view, setView] = useState<View>("big");
+  // An index per view, not one shared: switching tabs would otherwise carry a
+  // measure across to a tab that has no list for it, and each tab remembers
+  // what you last looked at.
+  const [option, setOption] = useState<Record<View, number>>({ over: 0, under: 0, big: 1 });
 
   const { tone, options } = VIEWS[view];
-  const current = options[option] ?? options[0];
-  // Ranked before slicing, so a deal tied with the 15th still shares its number.
+  const current = options[option[view]] ?? options[0];
+  // Competition ranking, so tied deals share a number rather than one of them
+  // arbitrarily sitting above the other.
   const list = withRanks(current.list(ranked), current.measure);
   const secondary = options.find((o) => o.basis !== current.basis);
 
@@ -131,8 +139,8 @@ export function Leaderboard({ ranked }: { ranked: Ranked }) {
 
         <ToggleGroup
           type="single"
-          value={String(option)}
-          onValueChange={(v) => v && setOption(Number(v))}
+          value={String(option[view])}
+          onValueChange={(v) => v && setOption((o) => ({ ...o, [view]: Number(v) }))}
           variant="outline"
           size="sm"
           className="rounded-lg"
@@ -157,19 +165,26 @@ export function Leaderboard({ ranked }: { ranked: Ranked }) {
         <p className="mt-1 text-sm text-text-muted">{current.blurb}</p>
       </div>
 
-      <ol className="mt-3 space-y-2">
-        {list.slice(0, LIMIT).map(({ transfer: t, rank: r }) => (
-          <TransferRow
-            key={t.playerId}
-            transfer={t}
-            rank={r}
-            tone={tone}
-            metric={figure(current.basis, t)}
-            secondary={secondary && figure(secondary.basis, t)}
-            showPrice
-          />
-        ))}
-      </ol>
+      {/* Every row, not a top-N: the interesting deals are as often 40th as
+          4th. Window-virtualized so 200 rows cost what a screenful costs. */}
+      <div role="list" className="mt-3">
+        <VirtualList
+          items={list}
+          estimateSize={ROW_ESTIMATE}
+          gap={ROW_GAP}
+          keyExtractor={({ transfer: t }) => t.playerId}
+          renderItem={({ transfer: t, rank: r }) => (
+            <TransferRow
+              transfer={t}
+              rank={r}
+              tone={tone}
+              metric={figure(current.basis, t)}
+              secondary={secondary && figure(secondary.basis, t)}
+              showPrice
+            />
+          )}
+        />
+      </div>
     </section>
   );
 }

@@ -70,7 +70,7 @@ interface TransferRowProps {
   /** Headline figure on the right — the premium, the ratio, or the fee itself. */
   metric: string;
   /** Caption under the figure. Omit inside a ranked list, where the section
-   *  heading already names the measure and 15 repeats of it are just noise. */
+   *  heading already names the measure and repeating it every row is noise. */
   metricLabel?: string;
   /** Show the player's value → fee alongside the clubs. */
   showPrice?: boolean;
@@ -101,7 +101,10 @@ export function TransferRow({
   tone,
 }: TransferRowProps) {
   return (
-    <li className="flex items-center gap-2.5 rounded-lg border border-border-subtle bg-card p-2.5 transition-colors hover:bg-card-hover sm:gap-3 sm:p-3">
+    <div
+      role="listitem"
+      className="flex items-center gap-2.5 rounded-lg border border-border-subtle bg-card p-2.5 transition-colors hover:bg-card-hover sm:gap-3 sm:p-3"
+    >
       {rank !== undefined && <RankBadge rank={rank} highlightClass={TONE_RANK[tone]} />}
       <PlayerAvatar imageUrl={transfer.imageUrl} name={transfer.name} size="sm" />
 
@@ -131,7 +134,7 @@ export function TransferRow({
           </p>
         )}
       </div>
-    </li>
+    </div>
   );
 }
 

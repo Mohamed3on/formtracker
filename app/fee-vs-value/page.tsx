@@ -2,13 +2,12 @@ import { leaders, rank } from "@/lib/fee-vs-value";
 import { getFeeVsValueData } from "@/lib/top-transfers";
 import { formatMarketValue } from "@/lib/format";
 import { createPageMetadata } from "@/lib/metadata";
-import { SectionPanel } from "@/components/SectionPanel";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ClubTables } from "./ClubTables";
 import { HeadlineCard } from "./HeadlineCard";
 import { Leaderboard } from "./Leaderboard";
-import { formatPremium, formatRatio, TransferRow } from "./TransferRow";
+import { formatPremium, formatRatio } from "./TransferRow";
 
 export const metadata = createPageMetadata({
   title: "Fee vs Value",
@@ -170,30 +169,6 @@ export default async function FeeVsValuePage() {
 
       <ClubTables clubs={data.clubs} />
 
-      {data.loans.length > 0 && (
-        <SectionPanel
-          title="Loans"
-          aside={
-            <span className="text-xs text-text-muted">
-              a loan is not a signing — kept out of the lists, counted for their club
-            </span>
-          }
-        >
-          <ol className="space-y-2">
-            {data.loans.map((t) => (
-              <TransferRow
-                key={t.playerId}
-                transfer={t}
-                tone="neutral"
-                showPrice
-                metric={formatMarketValue(t.marketValue)}
-                metricLabel="market value"
-              />
-            ))}
-          </ol>
-        </SectionPanel>
-      )}
-
       <section className="rounded-lg border border-border-subtle bg-card p-4">
         <h2 className="text-sm font-medium text-text-secondary">How to read this</h2>
         <p className="mt-2 text-sm text-text-muted">
@@ -207,7 +182,8 @@ export default async function FeeVsValuePage() {
           A free transfer is still a signing, so it counts in the cash lists — picking up a €45M
           defender for nothing is the best bargain there is. It is left out of the times value
           lists, where every free comes to 0.00× and they would fill the top in a dead heat. A loan
-          is not a signing at all, so it stays out of both and gets its own section below.
+          is not a signing at all, so it stays out of both — it only shows up in a club's totals,
+          and only if you leave that switch on.
         </p>
       </section>
     </div>
