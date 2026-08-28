@@ -65,6 +65,29 @@ function buildUrl(from: number, to: number, ids?: string): string {
   return `${BASE_URL}/transfers/einnahmenausgaben/statistik/plus/0?${params}`;
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+};
+
+/** TM titles carry raw HTML entities — "Brighton &amp; Hove Albion". The shared
+ *  cheerio-based parsers in lib/transfermarkt decode these for free; this one
+ *  reads attributes by regex, so it has to do it itself. */
+function decodeEntities(text: string): string {
+  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, body: string) => {
+    if (body.startsWith("#")) {
+      const hex = body[1] === "x" || body[1] === "X";
+      const code = parseInt(hex ? body.slice(2) : body.slice(1), hex ? 16 : 10);
+      return Number.isFinite(code) && code > 0 ? String.fromCodePoint(code) : match;
+    }
+    return NAMED_ENTITIES[body.toLowerCase()] ?? match;
+  });
+}
+
 /** "€737.10m" | "€3.20bn" | "€-1,166.91m" | "-" → millions of euros. */
 function parseMoney(raw: string): number {
   const s = raw.replace(/[€\s,]/g, "");
@@ -97,7 +120,7 @@ function parseClubs(html: string, where: string): TransferBalanceClub[] {
       return {
         id: link[2],
         slug: link[1],
-        name,
+        name: decodeEntities(name),
         expenditure: parseMoney(expenditure),
         arrivals: Number(arrivals) || 0,
         income: parseMoney(income),

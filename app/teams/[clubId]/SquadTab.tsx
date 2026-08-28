@@ -156,7 +156,9 @@ export function SquadTab({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+      {/* Bleed must match .page-container's 12px mobile padding (px-3) — -mx-5 pushed
+          this 8px past each viewport edge on every squad and league page. */}
+      <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
         <ToggleGroup
           type="single"
           value={sortBy}
