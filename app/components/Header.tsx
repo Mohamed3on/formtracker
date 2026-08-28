@@ -26,6 +26,7 @@ const PAGE_CACHE_MAP: Record<string, { tags?: string[]; workflow?: boolean }> = 
   "/players": { workflow: true },
   "/value-analysis": { workflow: true },
   "/biggest-movers": { workflow: true },
+  "/transfer-balance": { workflow: true },
 };
 
 async function refreshPage(pathname: string) {
@@ -99,6 +100,7 @@ const navItems = [
   { href: "/value-analysis", label: "Over/Under" },
   { href: "/injured", label: "Injury Impact" },
   { href: "/biggest-movers", label: "Biggest Movers" },
+  { href: "/transfer-balance", label: "Transfer Balance" },
   {
     href: "/wc-live",
     label: "World Cup",
