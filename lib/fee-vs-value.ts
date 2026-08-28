@@ -31,7 +31,6 @@ export interface FeeVsValueData {
   /** Permanent signings that cost nothing: ranked on cash only. */
   free: PricedTransfer[];
   loans: TopTransfer[];
-  totals: { fees: number; marketValue: number; premium: number; ratio: number };
   /** Both cuts of the club tables, so the page can offer the choice without a
    *  second pass on the client: a loan flatters a club's numbers (a €60m player
    *  for a €3m fee, or none at all) and whether that counts as good business is
@@ -53,6 +52,10 @@ export interface ClubPremium {
   marketValue: number;
   premium: number;
   ratio: number;
+  /** The arrivals themselves, dearest first, so a club row can expand into the
+   *  business behind its total. Same objects the ranked lists hold, so this
+   *  costs a back-reference rather than a second copy on the wire. */
+  arrivals: TopTransfer[];
 }
 
 function price(t: TopTransfer): PricedTransfer {
@@ -83,7 +86,9 @@ function byClub(arrivals: TopTransfer[]): ClubPremium[] {
       marketValue: 0,
       premium: 0,
       ratio: 0,
+      arrivals: [],
     };
+    entry.arrivals.push(t);
     entry.signings += 1;
     if (t.isLoan) entry.loans += 1;
     else if (t.fee === 0) entry.frees += 1;
@@ -94,6 +99,7 @@ function byClub(arrivals: TopTransfer[]): ClubPremium[] {
   }
   for (const entry of map.values()) {
     entry.ratio = entry.marketValue > 0 ? entry.fees / entry.marketValue : 0;
+    entry.arrivals.sort((a, b) => b.fee - a.fee || b.marketValue - a.marketValue);
   }
   return [...map.values()].sort((a, b) => b.premium - a.premium);
 }
@@ -106,24 +112,11 @@ export function analyzeTransfers(season: number, transfers: TopTransfer[]): FeeV
   const free = valued.filter((t) => !t.isLoan && t.fee === 0).map(price);
   const paid = valued.filter((t) => !t.isLoan && t.fee > 0).map(price);
 
-  // Totals cover every permanent move, frees included: a club that paid nothing
-  // still added that value to its squad, and leaving it out would overstate what
-  // the market paid per euro of player.
-  const permanent = [...paid, ...free];
-  const fees = permanent.reduce((s, t) => s + t.fee, 0);
-  const marketValue = permanent.reduce((s, t) => s + t.marketValue, 0);
-
   return {
     season,
     paid,
     free,
     loans,
-    totals: {
-      fees,
-      marketValue,
-      premium: fees - marketValue,
-      ratio: marketValue > 0 ? fees / marketValue : 0,
-    },
     clubs: {
       withLoans: byClub([...paid, ...free, ...loans]),
       permanentOnly: byClub([...paid, ...free]),
@@ -154,21 +147,13 @@ export function rank(paid: PricedTransfer[], free: PricedTransfer[] = []) {
   };
 }
 
-/** Both €20m-under-value deals of a window are the joint biggest bargain, so
- *  every leader is a list. Rounded to the cent before comparing — these are
- *  euro figures reconstructed from "€35.00m" strings, and float division leaves
- *  two genuinely equal ratios differing in the fifteenth decimal. */
-export function leaders(
-  sorted: PricedTransfer[],
-  measure: (t: PricedTransfer) => number,
-): PricedTransfer[] {
-  if (!sorted.length) return [];
-  const best = Math.round(measure(sorted[0]) * 100);
-  return sorted.filter((t) => Math.round(measure(t) * 100) === best);
-}
-
 /** Competition ranking (1, 2, 2, 4) so tied deals share a number instead of one
- *  arbitrarily sitting above the other. */
+ *  arbitrarily sitting above the other — both €20m-under-value deals of a window
+ *  are the joint biggest bargain.
+ *
+ *  Rounded to the cent before comparing: these are euro figures reconstructed
+ *  from "€35.00m" strings, and float division leaves two genuinely equal ratios
+ *  differing in the fifteenth decimal. */
 export function withRanks(
   sorted: PricedTransfer[],
   measure: (t: PricedTransfer) => number,

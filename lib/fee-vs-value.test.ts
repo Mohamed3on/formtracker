@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeTransfers, leaders, rank, withRanks } from "./fee-vs-value";
+import { analyzeTransfers, rank, withRanks } from "./fee-vs-value";
 import type { TopTransfer } from "@/app/types";
 
 const club = (name: string) => ({
@@ -73,16 +73,9 @@ describe("analyzeTransfers", () => {
     expect(bargain.ratio).toBe(0.5);
   });
 
-  it("totals every permanent move, so a free counts as value added for nothing", () => {
-    expect(data.totals.fees).toBe(50_000_000);
-    expect(data.totals.marketValue).toBe(95_000_000);
-    expect(data.totals.premium).toBe(-45_000_000);
-  });
-
-  it("leaves loans out of the totals — a loan is not a signing", () => {
-    // Overpay 10m + Bargain 40m + Freebie 45m = 95m. The 50m loanee is absent;
-    // had he counted, this would read 145m.
-    expect(data.totals.marketValue).toBe(95_000_000);
+  it("keeps the loan out of every priced pool — a loan is not a signing", () => {
+    const priced = [...data.paid, ...data.free].map((t) => t.name);
+    expect(priced).not.toContain("Loanee");
     expect(data.loans[0].marketValue).toBe(50_000_000);
   });
 
@@ -125,7 +118,6 @@ describe("market-value guard", () => {
     ]);
     expect(data.paid).toEqual([]);
     expect(data.free).toEqual([]);
-    expect(data.totals.ratio).toBe(0);
   });
 });
 
@@ -138,15 +130,14 @@ describe("ties", () => {
   ]);
   const r = rank(tied.paid);
 
-  it("names every deal tied at the extreme, not just the first to sort", () => {
-    expect(leaders(r.underpaidAbsolute, (t) => t.premium).map((t) => t.name)).toEqual([
-      "Khannouss",
-      "Malen",
+  it("separates the same pair when the measure does distinguish them", () => {
+    expect(
+      withRanks(r.underpaidRatio, (t) => t.ratio).map((e) => [e.transfer.name, e.rank]),
+    ).toEqual([
+      ["Khannouss", 1],
+      ["Malen", 2],
+      ["Solo", 3],
     ]);
-  });
-
-  it("breaks the same tie when the measure does distinguish them", () => {
-    expect(leaders(r.underpaidRatio, (t) => t.ratio).map((t) => t.name)).toEqual(["Khannouss"]);
   });
 
   it("gives tied deals the same rank and skips the next", () => {
@@ -166,11 +157,7 @@ describe("ties", () => {
       tx({ name: "B", marketValue: 70_000_000, fee: 30_000_000 }),
     ]);
     const ranked = rank(ratios.paid);
-    // Sorted: this test is about both surviving the comparison, not their order.
-    expect(
-      leaders(ranked.underpaidRatio, (t) => t.ratio)
-        .map((t) => t.name)
-        .sort(),
-    ).toEqual(["A", "B"]);
+    // Both share rank 1: had the raw floats been compared they would differ.
+    expect(withRanks(ranked.underpaidRatio, (t) => t.ratio).map((e) => e.rank)).toEqual([1, 1]);
   });
 });

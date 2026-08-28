@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VirtualList } from "@/components/VirtualList";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { withRanks, type rank as rankTransfers } from "@/lib/fee-vs-value";
+import { withRanks, type FeeVsValueData, type rank as rankTransfers } from "@/lib/fee-vs-value";
+import { ClubTables } from "./ClubTables";
 import { formatMarketValue } from "@/lib/format";
 import { formatPremium, formatRatio, TransferRow } from "./TransferRow";
 
 type Ranked = ReturnType<typeof rankTransfers>;
-type View = "over" | "under" | "big";
-type Basis = "premium" | "ratio" | "fee" | "value";
+type View = "over" | "under" | "big" | "clubs";
+type Basis = "premium" | "ratio" | "fee" | "value" | "with-loans" | "signings-only";
 
 /** Each view keeps its own pair of measures, so the toggle beside the tabs
  *  always offers the two that make sense for what's on screen. */
@@ -24,11 +25,34 @@ const VIEWS: Record<
       toggle: string;
       title: string;
       blurb: string;
-      list: (r: Ranked) => Ranked[keyof Ranked];
-      measure: (t: Ranked["byFee"][number]) => number;
+      /** Absent on the clubs view, which renders tables rather than a row list. */
+      list?: (r: Ranked) => Ranked[keyof Ranked];
+      measure?: (t: Ranked["byFee"][number]) => number;
     }>;
   }
 > = {
+  big: {
+    tab: "Biggest",
+    tone: "neutral",
+    options: [
+      {
+        basis: "fee",
+        toggle: "Fee",
+        title: "Most expensive signings",
+        blurb: "The biggest fees of the season, whatever the player was worth.",
+        list: (r) => r.byFee,
+        measure: (t) => t.fee,
+      },
+      {
+        basis: "value",
+        toggle: "Value",
+        title: "Most valuable signings",
+        blurb: "The best players to move, by market value, whatever their club paid.",
+        list: (r) => r.byValue,
+        measure: (t) => t.marketValue,
+      },
+    ],
+  },
   over: {
     tab: "Overpaid",
     tone: "over",
@@ -73,25 +97,22 @@ const VIEWS: Record<
       },
     ],
   },
-  big: {
-    tab: "Biggest",
+  clubs: {
+    tab: "Clubs",
     tone: "neutral",
     options: [
       {
-        basis: "fee",
-        toggle: "Fee",
-        title: "Most expensive signings",
-        blurb: "The biggest fees of the season, whatever the player was worth.",
-        list: (r) => r.byFee,
-        measure: (t) => t.fee,
+        basis: "with-loans",
+        toggle: "With loans",
+        title: "Who shopped well, loans included",
+        blurb:
+          "What a club ended up with and what it paid. A loan brings a player in for little or nothing, which flatters the numbers.",
       },
       {
-        basis: "value",
-        toggle: "Value",
-        title: "Most valuable signings",
-        blurb: "The best players to move, by market value, whatever their club paid.",
-        list: (r) => r.byValue,
-        measure: (t) => t.marketValue,
+        basis: "signings-only",
+        toggle: "Signings only",
+        title: "Who shopped well, signings only",
+        blurb: "Permanent arrivals only — no loans propping up the numbers.",
       },
     ],
   },
@@ -108,20 +129,26 @@ const figure = (basis: Basis, t: Ranked["byFee"][number]) => {
 const ROW_ESTIMATE = 76;
 const ROW_GAP = 8;
 
-export function Leaderboard({ ranked }: { ranked: Ranked }) {
+export function Leaderboard({ ranked, clubs }: { ranked: Ranked; clubs: FeeVsValueData["clubs"] }) {
   // Opens on the most valuable signings — the list that reads as the headline
   // "who actually moved this window" before you go looking for mispricing.
   const [view, setView] = useState<View>("big");
   // An index per view, not one shared: switching tabs would otherwise carry a
   // measure across to a tab that has no list for it, and each tab remembers
   // what you last looked at.
-  const [option, setOption] = useState<Record<View, number>>({ over: 0, under: 0, big: 1 });
+  const [option, setOption] = useState<Record<View, number>>({
+    over: 0,
+    under: 0,
+    big: 1,
+    clubs: 0,
+  });
 
   const { tone, options } = VIEWS[view];
   const current = options[option[view]] ?? options[0];
   // Competition ranking, so tied deals share a number rather than one of them
   // arbitrarily sitting above the other.
-  const list = withRanks(current.list(ranked), current.measure);
+  const list =
+    current.list && current.measure ? withRanks(current.list(ranked), current.measure) : [];
   const secondary = options.find((o) => o.basis !== current.basis);
 
   return (
@@ -165,26 +192,32 @@ export function Leaderboard({ ranked }: { ranked: Ranked }) {
         <p className="mt-1 text-sm text-text-muted">{current.blurb}</p>
       </div>
 
-      {/* Every row, not a top-N: the interesting deals are as often 40th as
-          4th. Window-virtualized so 200 rows cost what a screenful costs. */}
-      <div role="list" className="mt-3">
-        <VirtualList
-          items={list}
-          estimateSize={ROW_ESTIMATE}
-          gap={ROW_GAP}
-          keyExtractor={({ transfer: t }) => t.playerId}
-          renderItem={({ transfer: t, rank: r }) => (
-            <TransferRow
-              transfer={t}
-              rank={r}
-              tone={tone}
-              metric={figure(current.basis, t)}
-              secondary={secondary && figure(secondary.basis, t)}
-              showPrice
-            />
-          )}
-        />
-      </div>
+      {view === "clubs" ? (
+        <div className="mt-4">
+          <ClubTables clubs={clubs} withLoans={current.basis === "with-loans"} />
+        </div>
+      ) : (
+        /* Every row, not a top-N: the interesting deals are as often 40th as
+           4th. Window-virtualized so 200 rows cost what a screenful costs. */
+        <div role="list" className="mt-3">
+          <VirtualList
+            items={list}
+            estimateSize={ROW_ESTIMATE}
+            gap={ROW_GAP}
+            keyExtractor={({ transfer: t }) => t.playerId}
+            renderItem={({ transfer: t, rank: r }) => (
+              <TransferRow
+                transfer={t}
+                rank={r}
+                tone={tone}
+                metric={figure(current.basis, t)}
+                secondary={secondary && figure(secondary.basis, t)}
+                showPrice
+              />
+            )}
+          />
+        </div>
+      )}
     </section>
   );
 }

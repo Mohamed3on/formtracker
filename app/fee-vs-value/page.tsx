@@ -1,13 +1,7 @@
-import { leaders, rank } from "@/lib/fee-vs-value";
+import { rank } from "@/lib/fee-vs-value";
 import { getFeeVsValueData } from "@/lib/top-transfers";
-import { formatMarketValue } from "@/lib/format";
 import { createPageMetadata } from "@/lib/metadata";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { ClubTables } from "./ClubTables";
-import { HeadlineCard } from "./HeadlineCard";
 import { Leaderboard } from "./Leaderboard";
-import { formatPremium, formatRatio } from "./TransferRow";
 
 export const metadata = createPageMetadata({
   title: "Fee vs Value",
@@ -23,152 +17,13 @@ export const metadata = createPageMetadata({
   ],
 });
 
-function SummaryStat({
-  label,
-  value,
-  sub,
-  accentClass = "text-text-primary",
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  accentClass?: string;
-}) {
-  return (
-    <div className="min-w-0">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-text-muted">{label}</p>
-      <p className={cn("mt-1.5 font-value text-xl leading-none sm:text-2xl", accentClass)}>
-        {value}
-      </p>
-      <p className="mt-1.5 text-xs text-text-secondary">{sub}</p>
-    </div>
-  );
-}
-
-const HEADLINES = [
-  {
-    side: "over" as const,
-    cash: {
-      label: "Biggest overpay — cash",
-      hint: "How much more than his value the club paid.",
-    },
-    times: {
-      label: "Biggest overpay — times value",
-      hint: "How many times his value the club paid. 2.00× means they paid double.",
-    },
-    both: {
-      label: "Biggest overpay — cash and times value",
-      hint: "The same deal tops both lists.",
-    },
-  },
-  {
-    side: "under" as const,
-    cash: {
-      label: "Biggest bargain — cash",
-      hint: "How much less than his value the club paid.",
-    },
-    times: {
-      label: "Biggest bargain — times value",
-      hint: "What share of his value the club paid. 0.50× means half price.",
-    },
-    both: {
-      label: "Biggest bargain — cash and times value",
-      hint: "The same deal tops both lists.",
-    },
-  },
-];
-
-/** The deals topping a side on each measure — lists, because ties are joint.
- *  Cash and times value normally crown different players; when a single deal
- *  takes both outright it gets one card carrying both figures, since two
- *  identical cards read as a rendering bug rather than as the finding it is. */
-function headlineWinners(ranked: ReturnType<typeof rank>, side: "over" | "under") {
-  const cash = leaders(
-    side === "over" ? ranked.overpaidAbsolute : ranked.underpaidAbsolute,
-    (t) => t.premium,
-  );
-  const times = leaders(
-    side === "over" ? ranked.overpaidRatio : ranked.underpaidRatio,
-    (t) => t.ratio,
-  );
-  const sweep = cash.length === 1 && times.length === 1 && cash[0].playerId === times[0].playerId;
-  return { cash, times, sweep };
-}
-
 export default async function FeeVsValuePage() {
   const data = await getFeeVsValueData();
   const ranked = rank(data.paid, data.free);
-  const { totals } = data;
 
   return (
     <div className="space-y-8 sm:space-y-10">
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {HEADLINES.map(({ side, cash, times, both }) => {
-          const winners = headlineWinners(ranked, side);
-          return winners.sweep ? (
-            <HeadlineCard
-              key={side}
-              label={both.label}
-              hint={both.hint}
-              transfers={winners.cash}
-              metrics={["premium", "ratio"]}
-              tone={side}
-              className="lg:col-span-2"
-            />
-          ) : (
-            [
-              <HeadlineCard
-                key={`${side}-cash`}
-                label={cash.label}
-                hint={cash.hint}
-                transfers={winners.cash}
-                metrics={["premium"]}
-                tone={side}
-              />,
-              <HeadlineCard
-                key={`${side}-times`}
-                label={times.label}
-                hint={times.hint}
-                transfers={winners.times}
-                metrics={["ratio"]}
-                tone={side}
-              />,
-            ]
-          );
-        })}
-      </div>
-
-      <Card>
-        <CardContent className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-4 sm:p-5">
-          <SummaryStat
-            label="Total spent"
-            value={formatMarketValue(totals.fees)}
-            sub={`on ${data.paid.length + data.free.length} permanent signings`}
-          />
-          <SummaryStat
-            label="What they're worth"
-            value={formatMarketValue(totals.marketValue)}
-            sub="what those players were worth"
-          />
-          <SummaryStat
-            label="Paid over the odds"
-            value={formatPremium(totals.premium)}
-            sub="more than they were worth"
-            accentClass={totals.premium > 0 ? "text-accent-cold" : "text-accent-hot"}
-          />
-          <SummaryStat
-            label="Times their value"
-            value={formatRatio(totals.ratio)}
-            sub="what clubs paid, all in"
-            accentClass={totals.ratio > 1 ? "text-accent-cold" : "text-accent-hot"}
-          />
-        </CardContent>
-      </Card>
-
-      <Leaderboard ranked={ranked} />
-
-      <ClubTables clubs={data.clubs} />
-
+      <Leaderboard ranked={ranked} clubs={data.clubs} />
       <section className="rounded-lg border border-border-subtle bg-card p-4">
         <h2 className="text-sm font-medium text-text-secondary">How to read this</h2>
         <p className="mt-2 text-sm text-text-muted">
