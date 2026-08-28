@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SelectNative } from "@/components/ui/select-native";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Table,
@@ -91,8 +93,12 @@ export function TransferBalanceUI({ data }: { data: TransferBalanceResult }) {
     return sort.desc ? sorted.reverse() : sorted;
   }, [window, sort]);
 
-  const toggleSort = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: key !== "name" }));
+  // Header clicks flip direction on the active column; the mobile select only ever
+  // picks a column, so it takes that column's natural direction instead.
+  const toggleSort = (key: SortKey, fromSelect = false) =>
+    setSort((s) =>
+      s.key === key && !fromSelect ? { key, desc: !s.desc } : { key, desc: key !== "name" },
+    );
 
   return (
     <div className="space-y-6">
@@ -175,7 +181,69 @@ export function TransferBalanceUI({ data }: { data: TransferBalanceResult }) {
         </Card>
       )}
 
-      <div className="overflow-x-auto">
+      {/* The table needs 604px and only fits from md up; below that it hid the Net
+          column entirely behind a horizontal scroll, so phones get cards instead. */}
+      <div className="space-y-3 md:hidden">
+        <div className="flex items-center gap-2">
+          <SelectNative
+            aria-label="Sort clubs by"
+            value={sort.key}
+            onChange={(e) => toggleSort(e.target.value as SortKey, true)}
+          >
+            {COLUMNS.map((col) => (
+              <option key={col.key} value={col.key}>
+                Sort by {col.label.toLowerCase()}
+              </option>
+            ))}
+          </SelectNative>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 shrink-0 px-3"
+            aria-label={sort.desc ? "Sort ascending" : "Sort descending"}
+            onClick={() => setSort((s) => ({ ...s, desc: !s.desc }))}
+          >
+            <span aria-hidden="true">{sort.desc ? "▼" : "▲"}</span>
+          </Button>
+        </div>
+
+        {rows.map((club) => {
+          const multi = (window.wins[club.id] ?? []).length >= 2;
+          return (
+            <Card key={club.id} className={multi ? "border-[var(--accent-gold)]" : ""}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <ClubCell club={club} multi={multi} />
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs tracking-wide text-text-muted uppercase">Net</p>
+                    <p className={`font-value text-sm ${netTone(club.balance)}`}>
+                      {fee(club.balance)}
+                    </p>
+                  </div>
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-border-subtle pt-2 text-xs">
+                  <div>
+                    <dt className="text-text-muted">Gross spend</dt>
+                    <dd className="font-value">
+                      {fee(club.expenditure)}{" "}
+                      <span className="text-text-muted">({club.arrivals} in)</span>
+                    </dd>
+                  </div>
+                  <div className="text-right">
+                    <dt className="text-text-muted">Sales</dt>
+                    <dd className="font-value">
+                      {fee(club.income)}{" "}
+                      <span className="text-text-muted">({club.departures} out)</span>
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <Table>
           <TableHeader>
             <TableRow>
