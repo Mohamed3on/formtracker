@@ -115,7 +115,7 @@ function addTo(side: ClubSide, t: PricedTransfer) {
   side.transfers.push(t);
   side.players += 1;
   if (t.isLoan) side.loans += 1;
-  else if (t.fee === 0) side.frees += 1;
+  else if (t.isFree) side.frees += 1;
   side.fees += t.fee;
   side.marketValue += t.worth;
   side.premium += t.premium;
@@ -197,7 +197,10 @@ export function analyzeTransfers(
 export function rank(transfers: PricedTransfer[]) {
   // A market value of zero can't be compared against anything, and would divide
   // by zero on the way to a ratio. Club totals keep those rows; rankings can't.
-  const permanent = transfers.filter((t) => !t.isLoan && t.worth > 0);
+  // A move TM published no fee for can't be priced against anything: its zero
+  // is missing data, not a free transfer, and ranking it would report the
+  // player's whole value as money saved.
+  const permanent = transfers.filter((t) => !t.isLoan && t.worth > 0 && (t.fee > 0 || t.isFree));
   const paid = permanent.filter((t) => t.fee > 0);
 
   // Each measure breaks its own ties on the other one, so two deals the same
@@ -323,7 +326,7 @@ export function summarize(transfers: PricedTransfer[]): WindowSummary {
     s.deals += 1;
     s.fees += t.fee;
     s.marketValue += t.worth;
-    if (t.fee === 0) s.frees += 1;
+    if (t.isFree) s.frees += 1;
     if (t.premium > 0) s.over += 1;
     else if (t.premium < 0) s.under += 1;
     else s.level += 1;

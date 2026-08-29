@@ -15,7 +15,7 @@ import { fetchTopTransfers } from "./fetch-top-transfers";
  *  every type satisfied and the page happily served the previous formula's
  *  numbers. Shape is the obvious trigger, not the only one — if the bytes this
  *  function would return today differ from yesterday's, bump it. */
-const SHAPE_VERSION = "8";
+const SHAPE_VERSION = "9";
 
 /** Transfers move once a day at most outside a deadline, and the whole fetch is
  *  8 pages, so a day's cache costs one scrape and keeps the page instant. Tagged

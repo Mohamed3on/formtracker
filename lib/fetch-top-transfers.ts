@@ -66,7 +66,14 @@ export function parseTopTransfers(html: string): TopTransfer[] {
         marketValue: parseMarketValue(row.text(COL.marketValue)),
         fee: parseMarketValue(feeText),
         feeText,
-        isLoan: /loan/i.test(feeText),
+        // "loan transfer" and "Loan fee:€3.00m" are loans; "End of loan" is a
+        // player going home, which is not an arrival anyone bought.
+        isLoan: /loan/i.test(feeText) && !/end of loan/i.test(feeText),
+        // A free transfer says so. A move TM prices at "?" or "-" parses to a
+        // fee of 0 exactly like a free does, and would otherwise be ranked as
+        // having saved its buyer the player's whole value — the biggest bargain
+        // of the window, on a number TM never published.
+        isFree: /free transfer/i.test(feeText),
         from: row.club(COL.from),
         to: row.club(COL.to),
       };

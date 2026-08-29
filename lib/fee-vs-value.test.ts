@@ -33,6 +33,7 @@ const tx = (over: Partial<TopTransfer> & Pick<TopTransfer, "name">): TopTransfer
   fee: 10_000_000,
   feeText: "€10.00m",
   isLoan: false,
+  isFree: false,
   from: club("Seller"),
   to: club("Buyer"),
   ...over,
@@ -49,6 +50,7 @@ describe("analyzeTransfers", () => {
       marketValue: 45_000_000,
       fee: 0,
       feeText: "free transfer",
+      isFree: true,
       to: club("Gifted"),
     }),
     tx({
@@ -153,7 +155,13 @@ describe("rank", () => {
   const data = analyzeTransfers(2026, [
     tx({ name: "Overpay", marketValue: 10_000_000, fee: 30_000_000 }),
     tx({ name: "Bargain", marketValue: 40_000_000, fee: 20_000_000 }),
-    tx({ name: "Freebie", marketValue: 45_000_000, fee: 0, feeText: "free transfer" }),
+    tx({
+      name: "Freebie",
+      marketValue: 45_000_000,
+      fee: 0,
+      feeText: "free transfer",
+      isFree: true,
+    }),
     tx({ name: "Loanee", marketValue: 50_000_000, fee: 0, feeText: "loan", isLoan: true }),
   ]);
   const r = rank(data.transfers);
@@ -184,7 +192,7 @@ describe("rank", () => {
   it("drops a transfer with no market value rather than dividing by zero", () => {
     const unvalued = analyzeTransfers(2026, [
       tx({ name: "Unvalued", marketValue: 0, fee: 5_000_000 }),
-      tx({ name: "UnvaluedFree", marketValue: 0, fee: 0, feeText: "free transfer" }),
+      tx({ name: "UnvaluedFree", marketValue: 0, fee: 0, feeText: "free transfer", isFree: true }),
     ]);
     for (const list of Object.values(rank(unvalued.transfers))) expect(list).toEqual([]);
   });
@@ -321,7 +329,13 @@ describe("summarize", () => {
         tx({ name: "Overpay", marketValue: 10_000_000, fee: 30_000_000 }),
         tx({ name: "Bargain", marketValue: 40_000_000, fee: 20_000_000 }),
         tx({ name: "Exact", marketValue: 25_000_000, fee: 25_000_000 }),
-        tx({ name: "Freebie", marketValue: 45_000_000, fee: 0, feeText: "free transfer" }),
+        tx({
+          name: "Freebie",
+          marketValue: 45_000_000,
+          fee: 0,
+          feeText: "free transfer",
+          isFree: true,
+        }),
         tx({ name: "Loanee", marketValue: 50_000_000, fee: 0, isLoan: true }),
         tx({ name: "Unpriced", marketValue: 0, fee: 9_000_000 }),
       ],
@@ -411,5 +425,35 @@ describe("the fee-vs-value bar", () => {
     expect(caught.premium).toBe(0);
     const geo = barGeometry({ worth: caught.worth, fee: caught.fee }, 100_000_000);
     expect(geo.worthPct).toBe(geo.feePct);
+  });
+});
+
+describe("unpriced moves", () => {
+  // TM prints "?" or "-" for a permanent move whose fee it never learned. That
+  // parses to 0 exactly like a free transfer does.
+  const data = analyzeTransfers(2026, [
+    tx({ name: "Unpriced", marketValue: 40_000_000, fee: 0, feeText: "?" }),
+    tx({
+      name: "Freebie",
+      marketValue: 40_000_000,
+      fee: 0,
+      feeText: "free transfer",
+      isFree: true,
+    }),
+  ]);
+
+  it("keeps a move with no published fee out of the rankings", () => {
+    // Ranking it would report €40m of value as money the club saved, on a
+    // number Transfermarkt never published.
+    const r = rank(data.transfers);
+    expect(names(r.underpaidAbsolute)).toEqual(["Freebie"]);
+    expect(names(r.byFee)).toEqual(["Freebie"]);
+  });
+
+  it("does not count it as a free transfer in a club's business", () => {
+    const clubs = buildClubWindows(data.transfers);
+    const buyer = clubs.find((c) => c.club.name === "Buyer")!;
+    expect(buyer.in.players).toBe(2);
+    expect(buyer.in.frees).toBe(1);
   });
 });

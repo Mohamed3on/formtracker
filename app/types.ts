@@ -266,6 +266,9 @@ export interface TopTransfer {
   fee: number;
   feeText: string;
   isLoan: boolean;
+  /** TM said the move cost nothing, as opposed to saying nothing about what it
+   *  cost. Both parse to a fee of 0; only the first is a bargain. */
+  isFree: boolean;
   from: TransferClub;
   to: TransferClub;
 }
