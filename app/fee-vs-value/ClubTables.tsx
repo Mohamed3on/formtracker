@@ -26,9 +26,14 @@ type TableSpec = {
   side: "in" | "out";
   sort: (c: ClubWindow) => number;
   flip?: boolean;
+  /** Which clubs belong in this table at all. Defaults to "did something on
+   *  this side of the window". */
+  qualifies?: (c: ClubWindow) => boolean;
   /** What the big figure on each row shows. */
   figure: (c: ClubWindow) => string;
   caption: (c: ClubWindow) => string;
+  /** Small figure under it. Defaults to the fee-to-value ratio of that side. */
+  badge?: (c: ClubWindow) => string | null;
   tone: "over" | "under";
 };
 
@@ -95,22 +100,30 @@ export const CLUB_MODES: Record<
     toggle: "Squad value",
     title: "Who gained and who lost",
     blurb:
-      "Market value moved in and out, whatever it cost. Net is what the squad is worth after both.",
+      "Value in minus value out, whatever it cost. The badge is the money that swing took, in fees paid minus fees banked.",
+    // Ranked on net, not on gross: a club that brings in €292m and lets €268m
+    // go has not gained €292m of anything. Gross sits in the caption, and the
+    // two tables are now genuine opposites — no club can top both.
     tables: [
       {
         title: "Gained the most value",
         side: "in",
-        sort: (c) => c.in.marketValue,
-        figure: (c) => money(c.in.marketValue),
-        caption: (c) => `net ${signed(c.netValue)} after ${money(c.out.marketValue)} out`,
+        sort: (c) => c.netValue,
+        qualifies: (c) => c.netValue > 0,
+        figure: (c) => signed(c.netValue),
+        caption: (c) => `${money(c.in.marketValue)} in · ${money(c.out.marketValue)} out`,
+        badge: (c) => `${signed(c.netSpend)} net`,
         tone: "under",
       },
       {
         title: "Lost the most value",
         side: "out",
-        sort: (c) => c.out.marketValue,
-        figure: (c) => money(c.out.marketValue),
-        caption: (c) => `net ${signed(c.netValue)} after ${money(c.in.marketValue)} in`,
+        sort: (c) => c.netValue,
+        flip: true,
+        qualifies: (c) => c.netValue < 0,
+        figure: (c) => signed(c.netValue),
+        caption: (c) => `${money(c.in.marketValue)} in · ${money(c.out.marketValue)} out`,
+        badge: (c) => `${signed(c.netSpend)} net`,
         tone: "over",
       },
     ],
@@ -170,6 +183,7 @@ function sideLabel(s: ClubSide, side: "in" | "out") {
 function ClubRow({ c, spec }: { c: ClubWindow; spec: TableSpec }) {
   const [open, setOpen] = useState(false);
   const side = c[spec.side];
+  const badge = spec.badge ? spec.badge(c) : side.marketValue > 0 ? formatRatio(side.ratio) : null;
   return (
     <Collapsible
       open={open}
@@ -201,9 +215,9 @@ function ClubRow({ c, spec }: { c: ClubWindow; spec: TableSpec }) {
           >
             {spec.figure(c)}
           </span>
-          {side.marketValue > 0 && (
+          {badge && (
             <Badge variant="outline" className="mt-0.5 font-value">
-              {formatRatio(side.ratio)}
+              {badge}
             </Badge>
           )}
         </span>
@@ -234,7 +248,7 @@ function ClubRow({ c, spec }: { c: ClubWindow; spec: TableSpec }) {
 
 function ClubTable({ rows, spec }: { rows: ClubWindow[]; spec: TableSpec }) {
   const ranked = rows
-    .filter((c) => c[spec.side].players > 0)
+    .filter((c) => c[spec.side].players > 0 && (spec.qualifies?.(c) ?? true))
     .sort((a, b) => spec.sort(b) - spec.sort(a));
   const top = (spec.flip ? ranked.reverse() : ranked).slice(0, TOP);
 

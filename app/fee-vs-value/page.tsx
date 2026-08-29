@@ -45,9 +45,9 @@ export default async function FeeVsValuePage() {
           <strong>Clubs</strong> reads the same window from either end. <strong>Buying</strong> is
           fees paid against what the players were worth; <strong>Selling</strong> is fees banked
           against what the players leaving were worth, where being above value is the good outcome
-          rather than the bad one. <strong>Squad value</strong> ignores money altogether and asks
-          who added the most, and who let the most go. Open any club to see the deals behind its
-          total.
+          rather than the bad one. <strong>Squad value</strong> sets the two against each other —
+          value in minus value out — so it names who came out of the window stronger rather than who
+          simply churned the most. Open any club to see the deals behind its total.
         </p>
       </section>
     </div>
