@@ -5,6 +5,7 @@ import {
   buildClubWindows,
   gapScale,
   rank,
+  revalued,
   summarize,
   transferKey,
   withRanks,
@@ -273,7 +274,8 @@ describe("current market value", () => {
 
   it("measures the multiple against what the player is worth now", () => {
     // €138m against today's €110m, not against the €90m frozen at the move.
-    expect(rerated.currentValue).toBe(110_000_000);
+    expect(rerated.worth).toBe(110_000_000);
+    expect(revalued(rerated)).toBe(true);
     expect(rerated.ratio).toBeCloseTo(138 / 110, 10);
   });
 
@@ -296,15 +298,16 @@ describe("current market value", () => {
   });
 
   it("falls back to the frozen value for a player the dataset doesn't track", () => {
-    expect(untracked.currentValue).toBeUndefined();
     expect(untracked.worth).toBe(untracked.marketValue);
+    expect(revalued(untracked)).toBe(false);
     expect(untracked.ratio).toBe(1.5);
     expect(untracked.premium).toBe(25_000_000);
   });
 
-  it("carries no current value when the market hasn't moved him", () => {
-    // Nothing to say, and nothing to put on the wire.
-    expect(unchanged.currentValue).toBeUndefined();
+  it("reads as un-revalued when the market hasn't moved him", () => {
+    // Tracked, but at the same figure he moved for — nothing for the row to say.
+    expect(unchanged.worth).toBe(unchanged.marketValue);
+    expect(revalued(unchanged)).toBe(false);
     expect(unchanged.ratio).toBe(1.5);
   });
 });
@@ -368,8 +371,9 @@ describe("summarize", () => {
   it("summarizes exactly the pool the rankings draw from", () => {
     // The headline and the lists have to be counting the same deals. They came
     // apart once: `rank` learned to drop moves TM published no fee for while
-    // `summarize` went on treating them as signings bought for nothing, so the
-    // window claimed bargains that appeared on no list.
+    // `summarize` went on treating them as signings bought for nothing. Neither
+    // shape occurs in the current window, so nothing wrong ever rendered — this
+    // pins the invariant so the next divergence fails here instead of shipping.
     const transfers = analyzeTransfers(2026, [
       tx({ name: "Real", marketValue: 20_000_000, fee: 30_000_000 }),
       // A player going home. Not an arrival anyone bought, and not a loan
@@ -435,10 +439,8 @@ describe("the fee-vs-value bar", () => {
       [tx({ name: "Rerated", marketValue: 90_000_000, fee: 138_000_000 })],
       new Map([["Rerated", 110_000_000]]),
     ).transfers;
-    const geo = barGeometry(
-      { worth: rerated.worth, fee: rerated.fee, wasWorth: rerated.marketValue },
-      138_000_000,
-    );
+    // The row passes itself; the frozen value is marked because it differs.
+    const geo = barGeometry(rerated, 138_000_000);
     // The bar runs from today's €110m to the €138m fee — the same €28m the row
     // prints — with the €90m he was worth on the day marked behind it.
     expect(geo.worthPct).toBeCloseTo((110 / 138) * 100, 10);

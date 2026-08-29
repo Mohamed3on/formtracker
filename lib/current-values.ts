@@ -6,15 +6,16 @@ import { getMinutesValueData } from "./fetch-minutes-value";
  * by player id.
  *
  * Transfermarkt's transfer table carries the value a player held **at the time
- * of the move**. The two are used for different measures in `fee-vs-value`:
+ * of the move**. Where this map has him, the value here wins: it becomes the
+ * `worth` in `fee-vs-value`, and the cash premium and the multiple are both
+ * measured from it. One basis, not two — pricing the gap in euros against the
+ * frozen value while pricing it as a multiple against today's put `+€48.0M`
+ * beside `1.25×` on the same row, which reads as one of them being broken.
  *
- * - the **cash premium** stays on the frozen value, because whether a club paid
- *   over the odds can only be judged on what was known on the day;
- * - the **multiple** ("they paid 1.25× what he is worth") reads against this
- *   one, because that is a live question about the player, not a historical one
- *   about the deal.
+ * The frozen figure is still shown, as the mark on the bar and the "was worth"
+ * line beside the row, so a re-rated deal says both things at once.
  *
- * Two caveats that come with the multiple, both deliberate:
+ * Two caveats that come with measuring against today, both deliberate:
  *
  * 1. TM re-rates a player *towards* the fee his new club paid — four of this
  *    window's thirteen re-rated players landed on the fee exactly — so a

@@ -112,15 +112,9 @@ export function FeeValueBar({
   axisMax: number;
   className?: string;
 }) {
-  const geometry = barGeometry(
-    {
-      worth: transfer.worth,
-      fee: transfer.fee,
-      // Only a mark when it says something the worth doesn't.
-      wasWorth: transfer.currentValue ? transfer.marketValue : undefined,
-    },
-    axisMax,
-  );
+  // The row passes itself: `barGeometry` marks the frozen value where it differs
+  // from `worth`, which is exactly where there is something to mark.
+  const geometry = barGeometry(transfer, axisMax);
   const paid = transfer.fee > 0 ? formatMarketValue(transfer.fee) : transfer.feeText || "free";
 
   return (

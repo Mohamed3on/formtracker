@@ -8,7 +8,7 @@ import { formatMarketValue, getPlayerDetailHref, getTeamDetailHref } from "@/lib
 import { isSameLeague } from "@/lib/leagues";
 import { cn } from "@/lib/utils";
 import type { TopTransfer, TransferClub } from "@/app/types";
-import type { PricedTransfer } from "@/lib/fee-vs-value";
+import { revalued, type PricedTransfer } from "@/lib/fee-vs-value";
 import { FeeValueBar, WasWorthMark } from "./FeeValueBar";
 
 /** One end of a move. Links through to the squad when TM gave us a club id. */
@@ -136,7 +136,7 @@ export function TransferRow({
           {/* What he was valued at on the day he moved, where the market has
               since moved him. Same white dot as the one on the bar below, so the
               figure and the mark read as one fact rather than two. */}
-          {transfer.currentValue && (
+          {revalued(transfer) && (
             <p className="flex items-center justify-end gap-1 text-[10px] text-text-primary">
               <WasWorthMark />
               <span className="sr-only">Was worth </span>

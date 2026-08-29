@@ -25,17 +25,26 @@ export interface PricedTransfer extends TopTransfer {
   /** The same gap as a multiple: `1.00×` is the price the market now agrees
    *  with, `2.00×` is double what the player is worth. */
   ratio: number;
-  /** What the player is worth today, where the committed dataset tracks him.
-   *  Set only when it differs from `marketValue`, so its presence marks both the
-   *  rows the market has re-rated since the move and the rows whose `worth` is
-   *  something other than the frozen `marketValue`.
-   *
-   *  Transfermarkt re-rates a player towards the fee his new club paid — four of
-   *  this window's thirteen landed on the fee exactly — so a re-rated deal drifts
-   *  towards `1.00×` and a zero premium as the market comes round to the price.
-   *  That is the intended reading: these measure what he is worth now, not what
-   *  the buying club could have known. See lib/current-values.ts. */
-  currentValue?: number;
+}
+
+/**
+ * Whether the market has moved on this player since he signed.
+ *
+ * `worth` is today's valuation where the committed dataset tracks him and the
+ * frozen `marketValue` everywhere else, so the two differing *is* the fact —
+ * there is nothing more to carry. A `currentValue` field used to say the same
+ * thing a third time, present exactly when `worth !== marketValue` and equal to
+ * `worth` whenever it was, which put a redundant number on the wire for every
+ * row and left the concept itself unnamed.
+ *
+ * Transfermarkt re-rates a player towards the fee his new club paid — four of
+ * this window's thirteen landed on the fee exactly — so a re-rated deal drifts
+ * towards `1.00×` and a zero premium as the market comes round to the price.
+ * That is the intended reading: these measure what he is worth now, not what the
+ * buying club could have known. See lib/current-values.ts.
+ */
+export function revalued(t: PricedTransfer): boolean {
+  return t.worth !== t.marketValue;
 }
 
 /** One club's side of a window — everything it bought, or everything it sold.
@@ -88,16 +97,12 @@ export interface FeeVsValueData {
   transfers: PricedTransfer[];
 }
 
+/** `currentValue` is undefined for a player the dataset doesn't track, never
+ *  zero — `getCurrentMarketValues` drops unvalued players rather than carrying
+ *  them at nothing, which is what makes `??` the right fallback here. */
 function price(t: TopTransfer, currentValue?: number): PricedTransfer {
-  const worth = currentValue || t.marketValue;
-  return {
-    ...t,
-    worth,
-    premium: t.fee - worth,
-    ratio: worth > 0 ? t.fee / worth : 0,
-    // Only worth carrying when it says something the frozen value doesn't.
-    ...(currentValue && currentValue !== t.marketValue ? { currentValue } : {}),
-  };
+  const worth = currentValue ?? t.marketValue;
+  return { ...t, worth, premium: t.fee - worth, ratio: worth > 0 ? t.fee / worth : 0 };
 }
 
 const emptySide = (): ClubSide => ({
@@ -192,9 +197,12 @@ export function analyzeTransfers(
  * as money saved, on a number TM never published.
  *
  * Stated once because it was previously spelled out at each site, and the copies
- * drifted: `rank` learned to exclude unpriced moves while `summarize` went on
- * counting them as signings bought for nothing, so the headline claimed €80m of
- * bargains the lists below it did not contain.
+ * drifted: `rank` learned to exclude unpriced moves and end-of-loan returns
+ * while `summarize` went on counting both as signings bought for nothing. No row
+ * in the current window is either shape — TM has priced every permanent move of
+ * this season — so the divergence never reached the page. It only needed one
+ * feed carrying a "?" fee to put a bargain in the headline that appeared on no
+ * list beneath it.
  *
  * Club totals deliberately do not use this. There the question is what a side
  * ended up with and what it cost, which a loan or an unpriced arrival still
@@ -355,10 +363,10 @@ export function summarize(transfers: PricedTransfer[]): WindowSummary {
     if (t.premium > 0) s.over += 1;
     else if (t.premium < 0) s.under += 1;
     else s.level += 1;
-    if (t.currentValue) {
+    if (revalued(t)) {
       s.revalued += 1;
-      if (t.currentValue > t.marketValue) s.revaluedUp += 1;
-      if (t.fee > 0 && t.currentValue >= t.fee) s.worthTheFee += 1;
+      if (t.worth > t.marketValue) s.revaluedUp += 1;
+      if (t.fee > 0 && t.worth >= t.fee) s.worthTheFee += 1;
     }
   }
 
@@ -401,19 +409,24 @@ export function gapScale(transfers: PricedTransfer[]): number {
  *
  * The bar is anchored on `worth` because that is the basis both of the figures
  * a row prints are measured from — a bar drawn from anything else would
- * contradict the numbers beside it. `wasWorth` is the optional third mark: what
- * the player was valued at on the day he moved, on the rows where the market
- * has since moved him. A deal the market has come round to has its fee and its
- * worth in the same place, and so has no bar at all.
+ * contradict the numbers beside it. A deal the market has come round to has its
+ * fee and its worth in the same place, and so has no bar at all.
+ *
+ * A `PricedTransfer` satisfies this shape as it stands, so a row passes itself
+ * and gets the third mark — what the player was valued at on the day he moved —
+ * wherever `revalued` would be true. Club and window bars pass the two figures
+ * alone: an aggregate has no frozen value to mark.
  */
 export function barGeometry(
-  d: { worth: number; fee: number; wasWorth?: number },
+  d: { worth: number; fee: number; marketValue?: number },
   axisMax: number,
 ): { worthPct: number; feePct: number; wasPct: number | null } {
   const pct = (n: number) => (axisMax > 0 ? Math.min(100, Math.max(0, (n / axisMax) * 100)) : 0);
   return {
     worthPct: pct(d.worth),
     feePct: pct(d.fee),
-    wasPct: d.wasWorth ? pct(d.wasWorth) : null,
+    // The same test `revalued` makes: the frozen value earns a mark only where
+    // it says something `worth` doesn't.
+    wasPct: d.marketValue !== undefined && d.marketValue !== d.worth ? pct(d.marketValue) : null,
   };
 }
