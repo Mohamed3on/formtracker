@@ -1,211 +1,326 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
+import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VirtualList } from "@/components/VirtualList";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { withRanks, type FeeVsValueData, type rank as rankTransfers } from "@/lib/fee-vs-value";
+import { useQueryParams } from "@/lib/hooks/use-query-params";
+import { formatMarketValue, formatPremium, formatRatio } from "@/lib/format";
+import {
+  gapScale,
+  rank,
+  summarize,
+  transferKey,
+  withRanks,
+  type PricedTransfer,
+} from "@/lib/fee-vs-value";
 import { CLUB_MODES, ClubTables, type ClubMode } from "./ClubTables";
-import { formatMarketValue } from "@/lib/format";
-import { formatPremium, formatRatio, TransferRow } from "./TransferRow";
+import { TransferRow, type Tone } from "./TransferRow";
+import { WindowSummary } from "./WindowSummary";
 
-type Ranked = ReturnType<typeof rankTransfers>;
-type View = "over" | "under" | "big" | "clubs";
-type Basis = "premium" | "ratio" | "fee" | "value" | ClubMode;
+const PATH = "/fee-vs-value";
 
-/** Each view keeps its own pair of measures, so the toggle beside the tabs
- *  always offers the two that make sense for what's on screen. */
-const VIEWS: Record<
-  View,
-  {
-    tab: string;
-    tone: "over" | "under" | "neutral";
-    options: Array<{
-      basis: Basis;
-      toggle: string;
-      title: string;
-      blurb: string;
-      /** Absent on the clubs view, which renders tables rather than a row list. */
-      list?: (r: Ranked) => Ranked[keyof Ranked];
-      measure?: (t: Ranked["byFee"][number]) => number;
-    }>;
-  }
-> = {
-  big: {
+type Ranked = ReturnType<typeof rank>;
+type View = "biggest" | "overpaid" | "bargains" | "clubs";
+
+interface Option {
+  /** What this measure is called in the URL. Short and guessable, so a shared
+   *  link says what it opens rather than carrying an array index. */
+  slug: string;
+  toggle: string;
+  title: string;
+  blurb: string;
+}
+
+/** A leaderboard of transfers: which ranked slice to show, and how each row's
+ *  headline figure reads. The formatter doubles as the tie test — two rows
+ *  showing the same figure share a rank. */
+interface ListOption extends Option {
+  list: (r: Ranked) => PricedTransfer[];
+  format: (t: PricedTransfer) => string;
+}
+
+interface ClubOption extends Option {
+  mode: ClubMode;
+}
+
+/** Each view keeps its own pair of measures, so the control beside the heading
+ *  always offers the two that make sense for what's on screen. Clubs renders
+ *  tables rather than a row list, which is why it's a separate kind rather than
+ *  a list view with holes in it. */
+type ViewSpec = {
+  tab: string;
+  /** Caption on the measure control. The control means something different in
+   *  every view, so it says which question it is answering rather than leaving
+   *  the reader to infer it from two bare words. */
+  control: string;
+  defaultBy: string;
+} & (
+  | { kind: "list"; tone: Tone; options: [ListOption, ListOption] }
+  | { kind: "clubs"; options: ClubOption[] }
+);
+
+const VIEWS: Record<View, ViewSpec> = {
+  biggest: {
     tab: "Biggest",
+    kind: "list",
     tone: "neutral",
+    control: "Rank by",
+    defaultBy: "value",
     options: [
       {
-        basis: "fee",
+        slug: "fee",
         toggle: "Fee",
         title: "Most expensive signings",
         blurb: "The biggest fees of the season, whatever the player was worth.",
         list: (r) => r.byFee,
-        measure: (t) => t.fee,
+        format: (t) => formatMarketValue(t.fee),
       },
       {
-        basis: "value",
+        slug: "value",
         toggle: "Value",
         title: "Most valuable signings",
-        blurb: "The best players to move, by market value, whatever their club paid.",
+        blurb: "The best players to move, by what they are worth, whatever their club paid.",
         list: (r) => r.byValue,
-        measure: (t) => t.marketValue,
+        format: (t) => formatMarketValue(t.worth),
       },
     ],
   },
-  over: {
+  overpaid: {
     tab: "Overpaid",
+    kind: "list",
     tone: "over",
+    control: "Rank by",
+    defaultBy: "cash",
     options: [
       {
-        basis: "premium",
+        slug: "cash",
         toggle: "Cash",
         title: "Paid the most over the odds",
-        blurb: "How much more than his value the club paid. Big transfers lead this list.",
+        blurb:
+          "How much more than the player is worth the club paid. Big transfers lead this list.",
         list: (r) => r.overpaidAbsolute,
-        measure: (t) => t.premium,
+        format: (t) => formatPremium(t.premium),
       },
       {
-        basis: "ratio",
+        slug: "ratio",
         toggle: "Times value",
         title: "Paid the most times his value",
-        blurb: "How many times his value the club paid. Small transfers lead this list.",
+        blurb:
+          "The same gap as a multiple. Small transfers lead this list — a €5M player at €15M is 3.00×, where a €100M signing rarely clears 1.50×.",
         list: (r) => r.overpaidRatio,
-        measure: (t) => t.ratio,
+        format: (t) => formatRatio(t.ratio),
       },
     ],
   },
-  under: {
+  bargains: {
     tab: "Bargains",
+    kind: "list",
     tone: "under",
+    control: "Rank by",
+    defaultBy: "cash",
     options: [
       {
-        basis: "premium",
+        slug: "cash",
         toggle: "Cash",
         title: "Biggest bargains in cash",
-        blurb: "How much less than his value the club paid.",
+        blurb: "How much less than the player is worth the club paid.",
         list: (r) => r.underpaidAbsolute,
-        measure: (t) => t.premium,
+        format: (t) => formatPremium(t.premium),
       },
       {
-        basis: "ratio",
+        slug: "ratio",
         toggle: "Times value",
         title: "Biggest bargains, times value",
-        blurb: "What share of his value the club paid. 0.50× means half price.",
+        blurb: "The fee as a share of what the player is worth. 0.50× means half price.",
         list: (r) => r.underpaidRatio,
-        measure: (t) => t.ratio,
+        format: (t) => formatRatio(t.ratio),
       },
     ],
   },
   clubs: {
     tab: "Clubs",
-    tone: "neutral",
-    options: (Object.entries(CLUB_MODES) as Array<[ClubMode, (typeof CLUB_MODES)[ClubMode]]>).map(
-      ([mode, m]) => ({ basis: mode, toggle: m.toggle, title: m.title, blurb: m.blurb }),
-    ),
+    kind: "clubs",
+    control: "Show",
+    defaultBy: "buying",
+    options: (Object.keys(CLUB_MODES) as ClubMode[]).map((mode) => ({
+      slug: CLUB_MODES[mode].slug,
+      mode,
+      toggle: CLUB_MODES[mode].toggle,
+      title: CLUB_MODES[mode].title,
+      blurb: CLUB_MODES[mode].blurb,
+    })),
   },
 };
 
-const figure = (basis: Basis, t: Ranked["byFee"][number]) => {
-  if (basis === "premium") return formatPremium(t.premium);
-  if (basis === "ratio") return formatRatio(t.ratio);
-  return formatMarketValue(basis === "fee" ? t.fee : t.marketValue);
-};
+const VIEW_KEYS = Object.keys(VIEWS) as View[];
+
+/** The URL is the state. Anything unknown, missing or malformed lands on the
+ *  defaults rather than on an empty list, and the pair is resolved the same way
+ *  on the server as in the browser, so the first paint already has the right
+ *  tab open. */
+function resolve(view: string | null, by: string | null) {
+  const key = (VIEW_KEYS as string[]).includes(view ?? "") ? (view as View) : "biggest";
+  const spec = VIEWS[key];
+  const option =
+    spec.options.find((o) => o.slug === by) ??
+    spec.options.find((o) => o.slug === spec.defaultBy) ??
+    spec.options[0];
+  return { key, spec, option };
+}
 
 /** Roughly a row at desktop width; the virtualizer measures each one for real
- *  once mounted, so a wrapped three-line row on mobile corrects itself. */
-const ROW_ESTIMATE = 76;
+ *  once mounted, so a wrapped row on mobile corrects itself. */
+const ROW_ESTIMATE = 116;
 const ROW_GAP = 8;
 
-export function Leaderboard({ ranked, clubs }: { ranked: Ranked; clubs: FeeVsValueData["clubs"] }) {
-  // Opens on the most valuable signings — the list that reads as the headline
-  // "who actually moved this window" before you go looking for mispricing.
-  const [view, setView] = useState<View>("big");
-  // An index per view, not one shared: switching tabs would otherwise carry a
-  // measure across to a tab that has no list for it, and each tab remembers
-  // what you last looked at.
-  const [option, setOption] = useState<Record<View, number>>({
-    over: 0,
-    under: 0,
-    big: 1,
-    clubs: 0,
-  });
-
-  const { tone, options } = VIEWS[view];
-  const current = options[option[view]] ?? options[0];
+/** Every row, not a top-N: the interesting deals are as often 40th as 4th.
+ *  Window-virtualized so 200 rows cost what a screenful costs. */
+function TransferList({
+  spec,
+  option,
+  ranked,
+  axisMax,
+}: {
+  spec: Extract<ViewSpec, { kind: "list" }>;
+  option: ListOption;
+  ranked: Ranked;
+  axisMax: number;
+}) {
+  const other = spec.options.find((o) => o.slug !== option.slug);
   // Competition ranking, so tied deals share a number rather than one of them
   // arbitrarily sitting above the other.
-  const list =
-    current.list && current.measure ? withRanks(current.list(ranked), current.measure) : [];
-  const secondary = options.find((o) => o.basis !== current.basis);
+  const list = useMemo(() => withRanks(option.list(ranked), option.format), [option, ranked]);
 
   return (
-    <section>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={view} onValueChange={(v) => setView(v as View)}>
+    <div role="list" className="mt-3">
+      <VirtualList
+        items={list}
+        estimateSize={ROW_ESTIMATE}
+        gap={ROW_GAP}
+        // Not the player id: eight of this window's players moved twice, and a
+        // repeated key lets the virtualiser reuse the wrong row on a re-sort.
+        keyExtractor={({ transfer: t }) => transferKey(t)}
+        renderItem={({ transfer: t, rank: r }) => (
+          <TransferRow
+            transfer={t}
+            rank={r}
+            tone={spec.tone}
+            metric={option.format(t)}
+            secondary={other?.format(t)}
+            axisMax={axisMax}
+          />
+        )}
+      />
+    </div>
+  );
+}
+
+export function Leaderboard({
+  transfers,
+  season,
+}: {
+  transfers: PricedTransfer[];
+  season: number;
+}) {
+  const { params, update, replace } = useQueryParams(PATH);
+  const { key: view, spec, option } = resolve(params.get("view"), params.get("by"));
+
+  // Sorted here rather than on the server: the six orderings are six views of
+  // the same objects, and shipping them pre-sorted put every transfer on the
+  // wire once per list that mentioned it. Sorting ~200 rows costs nothing.
+  const ranked = useMemo(() => rank(transfers), [transfers]);
+  const summary = useMemo(() => summarize(transfers), [transfers]);
+  // One ruler for every bar on the page, so switching tabs reorders the rows
+  // without redrawing the scale underneath them.
+  const axisMax = useMemo(() => gapScale(transfers), [transfers]);
+
+  // Switching view is a real navigation — the tabs are links, so they can be
+  // opened in a tab, copied, or walked with the back button. The plain click is
+  // handled here instead so it costs a re-render rather than a round trip for
+  // the whole transfer list.
+  const goToView = (v: View) => update({ view: v, by: null });
+  const onTabClick = (e: React.MouseEvent, v: View) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    goToView(v);
+  };
+
+  return (
+    <div className="space-y-6 sm:space-y-8">
+      <WindowSummary season={season} summary={summary} />
+
+      <section>
+        <Tabs value={view} onValueChange={(v) => goToView(v as View)}>
           <TabsList>
-            {(Object.keys(VIEWS) as View[]).map((v) => (
-              <TabsTrigger key={v} value={v}>
-                {VIEWS[v].tab}
+            {VIEW_KEYS.map((v) => (
+              <TabsTrigger key={v} value={v} asChild>
+                <Link href={`${PATH}?view=${v}`} prefetch={false} onClick={(e) => onTabClick(e, v)}>
+                  {VIEWS[v].tab}
+                </Link>
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
 
-        <ToggleGroup
-          type="single"
-          value={String(option[view])}
-          onValueChange={(v) => v && setOption((o) => ({ ...o, [view]: Number(v) }))}
-          variant="outline"
-          size="sm"
-          className="rounded-lg"
-          aria-label="Sort by"
-        >
-          {options.map((o, i) => (
-            <ToggleGroupItem
-              key={o.basis}
-              value={String(i)}
-              className={i === 0 ? "rounded-l-lg" : "rounded-r-lg"}
+        {/* The measure sits with the heading it rewrites. It meant something
+            different in every tab while floating at the far end of the tab row,
+            so the reader had to guess which pair of words applied. */}
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+          <div className="min-w-0">
+            <h2 className="text-base font-pixel font-bold text-text-primary sm:text-lg">
+              {option.title}
+            </h2>
+            <p className="mt-1 text-sm text-text-muted">{option.blurb}</p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
+              {spec.control}
+            </span>
+            <ToggleGroup
+              type="single"
+              value={option.slug}
+              onValueChange={(v) => v && replace({ by: v })}
+              variant="outline"
+              size="sm"
+              className="rounded-lg"
+              aria-label={spec.control}
             >
-              {o.toggle}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
-
-      <div className="mt-4">
-        <h2 className="text-base font-pixel font-bold text-text-primary sm:text-lg">
-          {current.title}
-        </h2>
-        <p className="mt-1 text-sm text-text-muted">{current.blurb}</p>
-      </div>
-
-      {view === "clubs" ? (
-        <div className="mt-4">
-          <ClubTables clubs={clubs} mode={current.basis as ClubMode} />
+              {spec.options.map((o, i) => (
+                <ToggleGroupItem
+                  key={o.slug}
+                  value={o.slug}
+                  className={cnEdge(i, spec.options.length)}
+                >
+                  {o.toggle}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
         </div>
-      ) : (
-        /* Every row, not a top-N: the interesting deals are as often 40th as
-           4th. Window-virtualized so 200 rows cost what a screenful costs. */
-        <div role="list" className="mt-3">
-          <VirtualList
-            items={list}
-            estimateSize={ROW_ESTIMATE}
-            gap={ROW_GAP}
-            keyExtractor={({ transfer: t }) => t.playerId}
-            renderItem={({ transfer: t, rank: r }) => (
-              <TransferRow
-                transfer={t}
-                rank={r}
-                tone={tone}
-                metric={figure(current.basis, t)}
-                secondary={secondary && figure(secondary.basis, t)}
-                showPrice
-              />
-            )}
+
+        {spec.kind === "clubs" ? (
+          <div className="mt-4">
+            <ClubTables transfers={transfers} mode={(option as ClubOption).mode} />
+          </div>
+        ) : (
+          <TransferList
+            spec={spec}
+            option={option as ListOption}
+            ranked={ranked}
+            axisMax={axisMax}
           />
-        </div>
-      )}
-    </section>
+        )}
+      </section>
+    </div>
   );
+}
+
+/** Round only the outer edges of a segmented control, whatever its length. */
+function cnEdge(i: number, total: number) {
+  if (i === 0) return "rounded-l-lg";
+  if (i === total - 1) return "rounded-r-lg";
+  return "";
 }
