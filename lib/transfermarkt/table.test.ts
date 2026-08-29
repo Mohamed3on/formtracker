@@ -141,3 +141,43 @@ describe("parsePlayerTable — real market-value movers page (attr escape hatch)
     expect(moverRows).toMatchSnapshot();
   });
 });
+
+// A real "Top transfers of the season" page, captured 2026-08. Its two club
+// columns ("Left" and "Joined") are the club-cell shape.
+const transfersHtml = readFileSync(
+  fileURLToPath(new URL("./__fixtures__/top-transfers.html", import.meta.url)),
+  "utf8",
+);
+
+const clubRows = parsePlayerTable(
+  transfersHtml,
+  (player, row) => ({ name: player.name, from: row.club(5), to: row.club(6) }),
+  { playerColumn: 1 },
+);
+
+describe("parsePlayerTable — club cells on a real top-transfers fixture", () => {
+  it("parses both club columns of every row", () => {
+    expect(clubRows).toHaveLength(25);
+    expect(clubRows.every((r) => r.from.clubId && r.to.clubId)).toBe(true);
+  });
+
+  it("reads TM's display name, the club id, competition and nation", () => {
+    expect(clubRows[0].to).toEqual({
+      name: "Chelsea",
+      clubId: "631",
+      logoUrl: expect.stringContaining("/wappen/head/631.png"),
+      league: "Premier League",
+      country: "England",
+    });
+  });
+
+  it("keeps the short display name rather than the link's full title", () => {
+    // "Man City" / "PSG" are what TM renders; the long form is link(i).title.
+    const names = clubRows.flatMap((r) => [r.from.name, r.to.name]);
+    expect(names.some((n) => n.includes(" FC") || n === "Manchester City")).toBe(false);
+  });
+
+  it("upgrades club crests to the largest size via tmImage", () => {
+    expect(clubRows[0].from.logoUrl).toContain("/wappen/head/");
+  });
+});

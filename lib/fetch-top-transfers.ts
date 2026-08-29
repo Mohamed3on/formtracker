@@ -1,10 +1,9 @@
-import * as cheerio from "cheerio";
-import type { AnyNode } from "domhandler";
+import { parsePlayerTable } from "@/lib/transfermarkt";
+import type { TopTransfer } from "@/app/types";
 import { BASE_URL } from "./constants";
 import { fetchPage } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
 import { tmCurrentSeasonId } from "./player-aggregation";
-import type { TopTransfer, TransferClub } from "@/app/types";
 
 /**
  * Transfermarkt's "Top transfers of the season" table — the N most expensive
@@ -25,64 +24,55 @@ import type { TopTransfer, TransferClub } from "@/app/types";
 const PAGE_SIZE = 25;
 export const TOP_TRANSFER_LIMIT = 200;
 
+/** Column layout of the `plus/1` view. The player mini-table is column 1; the
+ *  rest are read positionally off the row accessor. */
+const COL = {
+  rank: 0,
+  age: 2,
+  marketValue: 3,
+  nationality: 4,
+  from: 5,
+  to: 6,
+  fee: 7,
+} as const;
+
 const pageUrl = (season: number, page: number) =>
   `${BASE_URL}/transfers/saisontransfers/statistik/top/plus/1/galerie/0${
     page > 1 ? `/page/${page}` : ""
   }?saison_id=${season}&transferfenster=alle&land_id=&ausrichtung=&spielerposition_id=&altersklasse=&leihe=&art=`;
 
-/** A club cell is a nested inline-table: crest link on the left, club name in
- *  `.hauptlink`, competition link underneath. Both "Left" and "Joined" use it. */
-function parseClub(cell: cheerio.Cheerio<AnyNode>): TransferClub {
-  const clubLink = cell.find("td.hauptlink a").first();
-  return {
-    name: clubLink.text().trim(),
-    clubId: clubLink.attr("href")?.match(/\/verein\/(\d+)/)?.[1] ?? "",
-    logoUrl: cell.find("img.tiny_wappen").first().attr("src") ?? "",
-    league: cell.find("a[href*='/wettbewerb/']").last().text().trim(),
-    country: cell.find("img.flaggenrahmen").last().attr("title") ?? "",
-  };
-}
-
 export function parseTopTransfers(html: string): TopTransfer[] {
-  const $ = cheerio.load(html);
-  const out: TopTransfer[] = [];
+  return parsePlayerTable(
+    html,
+    (player, row) => {
+      if (!player.playerId || !player.name) return null;
 
-  $("table.items > tbody > tr").each((_, tr) => {
-    const td = $(tr).find("> td");
-    if (td.length < 8) return;
+      // The fee cell carries the transfer type in its text for non-purchases
+      // ("loan transfer", "End of loan", "free transfer"). Only a plain money
+      // figure is a fee we can compare against a market value.
+      const feeText = row.text(COL.fee);
 
-    const playerLink = td.eq(1).find("a[href*='/profil/spieler/']").first();
-    const playerId = playerLink.attr("href")?.match(/\/spieler\/(\d+)/)?.[1] ?? "";
-    const name = playerLink.text().trim();
-    if (!playerId || !name) return;
-
-    // The fee cell carries the transfer type in its text for non-purchases
-    // ("loan transfer", "End of loan", "free transfer"). Only a plain money
-    // figure is a fee we can compare against a market value.
-    const feeText = td.eq(7).text().trim();
-    const fee = parseMarketValue(feeText);
-    const marketValue = parseMarketValue(td.eq(3).text().trim());
-
-    out.push({
-      rank: Number(td.eq(0).text().trim()) || out.length + 1,
-      playerId,
-      name,
-      // The second row of the player inline-table is the position.
-      position: td.eq(1).find("table.inline-table tr").eq(1).find("td").first().text().trim(),
-      age: Number(td.eq(2).text().trim()) || 0,
-      imageUrl: td.eq(1).find("img.bilderrahmen-fixed").first().attr("data-src") ?? "",
-      nationality: td.eq(4).find("img.flaggenrahmen").first().attr("title") ?? "",
-      nationalityFlagUrl: td.eq(4).find("img.flaggenrahmen").first().attr("src") ?? "",
-      marketValue,
-      fee,
-      feeText,
-      isLoan: /loan/i.test(feeText),
-      from: parseClub(td.eq(5)),
-      to: parseClub(td.eq(6)),
-    });
-  });
-
-  return out;
+      return {
+        rank: Number(row.text(COL.rank)) || 0,
+        playerId: player.playerId,
+        name: player.name,
+        position: player.position,
+        age: Number(row.text(COL.age)) || 0,
+        imageUrl: player.imageUrl,
+        // TM lists both passports of a dual national; the first is the one it
+        // sorts and filters him under.
+        nationality: row.imageTitle(COL.nationality),
+        nationalityFlagUrl: row.image(COL.nationality),
+        marketValue: parseMarketValue(row.text(COL.marketValue)),
+        fee: parseMarketValue(feeText),
+        feeText,
+        isLoan: /loan/i.test(feeText),
+        from: row.club(COL.from),
+        to: row.club(COL.to),
+      };
+    },
+    { playerColumn: 1 },
+  );
 }
 
 /** The transfer season rolls over with TM's own Aug 1 flip, so unlike the stats
@@ -97,19 +87,31 @@ export async function fetchTopTransfers(
     Array.from({ length: pages }, (_, i) => fetchPage(pageUrl(season, i + 1))),
   );
 
+  // Every page has to land. A partial set is not a shorter list — a failed page
+  // in the middle punches a 25-row hole through the rankings, the club totals
+  // and the season aggregate alike, and unstable_cache would then serve that
+  // hole for a day while the page still called itself the season's biggest 200.
+  // Failing here keeps the last good cache entry instead.
   const transfers: TopTransfer[] = [];
   for (const [i, result] of results.entries()) {
     if (result.status !== "fulfilled") {
-      // One page short beats no page at all: the lists stay useful, they just
-      // stop 25 rows sooner. Every page failing is a real break and throws below.
-      console.error(`[top-transfers] page ${i + 1} failed:`, result.reason);
-      continue;
+      throw new Error(`[top-transfers] page ${i + 1} of ${pages} failed: ${result.reason}`);
     }
-    transfers.push(...parseTopTransfers(result.value));
+    const rows = parseTopTransfers(result.value);
+    // TM fills every page but the last. A short one earlier in the run means the
+    // selectors moved, or the WAF served an empty 200 that fetchPage can't tell
+    // from a real answer — either way it isn't a shorter season.
+    if (rows.length < PAGE_SIZE && i < pages - 1) {
+      throw new Error(
+        `[top-transfers] page ${i + 1} of ${pages} parsed ${rows.length}/${PAGE_SIZE} rows — selectors moved or TM is blocking`,
+      );
+    }
+    transfers.push(...rows);
   }
 
   if (!transfers.length) throw new Error("Parsed 0 transfers — selectors moved or TM is blocking");
 
+  // TM's own rank column is the fee order across the whole season.
   transfers.sort((a, b) => a.rank - b.rank);
   return { season, transfers: transfers.slice(0, limit) };
 }
