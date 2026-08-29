@@ -35,6 +35,13 @@ export function WindowSummary({ season, summary }: { season: number; summary: Su
     Math.max(summary.fees, summary.marketValue),
   );
   const over = summary.premium > 0;
+  // Named separately: a loan was never a signing, an unpriced row is one TM gave
+  // no fee or no value for. Lumping them would imply the page had ignored deals
+  // it could have judged.
+  const excluded = [
+    { count: summary.loans, label: summary.loans === 1 ? "loan" : "loans" },
+    { count: summary.unpriced, label: "unpriced" },
+  ].filter((e) => e.count > 0);
 
   return (
     <section className="rounded-xl border border-border-subtle bg-elevated p-4 sm:p-5">
@@ -76,9 +83,13 @@ export function WindowSummary({ season, summary }: { season: number; summary: Su
         <Split swatch="bg-accent-cold" count={summary.over} label="paid over value" />
         <Split swatch="bg-text-secondary" count={summary.level} label="paid exactly value" />
         <Split swatch="bg-accent-hot" count={summary.under} label="paid under value" />
-        <span className="text-text-muted">
-          <span className="font-value">{summary.loans}</span> loans excluded
-        </span>
+        {/* Everything the pool left out, named. A count that silently swallowed
+            the rows it dropped would send the reader off to check it. */}
+        {excluded.map(({ count, label }) => (
+          <span key={label} className="text-text-muted">
+            <span className="font-value">{count}</span> {label} excluded
+          </span>
+        ))}
       </div>
 
       {summary.revalued > 0 && (

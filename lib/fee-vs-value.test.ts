@@ -361,6 +361,36 @@ describe("summarize", () => {
   it("accounts for what it left out rather than dropping it silently", () => {
     expect(summary.loans).toBe(1);
     expect(summary.frees).toBe(1);
+    // The row TM gave no market value for is named, not skipped.
+    expect(summary.unpriced).toBe(1);
+  });
+
+  it("summarizes exactly the pool the rankings draw from", () => {
+    // The headline and the lists have to be counting the same deals. They came
+    // apart once: `rank` learned to drop moves TM published no fee for while
+    // `summarize` went on treating them as signings bought for nothing, so the
+    // window claimed bargains that appeared on no list.
+    const transfers = analyzeTransfers(2026, [
+      tx({ name: "Real", marketValue: 20_000_000, fee: 30_000_000 }),
+      // A player going home. Not an arrival anyone bought, and not a loan
+      // either since `isLoan` stopped matching "End of loan".
+      tx({ name: "EndOfLoan", marketValue: 50_000_000, fee: 0, feeText: "End of loan" }),
+      // TM printed "?" for the fee: missing data, not a free transfer.
+      tx({ name: "Unpriced", marketValue: 40_000_000, fee: 0, feeText: "?" }),
+    ]).transfers;
+
+    const s = summarize(transfers);
+    expect(s.deals).toBe(rank(transfers).byFee.length);
+    expect(names(rank(transfers).byFee)).toEqual(["Real"]);
+    // Not €110m of players for €30m — the two unpriced rows are worth nothing
+    // to a measure of how well the window was priced.
+    expect(s.marketValue).toBe(20_000_000);
+    expect(s.fees).toBe(30_000_000);
+    expect(s.premium).toBe(10_000_000);
+    expect([s.over, s.under]).toEqual([1, 0]);
+    expect(s.unpriced).toBe(2);
+    // And neither stretches the ruler the visible rows are drawn against.
+    expect(gapScale(transfers)).toBe(30_000_000);
   });
 
   it("counts the market's later verdict", () => {

@@ -181,6 +181,30 @@ export function analyzeTransfers(
 }
 
 /**
+ * A move this page can put a price on — the one pool every ranking, the window
+ * headline and the shared bar axis are drawn from.
+ *
+ * Three ways a row falls out. A loan is not a signing at all: TM lists no fee
+ * for one and ranks it by its own internal transfer value. A market value of
+ * zero can't be compared against anything, and would divide by zero on the way
+ * to a ratio. And a move TM published no fee for parses to a fee of zero exactly
+ * like a free transfer does — ranking it would report the player's whole value
+ * as money saved, on a number TM never published.
+ *
+ * Stated once because it was previously spelled out at each site, and the copies
+ * drifted: `rank` learned to exclude unpriced moves while `summarize` went on
+ * counting them as signings bought for nothing, so the headline claimed €80m of
+ * bargains the lists below it did not contain.
+ *
+ * Club totals deliberately do not use this. There the question is what a side
+ * ended up with and what it cost, which a loan or an unpriced arrival still
+ * answers — see `buildClubWindows`.
+ */
+export function isPriced(t: PricedTransfer): boolean {
+  return !t.isLoan && t.worth > 0 && (t.fee > 0 || t.isFree);
+}
+
+/**
  * The ranked slices the page reads off, sorted once so the leaderboards all
  * share one source of truth.
  *
@@ -195,12 +219,7 @@ export function analyzeTransfers(
  * biggest-fee and most-valuable lists with them.
  */
 export function rank(transfers: PricedTransfer[]) {
-  // A market value of zero can't be compared against anything, and would divide
-  // by zero on the way to a ratio. Club totals keep those rows; rankings can't.
-  // A move TM published no fee for can't be priced against anything: its zero
-  // is missing data, not a free transfer, and ranking it would report the
-  // player's whole value as money saved.
-  const permanent = transfers.filter((t) => !t.isLoan && t.worth > 0 && (t.fee > 0 || t.isFree));
+  const permanent = transfers.filter(isPriced);
   const paid = permanent.filter((t) => t.fee > 0);
 
   // Each measure breaks its own ties on the other one, so two deals the same
@@ -268,13 +287,11 @@ export function transferKey(t: TopTransfer): string {
  * The window in one line: what was paid, what it was worth, and how the deals
  * split around their own valuations.
  *
- * Counted over exactly the pool the rankings draw from — permanent signings TM
- * priced — so the headline and the lists below it can never disagree. Everything
- * is measured against `worth`, the same basis a row shows, which is what keeps
- * the headline sentence internally consistent: the two figures it names really
- * do subtract to the third. Loans and unpriced rows are counted separately
- * rather than dropped silently, because a total that quietly excludes 26 moves
- * invites the reader to check it and find it wrong.
+ * Counted over exactly the pool the rankings draw from — `isPriced`, the same
+ * predicate `rank` filters on — so the headline and the lists below it can never
+ * disagree. Everything is measured against `worth`, the same basis a row shows,
+ * which is what keeps the headline sentence internally consistent: the two
+ * figures it names really do subtract to the third.
  */
 export interface WindowSummary {
   /** Permanent signings with a value to price against. */
@@ -289,9 +306,14 @@ export interface WindowSummary {
   over: number;
   level: number;
   under: number;
-  /** Left out of the pool above, and why. */
-  loans: number;
+  /** Permanent signings that cost nothing, counted inside the pool above. */
   frees: number;
+  /** Left out of the pool above, and why: a loan is not a signing, and an
+   *  unpriced row is one TM gave no fee or no market value for. Both are named
+   *  rather than dropped, because a total that quietly excludes 26 moves invites
+   *  the reader to check it and find it wrong. */
+  loans: number;
+  unpriced: number;
   /** Rows the market has re-rated since the move, and which way it went. */
   revalued: number;
   revaluedUp: number;
@@ -310,19 +332,22 @@ export function summarize(transfers: PricedTransfer[]): WindowSummary {
     over: 0,
     level: 0,
     under: 0,
-    loans: 0,
     frees: 0,
+    loans: 0,
+    unpriced: 0,
     revalued: 0,
     revaluedUp: 0,
     worthTheFee: 0,
   };
 
   for (const t of transfers) {
-    if (t.isLoan) {
-      s.loans += 1;
+    // Exactly the rankings' pool, so the headline and the lists below it can
+    // never disagree. What falls out is accounted for rather than skipped.
+    if (!isPriced(t)) {
+      if (t.isLoan) s.loans += 1;
+      else s.unpriced += 1;
       continue;
     }
-    if (t.worth <= 0) continue;
     s.deals += 1;
     s.fees += t.fee;
     s.marketValue += t.worth;
@@ -345,19 +370,27 @@ export function summarize(transfers: PricedTransfer[]): WindowSummary {
 }
 
 /**
- * The euro axis every bar on the page is drawn against: zero to the largest
- * figure any one deal puts on it.
+ * The euro axis every **player row** is drawn against: zero to the largest
+ * figure any one priced deal puts on it.
  *
- * One scale for the whole page, not one per list, so a bar means the same thing
- * wherever it appears and switching tabs reorders the rows without redrawing
- * the ruler under them. It is also what makes the page's hardest idea visible
- * for free: the cash lists lead with long bars and the times-value lists lead
- * with short ones, which is precisely why the two rarely name the same player.
+ * One scale across all six rankings, not one per list, so a bar means the same
+ * thing wherever a row appears and switching tabs reorders the rows without
+ * redrawing the ruler under them. It is also what makes the page's hardest idea
+ * visible for free: the cash lists lead with long bars and the times-value lists
+ * lead with short ones, which is precisely why the two rarely name the same
+ * player.
+ *
+ * The club tables and the window headline draw their own rulers, an order of
+ * magnitude up — a club's whole window against one signing would flatten every
+ * player row to nothing.
+ *
+ * Measured over `isPriced` rows only: a move that cannot appear on any list must
+ * not stretch the ruler for the ones that can.
  */
 export function gapScale(transfers: PricedTransfer[]): number {
   let max = 0;
   for (const t of transfers) {
-    if (t.isLoan) continue;
+    if (!isPriced(t)) continue;
     max = Math.max(max, t.fee, t.worth, t.marketValue);
   }
   return max;
