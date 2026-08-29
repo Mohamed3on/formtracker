@@ -288,7 +288,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border-subtle bg-black/90 backdrop-blur-xl">
-      <div className="page-container flex items-center justify-between py-3 sm:py-4">
+      <div className="page-container flex items-center justify-between gap-4 py-3 sm:py-4">
         {/* Logo */}
         <Link href="/" className="group flex items-center gap-2">
           <Image
