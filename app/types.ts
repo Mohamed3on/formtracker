@@ -1,4 +1,5 @@
 import type { CeapiGame, RecentGameStats } from "@/lib/player-aggregation";
+import type { ClubIdentity } from "@/lib/transfermarkt";
 
 export interface TeamStats {
   name: string;
@@ -244,6 +245,34 @@ export interface MarketValueMoversResult {
 // live with the pure aggregation module in lib/player-aggregation.ts and are
 // re-exported below so existing app-side imports keep working.
 export type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/lib/player-aggregation";
+
+/** The club at either end of a move. Defined with the parser that produces it
+ *  and aliased here, the same arrangement as the pipeline types above: it was
+ *  previously declared a second time in this file with the identical five
+ *  fields, which TypeScript accepts silently — `parseClubCell` returned one and
+ *  it was stored as the other, and nothing would have caught the two drifting
+ *  apart. `import type` is erased, so no scraper code reaches the bundle. */
+export type TransferClub = ClubIdentity;
+
+export interface TopTransfer {
+  rank: number;
+  playerId: string;
+  name: string;
+  position: string;
+  age: number;
+  imageUrl: string;
+  nationality: string;
+  nationalityFlagUrl: string;
+  marketValue: number;
+  fee: number;
+  feeText: string;
+  isLoan: boolean;
+  /** TM said the move cost nothing, as opposed to saying nothing about what it
+   *  cost. Both parse to a fee of 0; only the first is a bargain. */
+  isFree: boolean;
+  from: TransferClub;
+  to: TransferClub;
+}
 
 export type TransferBalanceMetric = "expenditure" | "income" | "netSpender" | "netProfit";
 

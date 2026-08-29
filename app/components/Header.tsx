@@ -8,8 +8,14 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Menu, HelpCircle } from "lucide-react";
+import { Menu, HelpCircle, ChevronDown } from "lucide-react";
 import { PlayerSearch } from "./PlayerSearch";
 import { LEAGUES, getLeagueLogoUrl } from "@/lib/leagues";
 
@@ -20,6 +26,7 @@ const PAGE_CACHE_MAP: Record<string, { tags?: string[]; workflow?: boolean }> = 
   "/players": { workflow: true },
   "/value-analysis": { workflow: true },
   "/biggest-movers": { workflow: true },
+  "/fee-vs-value": { tags: ["top-transfers"] },
   "/transfer-balance": { workflow: true },
 };
 
@@ -94,8 +101,25 @@ const navItems = [
   { href: "/value-analysis", label: "Over/Under" },
   { href: "/injured", label: "Injury Impact" },
   { href: "/biggest-movers", label: "Biggest Movers" },
-  { href: "/transfer-balance", label: "Transfer Balance" },
+  // Grouped, not top-level: both read the transfer window in money, and a
+  // top-level entry each overflows the bar into the logo at the xl breakpoint,
+  // which is exactly where the bar first appears.
+  {
+    label: "Transfers",
+    children: [
+      { href: "/fee-vs-value", label: "Fee vs Value" },
+      { href: "/transfer-balance", label: "Transfer Balance" },
+    ],
+  },
 ] as const;
+
+type NavLink = { href: string; label: string };
+
+// Mobile sheet is a flat list — a group has no page of its own, so it comes
+// through as its children rather than as a row that leads nowhere.
+const mobileNavItems = navItems.flatMap((i): NavLink[] =>
+  "children" in i ? [...i.children] : [{ href: i.href, label: i.label }],
+);
 
 const LEAGUE_NAV = LEAGUES.map((l) => ({
   slug: l.slug,
@@ -152,6 +176,44 @@ function MainNavLink({
     >
       {label}
     </Link>
+  );
+}
+
+// Desktop-only: a nav item whose children open in a dropdown (e.g. Transfers → Fee vs Value).
+function NavDropdown({
+  item,
+  pathname,
+}: {
+  item: { label: string; children: readonly { href: string; label: string }[] };
+  pathname: string;
+}) {
+  const isActive = item.children.some((c) => c.href === pathname);
+  return (
+    // Non-modal: don't lock body scroll / strip the scrollbar (that's what shifts the page).
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "h-auto gap-1 px-2 py-1.5 text-sm",
+            isActive && "bg-elevated text-text-primary",
+          )}
+        >
+          {item.label}
+          <ChevronDown className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {item.children.map((c) => (
+          <DropdownMenuItem key={c.href} asChild>
+            <Link href={c.href} aria-current={pathname === c.href ? "page" : undefined}>
+              {c.label}
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -240,15 +302,19 @@ export function Header() {
         <nav className="hidden items-center gap-0.5 xl:flex">
           {navItems
             .filter((i) => !("desktopHidden" in i && i.desktopHidden))
-            .map((item) => (
-              <MainNavLink
-                key={item.href}
-                href={item.href}
-                label={item.label}
-                variant="desktop"
-                isActive={pathname === item.href}
-              />
-            ))}
+            .map((item) =>
+              "children" in item ? (
+                <NavDropdown key={item.label} item={item} pathname={pathname} />
+              ) : (
+                <MainNavLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  variant="desktop"
+                  isActive={pathname === item.href}
+                />
+              ),
+            )}
         </nav>
 
         {/* Right side */}
@@ -300,7 +366,7 @@ export function Header() {
             <SheetContent side="right" className="w-64 border-border-subtle bg-background">
               <SheetTitle className="sr-only">Navigation</SheetTitle>
               <nav className="mt-8 flex flex-col gap-1">
-                {[...navItems, { href: "/how-it-works", label: "How It Works" }].map(
+                {[...mobileNavItems, { href: "/how-it-works", label: "How It Works" }].map(
                   ({ href, label }) => (
                     <SheetClose key={href} asChild>
                       <MainNavLink
