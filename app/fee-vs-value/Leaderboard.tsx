@@ -15,7 +15,7 @@ import {
   withRanks,
   type PricedTransfer,
 } from "@/lib/fee-vs-value";
-import { CLUB_MODES, ClubTables, type ClubMode } from "./ClubTables";
+import { CLUB_MODES, ClubTables, type ModeSpec } from "./ClubTables";
 import { TransferRow, type Tone } from "./TransferRow";
 import { WindowSummary } from "./WindowSummary";
 
@@ -41,10 +41,6 @@ interface ListOption extends Option {
   format: (t: PricedTransfer) => string;
 }
 
-interface ClubOption extends Option {
-  mode: ClubMode;
-}
-
 /** Each view keeps its own pair of measures, so the control beside the heading
  *  always offers the two that make sense for what's on screen. Clubs renders
  *  tables rather than a row list, which is why it's a separate kind rather than
@@ -58,7 +54,9 @@ type ViewSpec = {
   defaultBy: string;
 } & (
   | { kind: "list"; tone: Tone; options: [ListOption, ListOption] }
-  | { kind: "clubs"; options: ClubOption[] }
+  // A ModeSpec already carries everything an Option does, so the club views
+  // list the specs themselves rather than a copy of four of their fields.
+  | { kind: "clubs"; options: ModeSpec[] }
 );
 
 const VIEWS: Record<View, ViewSpec> = {
@@ -144,13 +142,7 @@ const VIEWS: Record<View, ViewSpec> = {
     kind: "clubs",
     control: "Show",
     defaultBy: "buying",
-    options: (Object.keys(CLUB_MODES) as ClubMode[]).map((mode) => ({
-      slug: CLUB_MODES[mode].slug,
-      mode,
-      toggle: CLUB_MODES[mode].toggle,
-      title: CLUB_MODES[mode].title,
-      blurb: CLUB_MODES[mode].blurb,
-    })),
+    options: Object.values(CLUB_MODES),
   },
 };
 
@@ -161,13 +153,18 @@ const VIEW_KEYS = Object.keys(VIEWS) as View[];
  *  on the server as in the browser, so the first paint already has the right
  *  tab open. */
 function resolve(view: string | null, by: string | null) {
-  const key = (VIEW_KEYS as string[]).includes(view ?? "") ? (view as View) : "biggest";
+  const key = view && view in VIEWS ? (view as View) : "biggest";
   const spec = VIEWS[key];
-  const option =
-    spec.options.find((o) => o.slug === by) ??
-    spec.options.find((o) => o.slug === spec.defaultBy) ??
-    spec.options[0];
-  return { key, spec, option };
+  const pick = <O extends Option>(options: readonly O[]): O =>
+    options.find((o) => o.slug === by) ??
+    options.find((o) => o.slug === spec.defaultBy) ??
+    options[0];
+  // The discriminant is hoisted onto the result. Narrowing on a nested
+  // `spec.kind` leaves the sibling `option` un-narrowed, which is what used to
+  // force a cast at each render site.
+  return spec.kind === "clubs"
+    ? ({ kind: spec.kind, key, spec, option: pick(spec.options) } as const)
+    : ({ kind: spec.kind, key, spec, option: pick(spec.options) } as const);
 }
 
 /** Roughly a row at desktop width; the virtualizer measures each one for real
@@ -225,7 +222,8 @@ export function Leaderboard({
   season: number;
 }) {
   const { params, update, replace } = useQueryParams(PATH);
-  const { key: view, spec, option } = resolve(params.get("view"), params.get("by"));
+  const resolved = resolve(params.get("view"), params.get("by"));
+  const { key: view, spec, option } = resolved;
 
   // Sorted here rather than on the server: the six orderings are six views of
   // the same objects, and shipping them pre-sorted put every transfer on the
@@ -292,7 +290,7 @@ export function Leaderboard({
                 <ToggleGroupItem
                   key={o.slug}
                   value={o.slug}
-                  className={cnEdge(i, spec.options.length)}
+                  className={edgeRounding(i, spec.options.length)}
                 >
                   {o.toggle}
                 </ToggleGroupItem>
@@ -301,14 +299,14 @@ export function Leaderboard({
           </div>
         </div>
 
-        {spec.kind === "clubs" ? (
+        {resolved.kind === "clubs" ? (
           <div className="mt-4">
-            <ClubTables transfers={transfers} mode={(option as ClubOption).mode} />
+            <ClubTables transfers={transfers} spec={resolved.option} />
           </div>
         ) : (
           <TransferList
-            spec={spec}
-            option={option as ListOption}
+            spec={resolved.spec}
+            option={resolved.option}
             ranked={ranked}
             axisMax={axisMax}
           />
@@ -319,7 +317,7 @@ export function Leaderboard({
 }
 
 /** Round only the outer edges of a segmented control, whatever its length. */
-function cnEdge(i: number, total: number) {
+function edgeRounding(i: number, total: number) {
   if (i === 0) return "rounded-l-lg";
   if (i === total - 1) return "rounded-r-lg";
   return "";

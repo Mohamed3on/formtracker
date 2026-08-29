@@ -32,8 +32,6 @@ import { GapTrack } from "./FeeValueBar";
  *  of any spending list into the mid-table business that is often the story. */
 const TOP = 10;
 
-export type ClubMode = "spending" | "selling" | "value";
-
 type Side = "in" | "out";
 
 /** One end of a mode's single ranking — its top, then its bottom. Only what
@@ -51,7 +49,7 @@ type EndSpec = {
 
 /** Which question a club table asks, and how it answers it. `sort` is descending;
  *  the second end reads the same order from the other end. */
-type ModeSpec = {
+export type ModeSpec = {
   /** What this mode is called in the URL. */
   slug: string;
   toggle: string;
@@ -78,8 +76,8 @@ type ModeSpec = {
 const money = formatMarketValue;
 const signed = formatPremium;
 
-export const CLUB_MODES: Record<ClubMode, ModeSpec> = {
-  spending: {
+export const CLUB_MODES = {
+  buying: {
     slug: "buying",
     bar: true,
     toggle: "Buying",
@@ -111,7 +109,7 @@ export const CLUB_MODES: Record<ClubMode, ModeSpec> = {
       { title: "Sold below value", tone: "over", side: "out" },
     ],
   },
-  value: {
+  "squad-value": {
     slug: "squad-value",
     toggle: "Squad value",
     title: "Who gained and who lost",
@@ -141,7 +139,13 @@ export const CLUB_MODES: Record<ClubMode, ModeSpec> = {
       },
     ],
   },
-};
+} satisfies Record<string, ModeSpec>;
+
+/** The three cuts, keyed by the slug that names them in the URL. `slug` was
+ *  always the public name; keying on it too means there is one vocabulary for a
+ *  mode rather than an internal name and a URL name that had to be mapped
+ *  between. */
+export type ClubMode = keyof typeof CLUB_MODES;
 
 /** Paying above a player's value is the bad outcome on the way in and the good
  *  one on the way out. Landing exactly on it is neither, so it stays uncoloured
@@ -336,7 +340,7 @@ function ClubTable({
   );
 }
 
-export function ClubTables({ transfers, mode }: { transfers: PricedTransfer[]; mode: ClubMode }) {
+export function ClubTables({ transfers, spec }: { transfers: PricedTransfer[]; spec: ModeSpec }) {
   // Loans are a scope on the data rather than a different question, so they sit
   // here beside the tables instead of competing with the mode toggle above.
   const [withLoans, setWithLoans] = useState(true);
@@ -344,10 +348,9 @@ export function ClubTables({ transfers, mode }: { transfers: PricedTransfer[]; m
   // the transfers the page already holds, and shipping them pre-built put every
   // move on the wire four more times.
   const rows = useMemo(
-    () => buildClubWindows(transfers, withLoans ? undefined : (t) => !t.isLoan),
+    () => buildClubWindows(withLoans ? transfers : transfers.filter((t) => !t.isLoan)),
     [transfers, withLoans],
   );
-  const spec = CLUB_MODES[mode];
   // One euro axis across both tables, so the bar on a club that spent €292m is
   // visibly longer than the bar on one that spent €40m.
   const axisMax = useMemo(

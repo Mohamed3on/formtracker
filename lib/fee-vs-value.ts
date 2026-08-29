@@ -142,11 +142,11 @@ function seal(side: ClubSide) {
  *  no market value for. There the question is "was this deal priced well", which
  *  a move with no fee or no value cannot answer; here it is "what did the club
  *  end up with, and what did it cost" — and a €50m striker arriving on loan for
- *  nothing is the single best answer a window can give. */
-export function buildClubWindows(
-  transfers: PricedTransfer[],
-  include: (t: PricedTransfer) => boolean = () => true,
-): ClubWindow[] {
+ *  nothing is the single best answer a window can give.
+ *
+ *  Narrowing the pool is the caller's job: the loans-off cut is one `.filter`
+ *  at the call site, which is what a predicate parameter here amounted to. */
+export function buildClubWindows(transfers: PricedTransfer[]): ClubWindow[] {
   const map = new Map<string, ClubWindow>();
   const at = (club: TransferClub) => {
     const key = club.clubId || club.name;
@@ -159,7 +159,6 @@ export function buildClubWindows(
   };
 
   for (const t of transfers) {
-    if (!include(t)) continue;
     if (t.to.name) addTo(at(t.to).in, t);
     // TM leaves the selling club blank on the odd row (a released player, a club
     // it has no page for); those rows still count as an arrival, just not as

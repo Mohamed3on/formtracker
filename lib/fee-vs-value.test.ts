@@ -83,7 +83,7 @@ describe("analyzeTransfers", () => {
   });
 
   const withLoans = buildClubWindows(data.transfers);
-  const permanentOnly = buildClubWindows(data.transfers, (t) => !t.isLoan);
+  const permanentOnly = buildClubWindows(data.transfers.filter((t) => !t.isLoan));
   const window = (name: string, cut = withLoans) => cut.find((c) => c.club.name === name)!;
 
   it("orders a club's moves by the player, not by the fee", () => {
