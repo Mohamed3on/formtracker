@@ -34,6 +34,11 @@ type TableSpec = {
   caption: (c: ClubWindow) => string;
   /** Small figure under it. Defaults to the fee-to-value ratio of that side. */
   badge?: (c: ClubWindow) => string | null;
+  /** Which moves the expanded row lists. Defaults to `side`, which is right when
+   *  the headline only counts one side. Where it nets the two — squad value —
+   *  the expansion has to show both, or half the number it is explaining is
+   *  missing from the list underneath it. */
+  expand?: "in" | "out" | "both";
   tone: "over" | "under";
 };
 
@@ -110,6 +115,7 @@ export const CLUB_MODES: Record<
         side: "in",
         sort: (c) => c.netValue,
         qualifies: (c) => c.netValue > 0,
+        expand: "both",
         figure: (c) => signed(c.netValue),
         caption: (c) => `${money(c.in.marketValue)} in · ${money(c.out.marketValue)} out`,
         badge: (c) => `${signed(c.netSpend)} net`,
@@ -121,6 +127,7 @@ export const CLUB_MODES: Record<
         sort: (c) => c.netValue,
         flip: true,
         qualifies: (c) => c.netValue < 0,
+        expand: "both",
         figure: (c) => signed(c.netValue),
         caption: (c) => `${money(c.in.marketValue)} in · ${money(c.out.marketValue)} out`,
         badge: (c) => `${signed(c.netSpend)} net`,
@@ -184,6 +191,16 @@ function ClubRow({ c, spec }: { c: ClubWindow; spec: TableSpec }) {
   const [open, setOpen] = useState(false);
   const side = c[spec.side];
   const badge = spec.badge ? spec.badge(c) : side.marketValue > 0 ? formatRatio(side.ratio) : null;
+  // Labels only when both sides are on show; a single-sided expansion needs no
+  // heading telling you what you already picked.
+  const groups = (
+    spec.expand === "both"
+      ? ([
+          { key: "in", label: "In" },
+          { key: "out", label: "Out" },
+        ] as const)
+      : ([{ key: spec.expand ?? spec.side, label: null }] as const)
+  ).filter((g) => c[g.key].transfers.length > 0);
   return (
     <Collapsible
       open={open}
@@ -224,11 +241,20 @@ function ClubRow({ c, spec }: { c: ClubWindow; spec: TableSpec }) {
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <ul className="divide-y divide-border-subtle border-t border-border-subtle px-2.5">
-          {side.transfers.map((t) => (
-            <MoveRow key={t.playerId} t={t} side={spec.side} />
-          ))}
-        </ul>
+        {groups.map(({ key, label }) => (
+          <div key={key} className="border-t border-border-subtle">
+            {label && (
+              <p className="px-2.5 pt-2 text-[10px] uppercase tracking-[0.18em] text-text-muted">
+                {label}
+              </p>
+            )}
+            <ul className="divide-y divide-border-subtle px-2.5">
+              {c[key].transfers.map((t) => (
+                <MoveRow key={`${key}-${t.playerId}`} t={t} side={key} />
+              ))}
+            </ul>
+          </div>
+        ))}
         {/* The club name in the header can't be a link — it sits inside the
             trigger button — so the way through to the squad lives down here. */}
         {c.club.clubId && (
