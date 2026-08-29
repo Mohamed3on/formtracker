@@ -14,6 +14,7 @@ const CORE_ROUTES = [
   "/injured",
   "/biggest-movers",
   "/fee-vs-value",
+  "/transfer-balance",
   "/wc-live",
   "/wc",
   "/wc-schedule",

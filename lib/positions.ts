@@ -83,6 +83,31 @@ const BROAD_POSITION_SHORT: Record<BroadPositionGroup, string> = {
   goalkeepers: "GK",
 };
 
+/** Shirt-style abbreviations. The squad list shows position, age and market
+ *  value on one line, and the full "Centre-Forward" pushed the value out of
+ *  the truncated span entirely. Unknown positions pass through unchanged. */
+const POSITION_ABBREVIATION: Record<string, string> = {
+  Goalkeeper: "GK",
+  "Centre-Back": "CB",
+  "Left-Back": "LB",
+  "Right-Back": "RB",
+  "Left Wing-Back": "LWB",
+  "Right Wing-Back": "RWB",
+  "Defensive Midfield": "DM",
+  "Central Midfield": "CM",
+  "Left Midfield": "LM",
+  "Right Midfield": "RM",
+  "Attacking Midfield": "AM",
+  "Left Winger": "LW",
+  "Right Winger": "RW",
+  "Second Striker": "SS",
+  "Centre-Forward": "CF",
+};
+
+export function getShortPosition(position: string): string {
+  return POSITION_ABBREVIATION[position] ?? position;
+}
+
 export function getBroadPositionShortLabel(position: string): string {
   return BROAD_POSITION_SHORT[getBroadPositionGroup(position)];
 }

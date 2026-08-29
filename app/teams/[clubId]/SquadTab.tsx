@@ -8,6 +8,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerDetailHref } from "@/lib/format";
 import type { MinutesValuePlayer } from "@/app/types";
 import { npga } from "@/lib/stats-toggles";
+import { getShortPosition } from "@/lib/positions";
 
 type SortKey = "value" | "mins" | "games" | "ga" | "pen";
 
@@ -38,9 +39,12 @@ function SquadPlayerRow({
   return (
     <Link
       href={getPlayerDetailHref(player.playerId)}
-      className="flex items-center gap-3 rounded-xl border border-border-subtle bg-elevated p-2.5 transition-colors hover:border-border-medium hover:bg-card-hover"
+      className="flex items-center gap-2 rounded-xl border border-border-subtle bg-elevated p-2.5 transition-colors hover:border-border-medium hover:bg-card-hover sm:gap-3"
     >
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/20 text-xs font-value text-text-muted">
+      {/* At 320px the fixed furniture left the name and market value only 66px of the
+          254px row. The rank chip is the one piece the list's own order already tells
+          you, so it goes first on the narrowest screens. */}
+      <div className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/20 text-xs font-value text-text-muted sm:flex">
         {rank}
       </div>
       <PlayerAvatar
@@ -62,7 +66,8 @@ function SquadPlayerRow({
           )}
           <NationalityFlag url={player.nationalityFlagUrl} name={player.nationality} />
           <span className="truncate">
-            {player.position} · {player.age}y · {player.marketValueDisplay}
+            <span title={player.position}>{getShortPosition(player.position)}</span> · {player.age}y
+            · {player.marketValueDisplay}
           </span>
         </p>
       </div>
@@ -95,7 +100,7 @@ function SquadPlayerRow({
         </div>
       </div>
       {/* Mobile stats */}
-      <div className="flex shrink-0 items-center gap-3 text-right sm:hidden">
+      <div className="flex shrink-0 items-center gap-2 text-right sm:hidden">
         <span className="text-sm font-value text-accent-hot">{playerNpga}</span>
         <span className="text-xs font-value text-text-muted">
           {player.minutes.toLocaleString()}&apos;
@@ -156,7 +161,9 @@ export function SquadTab({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+      {/* Bleed must match .page-container's 12px mobile padding (px-3) — -mx-5 pushed
+          this 8px past each viewport edge on every squad and league page. */}
+      <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
         <ToggleGroup
           type="single"
           value={sortBy}

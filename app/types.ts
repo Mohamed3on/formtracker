@@ -269,3 +269,34 @@ export interface TopTransfer {
   from: TransferClub;
   to: TransferClub;
 }
+
+export type TransferBalanceMetric = "expenditure" | "income" | "netSpender" | "netProfit";
+
+export interface TransferBalanceClub {
+  id: string;
+  slug: string;
+  name: string;
+  expenditure: number;
+  arrivals: number;
+  income: number;
+  departures: number;
+  /** Sales minus spend, straight from Transfermarkt: positive = the club banked money. */
+  balance: number;
+}
+
+export interface TransferBalanceWindow {
+  seasons: number;
+  from: number;
+  to: number;
+  label: string;
+  leaders: Record<TransferBalanceMetric, { id: string; name: string; value: number }>;
+  /** Every club that holds at least one of the four #1 slots, and which ones. */
+  wins: Record<string, TransferBalanceMetric[]>;
+  /** Those holding two or more — the thing the page is actually looking for. */
+  winners: { id: string; name: string; metrics: TransferBalanceMetric[] }[];
+  clubs: TransferBalanceClub[];
+}
+
+export interface TransferBalanceResult {
+  windows: TransferBalanceWindow[];
+}

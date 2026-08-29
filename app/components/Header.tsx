@@ -27,6 +27,7 @@ const PAGE_CACHE_MAP: Record<string, { tags?: string[]; workflow?: boolean }> = 
   "/value-analysis": { workflow: true },
   "/biggest-movers": { workflow: true },
   "/fee-vs-value": { tags: ["top-transfers"] },
+  "/transfer-balance": { workflow: true },
 };
 
 async function refreshPage(pathname: string) {
@@ -109,14 +110,7 @@ const navItems = [
   },
   { href: "/injured", label: "Injury Impact" },
   { href: "/biggest-movers", label: "Biggest Movers" },
-  {
-    href: "/wc-live",
-    label: "World Cup",
-    children: [
-      { href: "/wc-live", label: "Final Results" },
-      { href: "/wc-schedule", label: "Full Schedule" },
-    ],
-  },
+  { href: "/transfer-balance", label: "Transfer Balance" },
 ] as const;
 
 type NavLink = { href: string; label: string };
@@ -186,7 +180,7 @@ function MainNavLink({
   );
 }
 
-// Desktop-only: a nav item whose children open in a dropdown (e.g. World Cup → Live / Schedule).
+// Desktop-only: a nav item whose children open in a dropdown (e.g. Over/Under → Fee vs Value).
 function NavDropdown({
   item,
   pathname,
@@ -288,9 +282,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border-subtle bg-black/90 backdrop-blur-xl">
-      <div className="page-container flex items-center justify-between gap-4 py-3 sm:py-4">
+      <div className="page-container flex items-center justify-between gap-2 py-3 sm:py-4">
         {/* Logo */}
-        <Link href="/" className="group flex items-center gap-2">
+        {/* shrink-0: without it flex squeezes the logo below its text width and
+            "SquadStat" overflows into the first nav item. */}
+        <Link href="/" className="group flex shrink-0 items-center gap-2">
           <Image
             src="/icon.png"
             alt="SquadStat"
@@ -323,7 +319,7 @@ export function Header() {
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <PlayerSearch />
           <Button
             asChild
