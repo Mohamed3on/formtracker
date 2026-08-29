@@ -103,10 +103,7 @@ export function TransferRow({
   const shown: Tone = transfer.premium === 0 ? "neutral" : tone;
 
   return (
-    <div
-      role="listitem"
-      className="overflow-hidden rounded-lg border border-border-subtle bg-card transition-colors hover:bg-card-hover"
-    >
+    <div className="overflow-hidden rounded-lg border border-border-subtle bg-card transition-colors hover:bg-card-hover">
       <div className="flex items-center gap-2.5 p-2.5 sm:gap-3 sm:p-3">
         {rank !== undefined && <RankBadge rank={rank} highlightClass={TONE_RANK[shown]} />}
         <PlayerAvatar imageUrl={transfer.imageUrl} name={transfer.name} size="sm" />

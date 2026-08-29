@@ -191,7 +191,7 @@ function TransferList({
   const list = useMemo(() => withRanks(option.list(ranked), option.format), [option, ranked]);
 
   return (
-    <div role="list" className="mt-3">
+    <div className="mt-3">
       <VirtualList
         items={list}
         estimateSize={ROW_ESTIMATE}

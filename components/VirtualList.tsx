@@ -29,10 +29,15 @@ export function VirtualList<T>({
 
   return (
     <div ref={listRef}>
-      <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+      {/* The list semantics belong here, on the elements that actually nest.
+          A caller marking its own wrapper `role="list"` and its rows
+          `role="listitem"` puts these two positioning divs between them, and
+          ARIA only recognises a listitem directly owned by its list. */}
+      <div role="list" className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
         {virtualizer.getVirtualItems().map((virtualRow) => (
           <div
             key={keyExtractor(items[virtualRow.index])}
+            role="listitem"
             data-index={virtualRow.index}
             ref={virtualizer.measureElement}
             className="absolute left-0 w-full"

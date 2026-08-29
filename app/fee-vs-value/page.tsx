@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getFeeVsValueData } from "@/lib/top-transfers";
 import { createPageMetadata } from "@/lib/metadata";
 import { Leaderboard } from "./Leaderboard";
@@ -30,9 +29,7 @@ export default async function FeeVsValuePage() {
 
   return (
     <div className="space-y-8 sm:space-y-10">
-      <Suspense>
-        <Leaderboard transfers={data.transfers} season={data.season} />
-      </Suspense>
+      <Leaderboard transfers={data.transfers} season={data.season} />
 
       <section className="rounded-lg border border-border-subtle bg-card p-4">
         <h2 className="text-sm font-medium text-text-secondary">How to read this</h2>

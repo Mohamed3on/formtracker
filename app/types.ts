@@ -1,4 +1,5 @@
 import type { CeapiGame, RecentGameStats } from "@/lib/player-aggregation";
+import type { ClubIdentity } from "@/lib/transfermarkt";
 
 export interface TeamStats {
   name: string;
@@ -245,13 +246,13 @@ export interface MarketValueMoversResult {
 // re-exported below so existing app-side imports keep working.
 export type { CeapiGame, PlayerStatsResult, RecentGameStats } from "@/lib/player-aggregation";
 
-export interface TransferClub {
-  name: string;
-  clubId: string;
-  logoUrl: string;
-  league: string;
-  country: string;
-}
+/** The club at either end of a move. Defined with the parser that produces it
+ *  and aliased here, the same arrangement as the pipeline types above: it was
+ *  previously declared a second time in this file with the identical five
+ *  fields, which TypeScript accepts silently — `parseClubCell` returned one and
+ *  it was stored as the other, and nothing would have caught the two drifting
+ *  apart. `import type` is erased, so no scraper code reaches the bundle. */
+export type TransferClub = ClubIdentity;
 
 export interface TopTransfer {
   rank: number;
