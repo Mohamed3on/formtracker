@@ -79,9 +79,14 @@ describe("analyzeTransfers", () => {
     expect(data.loans[0].marketValue).toBe(50_000_000);
   });
 
+  const buying = (name: string, cut = data.clubs.withLoans) =>
+    cut.find((c) => c.club.name === name)!;
+
   it("counts loans and frees towards their club, unlike the player rankings", () => {
     expect(
-      data.clubs.withLoans.map((c) => [c.club.name, c.signings, c.loans, c.frees, c.premium]),
+      data.clubs.withLoans
+        .filter((c) => c.in.players > 0)
+        .map((c) => [c.club.name, c.in.players, c.in.loans, c.in.frees, c.in.premium]),
     ).toEqual([
       ["Buyer", 1, 0, 0, 20_000_000],
       ["Thrifty", 1, 0, 0, -20_000_000],
@@ -92,13 +97,35 @@ describe("analyzeTransfers", () => {
 
   it("offers a loan-free cut of the same table", () => {
     expect(
-      data.clubs.permanentOnly.map((c) => [c.club.name, c.signings, c.loans, c.premium]),
+      data.clubs.permanentOnly
+        .filter((c) => c.in.players > 0)
+        .map((c) => [c.club.name, c.in.players, c.in.loans, c.in.premium]),
     ).toEqual([
       ["Buyer", 1, 0, 20_000_000],
       ["Thrifty", 1, 0, -20_000_000],
       // Only Freebie survives, so Gifted drops from -95m to -45m.
       ["Gifted", 1, 0, -45_000_000],
     ]);
+  });
+
+  it("aggregates the selling side off the same rows", () => {
+    // Every fixture move leaves the same club, so Seller is the counterparty to
+    // all four: 10 + 40 + 45 + 50 of value out, for 30 + 20 + 0 + 0 in fees.
+    const seller = buying("Seller");
+    expect(seller.out.players).toBe(4);
+    expect(seller.out.marketValue).toBe(145_000_000);
+    expect(seller.out.fees).toBe(50_000_000);
+    // Negative on the way out means sold below what the players were worth.
+    expect(seller.out.premium).toBe(-95_000_000);
+    expect(seller.in.players).toBe(0);
+  });
+
+  it("nets value and spend across both sides", () => {
+    const seller = buying("Seller");
+    expect(seller.netValue).toBe(-145_000_000);
+    expect(seller.netSpend).toBe(-50_000_000);
+    expect(buying("Buyer").netValue).toBe(10_000_000);
+    expect(buying("Buyer").netSpend).toBe(30_000_000);
   });
 
   it("ranks both directions off one sort", () => {

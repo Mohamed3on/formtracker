@@ -5,13 +5,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VirtualList } from "@/components/VirtualList";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { withRanks, type FeeVsValueData, type rank as rankTransfers } from "@/lib/fee-vs-value";
-import { ClubTables } from "./ClubTables";
+import { CLUB_MODES, ClubTables, type ClubMode } from "./ClubTables";
 import { formatMarketValue } from "@/lib/format";
 import { formatPremium, formatRatio, TransferRow } from "./TransferRow";
 
 type Ranked = ReturnType<typeof rankTransfers>;
 type View = "over" | "under" | "big" | "clubs";
-type Basis = "premium" | "ratio" | "fee" | "value" | "with-loans" | "signings-only";
+type Basis = "premium" | "ratio" | "fee" | "value" | ClubMode;
 
 /** Each view keeps its own pair of measures, so the toggle beside the tabs
  *  always offers the two that make sense for what's on screen. */
@@ -100,21 +100,9 @@ const VIEWS: Record<
   clubs: {
     tab: "Clubs",
     tone: "neutral",
-    options: [
-      {
-        basis: "with-loans",
-        toggle: "With loans",
-        title: "Who shopped well, loans included",
-        blurb:
-          "What a club ended up with and what it paid. A loan brings a player in for little or nothing, which flatters the numbers.",
-      },
-      {
-        basis: "signings-only",
-        toggle: "Signings only",
-        title: "Who shopped well, signings only",
-        blurb: "Permanent arrivals only — no loans propping up the numbers.",
-      },
-    ],
+    options: (Object.entries(CLUB_MODES) as Array<[ClubMode, (typeof CLUB_MODES)[ClubMode]]>).map(
+      ([mode, m]) => ({ basis: mode, toggle: m.toggle, title: m.title, blurb: m.blurb }),
+    ),
   },
 };
 
@@ -194,7 +182,7 @@ export function Leaderboard({ ranked, clubs }: { ranked: Ranked; clubs: FeeVsVal
 
       {view === "clubs" ? (
         <div className="mt-4">
-          <ClubTables clubs={clubs} withLoans={current.basis === "with-loans"} />
+          <ClubTables clubs={clubs} mode={current.basis as ClubMode} />
         </div>
       ) : (
         /* Every row, not a top-N: the interesting deals are as often 40th as

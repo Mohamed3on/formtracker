@@ -9,7 +9,7 @@ import { fetchTopTransfers } from "./fetch-top-transfers";
  *  field until the day's TTL lapses. Adding a field to ClubPremium did exactly
  *  that in development, which is the only reason it isn't doing it in
  *  production. Version it and every such deploy misses cleanly instead. */
-const SHAPE_VERSION = "2";
+const SHAPE_VERSION = "3";
 
 /** Transfers move once a day at most outside a deadline, and the whole fetch is
  *  8 pages, so a day's cache costs one scrape and keeps the page instant. Tagged

@@ -1,4 +1,4 @@
-import type { TopTransfer } from "@/app/types";
+import type { TopTransfer, TransferClub } from "@/app/types";
 
 /** Pure analysis, no filesystem: `Leaderboard` is a client component and needs
  *  `withRanks`, so a `node:fs` import anywhere in this module's graph would
@@ -35,27 +35,42 @@ export interface FeeVsValueData {
    *  second pass on the client: a loan flatters a club's numbers (a €60m player
    *  for a €3m fee, or none at all) and whether that counts as good business is
    *  a matter of taste, not of fact. */
-  clubs: { withLoans: ClubPremium[]; permanentOnly: ClubPremium[] };
+  clubs: { withLoans: ClubWindow[]; permanentOnly: ClubWindow[] };
 }
 
-export interface ClubPremium {
-  club: TopTransfer["to"];
-  /** Every arrival counted, fee or not. */
-  signings: number;
-  /** Of those, the ones that were loans. TM lists a fee for some of these
-   *  ("Loan fee:€3.00m") and none for others, so this can't be read off the
-   *  fee — a €3m loan of a €60m player is still a loan, not a signing. */
+/** One club's side of a window — everything it bought, or everything it sold.
+ *
+ *  `premium` reads in opposite directions on the two sides, which is the whole
+ *  point of keeping them apart: buying above a player's value is money wasted,
+ *  selling above it is money made. */
+export interface ClubSide {
+  players: number;
+  /** TM lists a fee for some loans ("Loan fee:€3.00m") and none for others, so
+   *  this can't be read off the fee — a €3m loan of a €60m player is a loan. */
   loans: number;
-  /** Of those, the permanent ones that cost nothing. */
+  /** Permanent moves that cost nothing. */
   frees: number;
+  /** Paid, on the way in; received, on the way out. */
   fees: number;
   marketValue: number;
   premium: number;
   ratio: number;
-  /** The arrivals themselves, dearest first, so a club row can expand into the
-   *  business behind its total. Same objects the ranked lists hold, so this
-   *  costs a back-reference rather than a second copy on the wire. */
-  arrivals: TopTransfer[];
+  /** The moves themselves, dearest first, so a row can expand into the business
+   *  behind its total. Same objects the ranked lists hold, so this costs a
+   *  back-reference rather than a second copy on the wire. */
+  transfers: TopTransfer[];
+}
+
+/** A club's whole window: what came in, what went out, and the two nets that
+ *  fall out of them. A club can appear having only bought or only sold. */
+export interface ClubWindow {
+  club: TransferClub;
+  in: ClubSide;
+  out: ClubSide;
+  /** Market value gained minus lost — who actually strengthened. */
+  netValue: number;
+  /** Fees paid minus received — who actually spent. */
+  netSpend: number;
 }
 
 function price(t: TopTransfer): PricedTransfer {
@@ -66,42 +81,66 @@ function price(t: TopTransfer): PricedTransfer {
   };
 }
 
-/** Spend aggregated per buying club, so a club that overpaid a little on six
- *  signings shows up next to one that overpaid hugely on a single striker.
+const emptySide = (): ClubSide => ({
+  players: 0,
+  loans: 0,
+  frees: 0,
+  fees: 0,
+  marketValue: 0,
+  premium: 0,
+  ratio: 0,
+  transfers: [],
+});
+
+function addTo(side: ClubSide, t: TopTransfer) {
+  side.transfers.push(t);
+  side.players += 1;
+  if (t.isLoan) side.loans += 1;
+  else if (t.fee === 0) side.frees += 1;
+  side.fees += t.fee;
+  side.marketValue += t.marketValue;
+  side.premium += t.fee - t.marketValue;
+}
+
+function seal(side: ClubSide) {
+  side.ratio = side.marketValue > 0 ? side.fees / side.marketValue : 0;
+  side.transfers.sort((a, b) => b.fee - a.fee || b.marketValue - a.marketValue);
+}
+
+/** Every club that touched the window, aggregated on both sides at once.
  *
  *  Unlike the player rankings this counts loans and frees. There the question is
  *  "was this deal priced well", which a move with no fee cannot answer; here it
  *  is "what did the club end up with, and what did it cost" — and a €50m striker
  *  arriving on loan for nothing is the single best answer a window can give. */
-function byClub(arrivals: TopTransfer[]): ClubPremium[] {
-  const map = new Map<string, ClubPremium>();
-  for (const t of arrivals) {
-    const key = t.to.clubId || t.to.name;
-    const entry = map.get(key) ?? {
-      club: t.to,
-      signings: 0,
-      loans: 0,
-      frees: 0,
-      fees: 0,
-      marketValue: 0,
-      premium: 0,
-      ratio: 0,
-      arrivals: [],
-    };
-    entry.arrivals.push(t);
-    entry.signings += 1;
-    if (t.isLoan) entry.loans += 1;
-    else if (t.fee === 0) entry.frees += 1;
-    entry.fees += t.fee;
-    entry.marketValue += t.marketValue;
-    entry.premium += t.fee - t.marketValue;
-    map.set(key, entry);
+function buildClubWindows(transfers: TopTransfer[]): ClubWindow[] {
+  const map = new Map<string, ClubWindow>();
+  const at = (club: TransferClub) => {
+    const key = club.clubId || club.name;
+    let entry = map.get(key);
+    if (!entry) {
+      entry = { club, in: emptySide(), out: emptySide(), netValue: 0, netSpend: 0 };
+      map.set(key, entry);
+    }
+    return entry;
+  };
+
+  for (const t of transfers) {
+    if (t.to.name) addTo(at(t.to).in, t);
+    // TM leaves the selling club blank on the odd row (a released player, a club
+    // it has no page for); those rows still count as an arrival, just not as
+    // anyone's sale.
+    if (t.from.name) addTo(at(t.from).out, t);
   }
-  for (const entry of map.values()) {
-    entry.ratio = entry.marketValue > 0 ? entry.fees / entry.marketValue : 0;
-    entry.arrivals.sort((a, b) => b.fee - a.fee || b.marketValue - a.marketValue);
+
+  const windows = [...map.values()];
+  for (const w of windows) {
+    seal(w.in);
+    seal(w.out);
+    w.netValue = w.in.marketValue - w.out.marketValue;
+    w.netSpend = w.in.fees - w.out.fees;
   }
-  return [...map.values()].sort((a, b) => b.premium - a.premium);
+  return windows;
 }
 
 export function analyzeTransfers(season: number, transfers: TopTransfer[]): FeeVsValueData {
@@ -118,8 +157,8 @@ export function analyzeTransfers(season: number, transfers: TopTransfer[]): FeeV
     free,
     loans,
     clubs: {
-      withLoans: byClub([...paid, ...free, ...loans]),
-      permanentOnly: byClub([...paid, ...free]),
+      withLoans: buildClubWindows([...paid, ...free, ...loans]),
+      permanentOnly: buildClubWindows([...paid, ...free]),
     },
   };
 }

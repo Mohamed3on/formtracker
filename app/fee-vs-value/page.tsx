@@ -37,8 +37,17 @@ export default async function FeeVsValuePage() {
           A free transfer is still a signing, so it counts in the cash lists — picking up a €45M
           defender for nothing is the best bargain there is. It is left out of the times value
           lists, where every free comes to 0.00× and they would fill the top in a dead heat. A loan
-          is not a signing at all, so it stays out of both — it only shows up in a club's totals,
-          and only if you leave that switch on.
+          is not a signing at all, so it stays out of both — it only shows up under{" "}
+          <strong>Clubs</strong>, and only with that switch on.
+        </p>
+        <p className="mt-2 text-sm text-text-muted">
+          Every row names the club a player left as well as the one he joined, so{" "}
+          <strong>Clubs</strong> reads the same window from either end. <strong>Buying</strong> is
+          fees paid against what the players were worth; <strong>Selling</strong> is fees banked
+          against what the players leaving were worth, where being above value is the good outcome
+          rather than the bad one. <strong>Squad value</strong> ignores money altogether and asks
+          who added the most, and who let the most go. Open any club to see the deals behind its
+          total.
         </p>
       </section>
     </div>
