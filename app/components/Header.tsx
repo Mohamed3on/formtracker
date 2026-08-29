@@ -98,28 +98,27 @@ const navItems = [
   { href: "/form", label: "Recent Form" },
   { href: "/expected-position", label: "Value vs Table" },
   { href: "/players", label: "Players" },
-  // Grouped, not top-level: an eighth desktop nav item overflows the bar into
-  // the logo at the xl breakpoint, which is exactly where the bar first appears.
-  {
-    href: "/value-analysis",
-    label: "Over/Under",
-    children: [
-      { href: "/value-analysis", label: "Over/Under" },
-      { href: "/fee-vs-value", label: "Fee vs Value" },
-    ],
-  },
+  { href: "/value-analysis", label: "Over/Under" },
   { href: "/injured", label: "Injury Impact" },
   { href: "/biggest-movers", label: "Biggest Movers" },
-  { href: "/transfer-balance", label: "Transfer Balance" },
+  // Grouped, not top-level: both read the transfer window in money, and a
+  // top-level entry each overflows the bar into the logo at the xl breakpoint,
+  // which is exactly where the bar first appears.
+  {
+    label: "Transfers",
+    children: [
+      { href: "/fee-vs-value", label: "Fee vs Value" },
+      { href: "/transfer-balance", label: "Transfer Balance" },
+    ],
+  },
 ] as const;
 
 type NavLink = { href: string; label: string };
 
-// Mobile sheet is a flat list — surface dropdown children as their own rows.
+// Mobile sheet is a flat list — a group has no page of its own, so it comes
+// through as its children rather than as a row that leads nowhere.
 const mobileNavItems = navItems.flatMap((i): NavLink[] =>
-  "children" in i
-    ? [{ href: i.href, label: i.label }, ...i.children.filter((c) => c.href !== i.href)]
-    : [{ href: i.href, label: i.label }],
+  "children" in i ? [...i.children] : [{ href: i.href, label: i.label }],
 );
 
 const LEAGUE_NAV = LEAGUES.map((l) => ({
@@ -180,7 +179,7 @@ function MainNavLink({
   );
 }
 
-// Desktop-only: a nav item whose children open in a dropdown (e.g. Over/Under → Fee vs Value).
+// Desktop-only: a nav item whose children open in a dropdown (e.g. Transfers → Fee vs Value).
 function NavDropdown({
   item,
   pathname,
@@ -305,7 +304,7 @@ export function Header() {
             .filter((i) => !("desktopHidden" in i && i.desktopHidden))
             .map((item) =>
               "children" in item ? (
-                <NavDropdown key={item.href} item={item} pathname={pathname} />
+                <NavDropdown key={item.label} item={item} pathname={pathname} />
               ) : (
                 <MainNavLink
                   key={item.href}
