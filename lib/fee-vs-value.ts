@@ -1,41 +1,41 @@
 import type { TopTransfer, TransferClub } from "@/app/types";
 
-/** Pure analysis, no filesystem: `Leaderboard` is a client component and needs
- *  `withRanks`, so a `node:fs` import anywhere in this module's graph would
- *  break the browser bundle. Reading data/top-transfers.json lives in
- *  lib/top-transfers.ts, which only server components touch. */
+/** Pure analysis, no filesystem and no cheerio: `Leaderboard` is a client
+ *  component and calls `rank`/`withRanks` directly, so anything server-only in
+ *  this module's graph would break the browser bundle. Fetching and caching live
+ *  in lib/fetch-top-transfers.ts and lib/top-transfers.ts. */
 
 /** A transfer with its fee-vs-market-value gap resolved. `premium` is the cash
  *  above (or below) what TM thought the player was worth; `ratio` is the same
  *  gap as a multiple, which is what separates a €10m overpay on a €5m player
  *  from a €10m overpay on a €100m one. */
 export interface PricedTransfer extends TopTransfer {
+  /** The valuation every measure on this page is taken against: what the player
+   *  is worth **today** where the dataset has him, and the value frozen at the
+   *  moment of the move otherwise.
+   *
+   *  One basis, used by `premium`, `ratio` and the club totals alike, so the
+   *  figures on a row agree with each other: fee − worth is the cash gap and
+   *  fee ÷ worth is the same gap as a multiple. Measuring the two against
+   *  different values put `+€48.0M` beside `1.25×` on the same Morgan Rogers
+   *  row, which reads as one of them being broken. */
+  worth: number;
+  /** Cash paid above (or below) `worth`. */
   premium: number;
+  /** The same gap as a multiple: `1.00×` is the price the market now agrees
+   *  with, `2.00×` is double what the player is worth. */
   ratio: number;
-}
-
-/** Transfers split by what the buying club actually did.
- *
- *  A free transfer is still a permanent signing, so it belongs in the cash
- *  rankings — picking up a €45m defender for nothing is the biggest bargain a
- *  window can hold. It has no place in the times-value rankings: every free
- *  divides out to 0.00×, so they would fill the top of that list in a dead heat
- *  and bury the deals where a club actually negotiated a price down.
- *
- *  A loan is not a signing at all — TM lists no fee for one and ranks it by its
- *  own internal transfer value — so it stays out of both. */
-export interface FeeVsValueData {
-  season: number;
-  /** Permanent signings that cost a fee: ranked on cash and on times value. */
-  paid: PricedTransfer[];
-  /** Permanent signings that cost nothing: ranked on cash only. */
-  free: PricedTransfer[];
-  loans: TopTransfer[];
-  /** Both cuts of the club tables, so the page can offer the choice without a
-   *  second pass on the client: a loan flatters a club's numbers (a €60m player
-   *  for a €3m fee, or none at all) and whether that counts as good business is
-   *  a matter of taste, not of fact. */
-  clubs: { withLoans: ClubWindow[]; permanentOnly: ClubWindow[] };
+  /** What the player is worth today, where the committed dataset tracks him.
+   *  Set only when it differs from `marketValue`, so its presence marks both the
+   *  rows the market has re-rated since the move and the rows whose `worth` is
+   *  something other than the frozen `marketValue`.
+   *
+   *  Transfermarkt re-rates a player towards the fee his new club paid — four of
+   *  this window's thirteen landed on the fee exactly — so a re-rated deal drifts
+   *  towards `1.00×` and a zero premium as the market comes round to the price.
+   *  That is the intended reading: these measure what he is worth now, not what
+   *  the buying club could have known. See lib/current-values.ts. */
+  currentValue?: number;
 }
 
 /** One club's side of a window — everything it bought, or everything it sold.
@@ -52,13 +52,15 @@ export interface ClubSide {
   frees: number;
   /** Paid, on the way in; received, on the way out. */
   fees: number;
+  /** Summed `worth`, not summed `marketValue`, so `fees - marketValue` is this
+   *  side's `premium` and the caption a club row shows adds up. */
   marketValue: number;
   premium: number;
   ratio: number;
   /** The moves themselves, dearest first, so a row can expand into the business
-   *  behind its total. Same objects the ranked lists hold, so this costs a
-   *  back-reference rather than a second copy on the wire. */
-  transfers: TopTransfer[];
+   *  behind its total. Free to hold by reference: club windows are derived on
+   *  the client from the one transfer array, so nothing here crosses the wire. */
+  transfers: PricedTransfer[];
 }
 
 /** A club's whole window: what came in, what went out, and the two nets that
@@ -73,11 +75,28 @@ export interface ClubWindow {
   netSpend: number;
 }
 
-function price(t: TopTransfer): PricedTransfer {
+/**
+ * What the server ships: the window's transfers, priced, and nothing else.
+ *
+ * Every view the page offers — six rankings and two cuts of the club tables —
+ * is a rearrangement of these same rows, so each one that was computed here
+ * put the whole set on the wire again. They are derived on the client instead,
+ * which costs a few hundred array operations and saves the duplication.
+ */
+export interface FeeVsValueData {
+  season: number;
+  transfers: PricedTransfer[];
+}
+
+function price(t: TopTransfer, currentValue?: number): PricedTransfer {
+  const worth = currentValue || t.marketValue;
   return {
     ...t,
-    premium: t.fee - t.marketValue,
-    ratio: t.marketValue > 0 ? t.fee / t.marketValue : 0,
+    worth,
+    premium: t.fee - worth,
+    ratio: worth > 0 ? t.fee / worth : 0,
+    // Only worth carrying when it says something the frozen value doesn't.
+    ...(currentValue && currentValue !== t.marketValue ? { currentValue } : {}),
   };
 }
 
@@ -92,28 +111,37 @@ const emptySide = (): ClubSide => ({
   transfers: [],
 });
 
-function addTo(side: ClubSide, t: TopTransfer) {
+function addTo(side: ClubSide, t: PricedTransfer) {
   side.transfers.push(t);
   side.players += 1;
   if (t.isLoan) side.loans += 1;
   else if (t.fee === 0) side.frees += 1;
   side.fees += t.fee;
-  side.marketValue += t.marketValue;
-  side.premium += t.fee - t.marketValue;
+  side.marketValue += t.worth;
+  side.premium += t.premium;
 }
 
 function seal(side: ClubSide) {
   side.ratio = side.marketValue > 0 ? side.fees / side.marketValue : 0;
-  side.transfers.sort((a, b) => b.fee - a.fee || b.marketValue - a.marketValue);
+  // Best player first, not dearest deal first. An expanded club reads as
+  // "what did they get", and each row shows worth → fee, so ordering on worth
+  // runs down the left-hand column instead of the right — a €45m player bought
+  // for €25m belongs above a €36m one, which is the whole point of the panel
+  // he is sitting in.
+  side.transfers.sort((a, b) => b.worth - a.worth || b.fee - a.fee);
 }
 
 /** Every club that touched the window, aggregated on both sides at once.
  *
- *  Unlike the player rankings this counts loans and frees. There the question is
- *  "was this deal priced well", which a move with no fee cannot answer; here it
- *  is "what did the club end up with, and what did it cost" — and a €50m striker
- *  arriving on loan for nothing is the single best answer a window can give. */
-function buildClubWindows(transfers: TopTransfer[]): ClubWindow[] {
+ *  Unlike the player rankings this counts loans, frees and the odd row TM lists
+ *  no market value for. There the question is "was this deal priced well", which
+ *  a move with no fee or no value cannot answer; here it is "what did the club
+ *  end up with, and what did it cost" — and a €50m striker arriving on loan for
+ *  nothing is the single best answer a window can give. */
+export function buildClubWindows(
+  transfers: PricedTransfer[],
+  include: (t: PricedTransfer) => boolean = () => true,
+): ClubWindow[] {
   const map = new Map<string, ClubWindow>();
   const at = (club: TransferClub) => {
     const key = club.clubId || club.name;
@@ -126,6 +154,7 @@ function buildClubWindows(transfers: TopTransfer[]): ClubWindow[] {
   };
 
   for (const t of transfers) {
+    if (!include(t)) continue;
     if (t.to.name) addTo(at(t.to).in, t);
     // TM leaves the selling club blank on the odd row (a released player, a club
     // it has no page for); those rows still count as an arrival, just not as
@@ -143,68 +172,212 @@ function buildClubWindows(transfers: TopTransfer[]): ClubWindow[] {
   return windows;
 }
 
-export function analyzeTransfers(season: number, transfers: TopTransfer[]): FeeVsValueData {
-  // A market value of zero can't be compared against anything, and would divide
-  // by zero on the way to a ratio.
-  const valued = transfers.filter((t) => t.marketValue > 0);
-  const loans = valued.filter((t) => t.isLoan);
-  const free = valued.filter((t) => !t.isLoan && t.fee === 0).map(price);
-  const paid = valued.filter((t) => !t.isLoan && t.fee > 0).map(price);
-
-  return {
-    season,
-    paid,
-    free,
-    loans,
-    clubs: {
-      withLoans: buildClubWindows([...paid, ...free, ...loans]),
-      permanentOnly: buildClubWindows([...paid, ...free]),
-    },
-  };
+export function analyzeTransfers(
+  season: number,
+  transfers: TopTransfer[],
+  currentValues: ReadonlyMap<string, number> = new Map(),
+): FeeVsValueData {
+  return { season, transfers: transfers.map((t) => price(t, currentValues.get(t.playerId))) };
 }
 
-/** Ranked slices the page reads off directly. Sorting once here keeps the
- *  headline cards and the leaderboards on the same source of truth. */
-export function rank(paid: PricedTransfer[], free: PricedTransfer[] = []) {
-  // Cash ranks every permanent move; times value ranks only the ones with a fee.
+/**
+ * The ranked slices the page reads off, sorted once so the leaderboards all
+ * share one source of truth.
+ *
+ * Which list a transfer is eligible for follows from what the buying club
+ * actually did. A free transfer is still a permanent signing, so it belongs in
+ * the cash rankings — picking up a €45m defender for nothing is the biggest
+ * bargain a window can hold. It has no place in the times-value rankings: every
+ * free divides out to 0.00×, so they would fill the top of that list in a dead
+ * heat and bury the deals where a club actually negotiated a price down. A loan
+ * is not a signing at all — TM lists no fee for one and ranks it by its own
+ * internal transfer value — so it stays out of both, and out of the plain
+ * biggest-fee and most-valuable lists with them.
+ */
+export function rank(transfers: PricedTransfer[]) {
+  // A market value of zero can't be compared against anything, and would divide
+  // by zero on the way to a ratio. Club totals keep those rows; rankings can't.
+  const permanent = transfers.filter((t) => !t.isLoan && t.worth > 0);
+  const paid = permanent.filter((t) => t.fee > 0);
+
   // Each measure breaks its own ties on the other one, so two deals the same
   // distance from value are ordered by which was the more extreme in the way
   // this list isn't measuring — and the display order stops depending on which
-  // happened to be scraped first.
-  const byPremium = [...paid, ...free].sort((a, b) => b.premium - a.premium || b.ratio - a.ratio);
+  // happened to be scraped first. Reversing gives the ascending list, secondary
+  // key included, which is the right direction for a bargain too: of two deals
+  // equally under value, the lower multiple is the better piece of business.
+  const byPremium = [...permanent].sort((a, b) => b.premium - a.premium || b.ratio - a.ratio);
   const byRatio = [...paid].sort((a, b) => b.ratio - a.ratio || b.premium - a.premium);
-  // Plain "who cost the most" and "who was worth the most" — no judgement about
-  // the price, so every permanent move is eligible, same pool as the cash lists.
-  const permanent = [...paid, ...free];
+
   return {
     overpaidAbsolute: byPremium,
     overpaidRatio: byRatio,
     underpaidAbsolute: [...byPremium].reverse(),
     underpaidRatio: [...byRatio].reverse(),
-    byFee: [...permanent].sort((a, b) => b.fee - a.fee || b.marketValue - a.marketValue),
-    byValue: [...permanent].sort((a, b) => b.marketValue - a.marketValue || b.fee - a.fee),
+    // Plain "who cost the most" and "who was worth the most" — no judgement
+    // about the price, so every permanent move is eligible.
+    byFee: [...permanent].sort((a, b) => b.fee - a.fee || b.worth - a.worth),
+    byValue: [...permanent].sort((a, b) => b.worth - a.worth || b.fee - a.fee),
   };
 }
 
-/** Competition ranking (1, 2, 2, 4) so tied deals share a number instead of one
- *  arbitrarily sitting above the other — both €20m-under-value deals of a window
- *  are the joint biggest bargain.
+/**
+ * Competition ranking (1, 2, 2, 4) so tied deals share a number instead of one
+ * arbitrarily sitting above the other — both €20m-under-value deals of a window
+ * are the joint biggest bargain.
  *
- *  Rounded to the cent before comparing: these are euro figures reconstructed
- *  from "€35.00m" strings, and float division leaves two genuinely equal ratios
- *  differing in the fifteenth decimal. */
+ * Ties are decided on the figure the row actually shows, not the raw number
+ * behind it: two rows both reading "+€52.7M" are a dead heat to the reader, and
+ * ranking one above the other on a difference they cannot see is noise. (Float
+ * noise is not the reason — IEEE division is correctly rounded, so equal ratios
+ * built from representable euro figures come out bit-identical.)
+ */
 export function withRanks(
   sorted: PricedTransfer[],
-  measure: (t: PricedTransfer) => number,
+  format: (t: PricedTransfer) => string,
 ): Array<{ transfer: PricedTransfer; rank: number }> {
-  let lastValue: number | null = null;
+  let lastShown: string | null = null;
   let lastRank = 0;
   return sorted.map((transfer, i) => {
-    const value = Math.round(measure(transfer) * 100);
-    if (value !== lastValue) {
+    const shown = format(transfer);
+    if (shown !== lastShown) {
       lastRank = i + 1;
-      lastValue = value;
+      lastShown = shown;
     }
     return { transfer, rank: lastRank };
   });
+}
+
+/**
+ * A stable identity for one move.
+ *
+ * `playerId` alone is not unique: eight players in this window moved twice
+ * (Openda went Leipzig → Juventus → Lyon, both moves permanent), so keying a
+ * list on it hands React the same key twice and lets the virtualiser reuse the
+ * wrong row when the list reorders. TM's own `rank` is unique per row, which is
+ * the one thing it is good for.
+ */
+export function transferKey(t: TopTransfer): string {
+  return `${t.rank}-${t.playerId}`;
+}
+
+/**
+ * The window in one line: what was paid, what it was worth, and how the deals
+ * split around their own valuations.
+ *
+ * Counted over exactly the pool the rankings draw from — permanent signings TM
+ * priced — so the headline and the lists below it can never disagree. Everything
+ * is measured against `worth`, the same basis a row shows, which is what keeps
+ * the headline sentence internally consistent: the two figures it names really
+ * do subtract to the third. Loans and unpriced rows are counted separately
+ * rather than dropped silently, because a total that quietly excludes 26 moves
+ * invites the reader to check it and find it wrong.
+ */
+export interface WindowSummary {
+  /** Permanent signings with a value to price against. */
+  deals: number;
+  fees: number;
+  /** Summed `worth`, so `fees - marketValue === premium` and the headline
+   *  sentence really does subtract in front of the reader. */
+  marketValue: number;
+  premium: number;
+  ratio: number;
+  /** Deals priced above, at, and below what the player is worth. */
+  over: number;
+  level: number;
+  under: number;
+  /** Left out of the pool above, and why. */
+  loans: number;
+  frees: number;
+  /** Rows the market has re-rated since the move, and which way it went. */
+  revalued: number;
+  revaluedUp: number;
+  /** Re-rated players now worth at least the fee that was paid for them — the
+   *  market coming round to a price it did not set. */
+  worthTheFee: number;
+}
+
+export function summarize(transfers: PricedTransfer[]): WindowSummary {
+  const s: WindowSummary = {
+    deals: 0,
+    fees: 0,
+    marketValue: 0,
+    premium: 0,
+    ratio: 0,
+    over: 0,
+    level: 0,
+    under: 0,
+    loans: 0,
+    frees: 0,
+    revalued: 0,
+    revaluedUp: 0,
+    worthTheFee: 0,
+  };
+
+  for (const t of transfers) {
+    if (t.isLoan) {
+      s.loans += 1;
+      continue;
+    }
+    if (t.worth <= 0) continue;
+    s.deals += 1;
+    s.fees += t.fee;
+    s.marketValue += t.worth;
+    if (t.fee === 0) s.frees += 1;
+    if (t.premium > 0) s.over += 1;
+    else if (t.premium < 0) s.under += 1;
+    else s.level += 1;
+    if (t.currentValue) {
+      s.revalued += 1;
+      if (t.currentValue > t.marketValue) s.revaluedUp += 1;
+      if (t.fee > 0 && t.currentValue >= t.fee) s.worthTheFee += 1;
+    }
+  }
+
+  // Derived from the two totals rather than summed row by row, so the sentence
+  // the page prints — paid X for Y, which is Z over — actually subtracts.
+  s.premium = s.fees - s.marketValue;
+  s.ratio = s.marketValue > 0 ? s.fees / s.marketValue : 0;
+  return s;
+}
+
+/**
+ * The euro axis every bar on the page is drawn against: zero to the largest
+ * figure any one deal puts on it.
+ *
+ * One scale for the whole page, not one per list, so a bar means the same thing
+ * wherever it appears and switching tabs reorders the rows without redrawing
+ * the ruler under them. It is also what makes the page's hardest idea visible
+ * for free: the cash lists lead with long bars and the times-value lists lead
+ * with short ones, which is precisely why the two rarely name the same player.
+ */
+export function gapScale(transfers: PricedTransfer[]): number {
+  let max = 0;
+  for (const t of transfers) {
+    if (t.isLoan) continue;
+    max = Math.max(max, t.fee, t.worth, t.marketValue);
+  }
+  return max;
+}
+
+/**
+ * Where one deal's figures fall on that axis, as percentages of its width.
+ *
+ * The bar is anchored on `worth` because that is the basis both of the figures
+ * a row prints are measured from — a bar drawn from anything else would
+ * contradict the numbers beside it. `wasWorth` is the optional third mark: what
+ * the player was valued at on the day he moved, on the rows where the market
+ * has since moved him. A deal the market has come round to has its fee and its
+ * worth in the same place, and so has no bar at all.
+ */
+export function barGeometry(
+  d: { worth: number; fee: number; wasWorth?: number },
+  axisMax: number,
+): { worthPct: number; feePct: number; wasPct: number | null } {
+  const pct = (n: number) => (axisMax > 0 ? Math.min(100, Math.max(0, (n / axisMax) * 100)) : 0);
+  return {
+    worthPct: pct(d.worth),
+    feePct: pct(d.fee),
+    wasPct: d.wasWorth ? pct(d.wasWorth) : null,
+  };
 }

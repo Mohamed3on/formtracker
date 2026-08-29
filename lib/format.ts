@@ -9,6 +9,16 @@ export function formatMarketValue(value: number): string {
   return `${sign}€${abs}`;
 }
 
+/** A fee as a multiple of market value — `1.10×` means they paid ten percent over. */
+export function formatRatio(ratio: number): string {
+  return `${ratio.toFixed(2)}×`;
+}
+
+/** A fee-vs-value gap, signed so an overpay reads `+€52.7M` against a bargain's `-€45.0M`. */
+export function formatPremium(premium: number): string {
+  return `${premium > 0 ? "+" : ""}${formatMarketValue(premium)}`;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function formatReturnInfo(dateStr: string): { label: string; imminent: boolean } | null {
