@@ -1,39 +1,40 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { getCurrentMarketValues } from "./current-values";
-import { getDataVersion } from "./data-version";
 import { analyzeTransfers, type FeeVsValueData } from "./fee-vs-value";
 import { fetchTopTransfers } from "./fetch-top-transfers";
 
-/** Bump whenever the shape **or the meaning** of FeeVsValueData changes.
+/** The scrape, and only the scrape.
  *
- *  unstable_cache entries outlive deployments, so without this a change ships to
- *  a cache still holding the old result and that result keeps being served until
- *  the day's TTL lapses. Adding a field to ClubPremium threw on the missing
- *  field, which at least announced itself. The quieter failure is a changed
- *  computation over an unchanged shape: re-basing `ratio` on `currentValue` left
- *  every type satisfied and the page happily served the previous formula's
- *  numbers. Shape is the obvious trigger, not the only one — if the bytes this
- *  function would return today differ from yesterday's, bump it. */
-const SHAPE_VERSION = "9";
-
-/** Transfers move once a day at most outside a deadline, and the whole fetch is
+ *  Transfers move once a day at most outside a deadline, and the whole fetch is
  *  8 pages, so a day's cache costs one scrape and keeps the page instant. Tagged
- *  so the header's refresh button can bust it (see app/api/revalidate). */
+ *  so the header's refresh button can bust it (see app/api/revalidate).
+ *
+ *  What is cached is the raw table, which moves only when the scraper does —
+ *  not the analysis on top of it. unstable_cache entries outlive deployments, so
+ *  anything inside this closure keeps being served after a deploy that changed
+ *  how it works. That cost a hand-bumped SHAPE_VERSION, nine of them, and the
+ *  failure whenever someone forgot was silent: re-basing `ratio` on today's
+ *  value left every type satisfied and the page served the previous formula's
+ *  numbers for a day. Keeping the derivation outside means a deploy cannot ship
+ *  beside a stale computation, because there is no cached computation. */
+const fetchCached = unstable_cache(fetchTopTransfers, ["top-transfers"], {
+  revalidate: 86400,
+  tags: ["top-transfers"],
+});
+
+/** Priced against today's market values, fresh on every request.
+ *
+ *  `analyzeTransfers` is a map over 200 rows against a process-memoised lookup,
+ *  so running it per request costs nothing measurable and buys back the whole
+ *  cache-invalidation problem. It also drops `getDataVersion` from the picture:
+ *  the committed dataset is no longer read from inside a cached region, so there
+ *  is nothing to key on to make a data deploy miss. React's `cache` still
+ *  dedupes it within a single render. */
 export const getFeeVsValueData = cache(async (): Promise<FeeVsValueData> => {
-  // The analysis now joins today's market values off the committed dataset, so
-  // the cache has to miss when that data is redeployed as well as when the TTL
-  // lapses — otherwise a data refresh ships beside a day-old join.
-  const dataVersion = await getDataVersion();
-  return unstable_cache(
-    async () => {
-      const [{ season, transfers }, currentValues] = await Promise.all([
-        fetchTopTransfers(),
-        getCurrentMarketValues(),
-      ]);
-      return analyzeTransfers(season, transfers, currentValues);
-    },
-    ["fee-vs-value", SHAPE_VERSION, dataVersion],
-    { revalidate: 86400, tags: ["top-transfers"] },
-  )();
+  const [{ season, transfers }, currentValues] = await Promise.all([
+    fetchCached(),
+    getCurrentMarketValues(),
+  ]);
+  return analyzeTransfers(season, transfers, currentValues);
 });
