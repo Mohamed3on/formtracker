@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Crown, Medal, TrendingDown, TrendingUp, TriangleAlert } from "lucide-react";
+import { Suspense } from "react";
 import { DetailHero, DetailPageShell } from "@/components/DetailHero";
 import { createPageMetadata } from "@/lib/metadata";
 import {
@@ -24,6 +25,7 @@ import { ComparisonItem } from "@/components/ComparisonItem";
 import { DetailDeck } from "@/components/DetailDeck";
 import { HeroMetric } from "@/components/HeroMetric";
 import { SectionPanel } from "@/components/SectionPanel";
+import { ClubWindowBadges } from "./ClubWindowBadges";
 import { SquadTab } from "./SquadTab";
 import { ManagerClient } from "./TeamDeferredData";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -308,6 +310,12 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
                   Form leader
                 </Badge>
               )}
+              {/* What the summer came to, and any club table this club heads.
+                  Streamed: the crest and the name should not wait on a transfer
+                  scrape. */}
+              <Suspense>
+                <ClubWindowBadges clubId={clubId} />
+              </Suspense>
             </div>
 
             <h1 className="mt-4 text-3xl font-pixel leading-tight text-text-primary sm:text-4xl">

@@ -9,6 +9,7 @@ import { isSameLeague } from "@/lib/leagues";
 import { cn } from "@/lib/utils";
 import type { TopTransfer, TransferClub } from "@/app/types";
 import { revalued, type PricedTransfer } from "@/lib/fee-vs-value";
+import type { Tone } from "@/lib/fee-vs-value-rankings";
 import { FeeValueBar, WasWorthMark } from "./FeeValueBar";
 
 /** One end of a move. Links through to the squad when TM gave us a club id. */
@@ -61,8 +62,6 @@ function ClubPair({ transfer }: { transfer: TopTransfer }) {
     </div>
   );
 }
-
-export type Tone = "over" | "under" | "neutral";
 
 interface TransferRowProps {
   transfer: PricedTransfer;

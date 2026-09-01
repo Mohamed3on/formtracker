@@ -9,13 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { SectionPanel } from "@/components/SectionPanel";
 import { ClubLogo } from "@/components/ClubLogo";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import {
-  formatMarketValue,
-  formatPremium,
-  formatRatio,
-  getPlayerDetailHref,
-  getTeamDetailHref,
-} from "@/lib/format";
+import { formatPremium, formatRatio, getPlayerDetailHref, getTeamDetailHref } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   barGeometry,
@@ -25,127 +19,25 @@ import {
   type ClubWindow,
   type PricedTransfer,
 } from "@/lib/fee-vs-value";
-import { TONE_TEXT, ValueToFee, type Tone } from "./TransferRow";
+import { useQueryParams } from "@/lib/hooks/use-query-params";
+import {
+  PATH,
+  cutTransfers,
+  inLeague,
+  rankClubs,
+  resolveLoans,
+  type ModeSpec,
+  type Side,
+  type Tone,
+} from "@/lib/fee-vs-value-rankings";
+import { TONE_TEXT, ValueToFee } from "./TransferRow";
 import { GapTrack } from "./FeeValueBar";
 
-/** Clubs per table. Ten reaches past the handful of usual suspects at the top
- *  of any spending list into the mid-table business that is often the story. */
-const TOP = 10;
-
-type Side = "in" | "out";
-
-/** One end of a mode's single ranking — its top, then its bottom. Only what
- *  actually differs between the two lives here; the measure itself is shared,
- *  which is what makes them genuine opposites rather than two similar tables. */
-type EndSpec = {
-  title: string;
-  tone: Extract<Tone, "over" | "under">;
-  /** Which side of the window a row expands into. */
-  side: Side;
-  /** Which clubs belong at this end at all. Defaults to "did something on that
-   *  side of the window". */
-  qualifies?: (c: ClubWindow) => boolean;
-};
-
-/** Which question a club table asks, and how it answers it. `sort` is descending;
- *  the second end reads the same order from the other end. */
-export type ModeSpec = {
-  /** What this mode is called in the URL. */
-  slug: string;
-  toggle: string;
-  title: string;
-  blurb: string;
-  sort: (c: ClubWindow) => number;
-  /** The big figure on each row. */
-  figure: (c: ClubWindow) => string;
-  caption: (c: ClubWindow) => string;
-  /** Small figure under it. Defaults to the fee-to-value ratio of that side. */
-  badge?: (c: ClubWindow) => string | null;
-  /** Draw the value-against-fees bar under the caption. Off where the mode ranks
-   *  on something else — a bar plotting figures the row isn't ranked on reads as
-   *  a contradiction, or worse, as a control. */
-  bar?: boolean;
-  /** Which moves an expanded row lists. Defaults to the end's own `side`, which
-   *  is right when the headline only counts one side. Where it nets the two —
-   *  squad value — the expansion has to show both, or half the number it is
-   *  explaining is missing from the list underneath it. */
-  expand?: "in" | "out" | "both";
-  ends: [EndSpec, EndSpec];
-};
-
-const money = formatMarketValue;
-const signed = formatPremium;
-
-export const CLUB_MODES = {
-  buying: {
-    slug: "buying",
-    bar: true,
-    toggle: "Buying",
-    title: "Who bought well",
-    blurb:
-      "Fees paid against what the players were worth. A club that paid under value shopped well.",
-    sort: (c) => c.in.premium,
-    figure: (c) => signed(c.in.premium),
-    caption: (c) => `${money(c.in.marketValue)} of players for ${money(c.in.fees)}`,
-    ends: [
-      { title: "Paid over the odds", tone: "over", side: "in" },
-      { title: "Shopped best", tone: "under", side: "in" },
-    ],
-  },
-  selling: {
-    slug: "selling",
-    bar: true,
-    toggle: "Selling",
-    title: "Who sold well",
-    blurb:
-      "The same sum from the other end: fees banked against what the players leaving were worth.",
-    sort: (c) => c.out.premium,
-    figure: (c) => signed(c.out.premium),
-    caption: (c) => `${money(c.out.marketValue)} of players for ${money(c.out.fees)}`,
-    ends: [
-      // Banking more than a player was worth is the good outcome here, so the
-      // colours run opposite to the buying tables.
-      { title: "Sold above value", tone: "under", side: "out" },
-      { title: "Sold below value", tone: "over", side: "out" },
-    ],
-  },
-  "squad-value": {
-    slug: "squad-value",
-    toggle: "Squad value",
-    title: "Who gained and who lost",
-    blurb:
-      "Value in minus value out, whatever it cost. The badge is the money that swing took, in fees paid minus fees banked.",
-    // Ranked on net, not on gross: a club that brings in €292m and lets €268m
-    // go has not gained €292m of anything. Gross sits in the caption, and the
-    // two ends are genuine opposites — no club can top both.
-    sort: (c) => c.netValue,
-    figure: (c) => signed(c.netValue),
-    caption: (c) => `${money(c.in.marketValue)} in · ${money(c.out.marketValue)} out`,
-    badge: (c) => `${signed(c.netSpend)} net`,
-    // The figure nets both sides, so the expansion has to list both.
-    expand: "both",
-    ends: [
-      {
-        title: "Gained the most value",
-        tone: "under",
-        side: "in",
-        qualifies: (c) => c.netValue > 0,
-      },
-      {
-        title: "Lost the most value",
-        tone: "over",
-        side: "out",
-        qualifies: (c) => c.netValue < 0,
-      },
-    ],
-  },
-} satisfies Record<string, ModeSpec>;
-
-/** The three cuts, keyed by the slug that names them in the URL. `slug` was
- *  always the public name; keying on it too means there is one vocabulary for a
- *  mode rather than an internal name and a URL name that had to be mapped
- *  between. */
-export type ClubMode = keyof typeof CLUB_MODES;
+/** Clubs per table. Twenty reaches well past the handful of usual suspects at
+ *  the top of any spending list into the mid-table business that is often the
+ *  story — 118 clubs did business in this window, and the twentieth-placed one
+ *  is still moving tens of millions of value either way. */
+const TOP = 20;
 
 /** Paying above a player's value is the bad outcome on the way in and the good
  *  one on the way out. Landing exactly on it is neither, so it stays uncoloured
@@ -210,16 +102,17 @@ function sideLabel(s: ClubSide, side: Side) {
 function ClubRow({
   c,
   mode,
-  end,
+  endIndex,
   axisMax,
 }: {
   c: ClubWindow;
   mode: ModeSpec;
-  end: EndSpec;
+  endIndex: 0 | 1;
   /** Shared euro axis for the fee-vs-value bar, across both tables. */
   axisMax: number;
 }) {
   const [open, setOpen] = useState(false);
+  const end = mode.ends[endIndex];
   const side = c[end.side];
   const badge = mode.badge ? mode.badge(c) : side.marketValue > 0 ? formatRatio(side.ratio) : null;
   // Labels only when both sides are on show; a single-sided expansion needs no
@@ -249,7 +142,22 @@ function ClubRow({
         />
         {c.club.logoUrl && <ClubLogo src={c.club.logoUrl} />}
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-bold text-text-primary">{c.club.name}</span>
+          {/* The division, in the same micro-type the transfer rows use for a
+              league. Text rather than a crest: twenty of the twenty-five
+              leagues in a window have no logo of ours, and half the clubs on
+              these tables play outside the big five — a badge only the usual
+              suspects get would say "these ones matter" and nothing else. It
+              wraps rather than squeezes, so a long name keeps its room. */}
+          <span className="flex flex-wrap items-baseline gap-x-1.5">
+            <span className="max-w-full truncate text-sm font-bold text-text-primary">
+              {c.club.name}
+            </span>
+            {c.club.league && (
+              <span className="text-[10px] uppercase tracking-wide text-text-muted">
+                {c.club.league}
+              </span>
+            )}
+          </span>
           <span className="mt-0.5 block font-value text-xs text-text-secondary">
             {mode.caption(c)}
             <span className="text-text-muted"> · {sideLabel(side, end.side)}</span>
@@ -310,46 +218,58 @@ function ClubRow({
 function ClubTable({
   rows,
   mode,
-  end,
-  bottom,
+  endIndex,
   axisMax,
 }: {
   rows: ClubWindow[];
   mode: ModeSpec;
-  end: EndSpec;
-  /** Read the shared ranking from its bottom rather than its top. */
-  bottom: boolean;
+  /** Which end of the shared ranking to read — the second one reads it from the
+   *  bottom. Same function the club-page badges call, so a club badged
+   *  "Shopped best" is by construction the one at the head of this table. */
+  endIndex: 0 | 1;
   axisMax: number;
 }) {
-  const top = useMemo(() => {
-    const ranked = rows
-      .filter((c) => c[end.side].players > 0 && (end.qualifies?.(c) ?? true))
-      .sort((a, b) => mode.sort(b) - mode.sort(a));
-    return (bottom ? ranked.reverse() : ranked).slice(0, TOP);
-  }, [rows, mode, end, bottom]);
+  const top = useMemo(() => rankClubs(rows, mode, endIndex).slice(0, TOP), [rows, mode, endIndex]);
 
   if (top.length === 0) return <p className="text-sm text-text-muted">No clubs qualify.</p>;
   return (
     <ul className="space-y-2">
       {top.map((c) => (
         <li key={c.club.clubId || c.club.name}>
-          <ClubRow c={c} mode={mode} end={end} axisMax={axisMax} />
+          <ClubRow c={c} mode={mode} endIndex={endIndex} axisMax={axisMax} />
         </li>
       ))}
     </ul>
   );
 }
 
-export function ClubTables({ transfers, spec }: { transfers: PricedTransfer[]; spec: ModeSpec }) {
-  // Loans are a scope on the data rather than a different question, so they sit
-  // here beside the tables instead of competing with the mode toggle above.
-  const [withLoans, setWithLoans] = useState(true);
+export function ClubTables({
+  transfers,
+  spec,
+  league,
+}: {
+  transfers: PricedTransfer[];
+  spec: ModeSpec;
+  league: string;
+}) {
+  // Loans are a scope on the data rather than a different question, so the
+  // control sits here beside the tables instead of competing with the mode
+  // toggle above — but the choice itself lives in the URL like every other one
+  // on this page, so a cut can be linked and an accolade badge can point at the
+  // exact table its club won.
+  const { params, replace } = useQueryParams(PATH);
+  const cut = resolveLoans(params.get("loans"));
   // Aggregated here rather than on the server: both cuts are rearrangements of
   // the transfers the page already holds, and shipping them pre-built put every
   // move on the wire four more times.
+  //
+  // Built from every transfer, then narrowed to the chosen league by club.
+  // Narrowing the moves first would restate each club's window as "the part of
+  // it that touched this league" and print it under the same heading.
   const rows = useMemo(
-    () => buildClubWindows(withLoans ? transfers : transfers.filter((t) => !t.isLoan)),
-    [transfers, withLoans],
+    () =>
+      buildClubWindows(cutTransfers(transfers, cut)).filter((c) => inLeague(c.club.league, league)),
+    [transfers, cut, league],
   );
   // One euro axis across both tables, so the bar on a club that spent €292m is
   // visibly longer than the bar on one that spent €40m.
@@ -370,17 +290,17 @@ export function ClubTables({ transfers, spec }: { transfers: PricedTransfer[]; s
         </span>
         <ToggleGroup
           type="single"
-          value={withLoans ? "with" : "without"}
-          onValueChange={(v) => v && setWithLoans(v === "with")}
+          value={cut}
+          onValueChange={(v) => v && replace({ loans: v === "permanent" ? "permanent" : null })}
           variant="outline"
           size="sm"
           className="rounded-lg"
           aria-label="Count loans"
         >
-          <ToggleGroupItem value="with" className="rounded-l-lg">
+          <ToggleGroupItem value="loans" className="rounded-l-lg">
             With loans
           </ToggleGroupItem>
-          <ToggleGroupItem value="without" className="rounded-r-lg">
+          <ToggleGroupItem value="permanent" className="rounded-r-lg">
             Permanent only
           </ToggleGroupItem>
         </ToggleGroup>
@@ -389,7 +309,7 @@ export function ClubTables({ transfers, spec }: { transfers: PricedTransfer[]; s
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {spec.ends.map((end, i) => (
           <SectionPanel key={end.title} title={end.title}>
-            <ClubTable rows={rows} mode={spec} end={end} bottom={i === 1} axisMax={axisMax} />
+            <ClubTable rows={rows} mode={spec} endIndex={i as 0 | 1} axisMax={axisMax} />
           </SectionPanel>
         ))}
       </div>

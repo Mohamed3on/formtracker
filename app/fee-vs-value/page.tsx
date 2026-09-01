@@ -29,7 +29,7 @@ export default async function FeeVsValuePage() {
 
   return (
     <div className="space-y-8 sm:space-y-10">
-      <Leaderboard transfers={data.transfers} season={data.season} />
+      <Leaderboard transfers={data.transfers} />
 
       <section className="rounded-lg border border-border-subtle bg-card p-4">
         <h2 className="text-sm font-medium text-text-secondary">How to read this</h2>
@@ -60,6 +60,14 @@ export default async function FeeVsValuePage() {
           to <span className="font-value">0.00×</span> and they would fill the top in a dead heat. A
           loan is not a signing at all, so it stays out of both — it only shows up under{" "}
           <strong>Clubs</strong>, and only with that switch on.
+        </p>
+        <p className="mt-2 text-sm text-text-muted">
+          The league filter takes a deal if <em>either</em> club is in that league, because most of
+          the divisions here appear only as sellers — filtering on the buyer alone would empty them.
+          So picking Liga Portugal keeps a Sporting player&apos;s move to the Premier League, and
+          picking the Premier League keeps it too. Under <strong>Clubs</strong> it means the club
+          itself, and each club keeps its whole window rather than the part of it that touched the
+          league you picked.
         </p>
         <p className="mt-2 text-sm text-text-muted">
           Every row names the club a player left as well as the one he joined, and the leagues

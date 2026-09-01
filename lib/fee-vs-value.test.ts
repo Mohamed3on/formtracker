@@ -6,7 +6,6 @@ import {
   gapScale,
   rank,
   revalued,
-  summarize,
   transferKey,
   withRanks,
   type PricedTransfer,
@@ -321,87 +320,6 @@ describe("transferKey", () => {
     ]).transfers;
     expect(first.playerId).toBe(second.playerId);
     expect(transferKey(first)).not.toBe(transferKey(second));
-  });
-});
-
-describe("summarize", () => {
-  const summary = summarize(
-    analyzeTransfers(
-      2026,
-      [
-        tx({ name: "Overpay", marketValue: 10_000_000, fee: 30_000_000 }),
-        tx({ name: "Bargain", marketValue: 40_000_000, fee: 20_000_000 }),
-        tx({ name: "Exact", marketValue: 25_000_000, fee: 25_000_000 }),
-        tx({
-          name: "Freebie",
-          marketValue: 45_000_000,
-          fee: 0,
-          feeText: "free transfer",
-          isFree: true,
-        }),
-        tx({ name: "Loanee", marketValue: 50_000_000, fee: 0, isLoan: true }),
-        tx({ name: "Unpriced", marketValue: 0, fee: 9_000_000 }),
-      ],
-      new Map([["Overpay", 28_000_000]]),
-    ).transfers,
-  );
-
-  it("totals only the deals the rankings can price", () => {
-    // The loan and the row TM gave no value for are both out of the pool.
-    expect(summary.deals).toBe(4);
-    expect(summary.fees).toBe(75_000_000);
-    // Totalled on `worth`, so Overpay counts at today's €28m rather than the
-    // €10m frozen at his move: 28 + 40 + 25 + 45.
-    expect(summary.marketValue).toBe(138_000_000);
-    expect(summary.premium).toBe(summary.fees - summary.marketValue);
-    expect(summary.ratio).toBeCloseTo(75 / 138, 10);
-  });
-
-  it("splits the deals around their own valuations", () => {
-    expect([summary.over, summary.level, summary.under]).toEqual([1, 1, 2]);
-  });
-
-  it("accounts for what it left out rather than dropping it silently", () => {
-    expect(summary.loans).toBe(1);
-    expect(summary.frees).toBe(1);
-    // The row TM gave no market value for is named, not skipped.
-    expect(summary.unpriced).toBe(1);
-  });
-
-  it("summarizes exactly the pool the rankings draw from", () => {
-    // The headline and the lists have to be counting the same deals. They came
-    // apart once: `rank` learned to drop moves TM published no fee for while
-    // `summarize` went on treating them as signings bought for nothing. Neither
-    // shape occurs in the current window, so nothing wrong ever rendered — this
-    // pins the invariant so the next divergence fails here instead of shipping.
-    const transfers = analyzeTransfers(2026, [
-      tx({ name: "Real", marketValue: 20_000_000, fee: 30_000_000 }),
-      // A player going home. Not an arrival anyone bought, and not a loan
-      // either since `isLoan` stopped matching "End of loan".
-      tx({ name: "EndOfLoan", marketValue: 50_000_000, fee: 0, feeText: "End of loan" }),
-      // TM printed "?" for the fee: missing data, not a free transfer.
-      tx({ name: "Unpriced", marketValue: 40_000_000, fee: 0, feeText: "?" }),
-    ]).transfers;
-
-    const s = summarize(transfers);
-    expect(s.deals).toBe(rank(transfers).byFee.length);
-    expect(names(rank(transfers).byFee)).toEqual(["Real"]);
-    // Not €110m of players for €30m — the two unpriced rows are worth nothing
-    // to a measure of how well the window was priced.
-    expect(s.marketValue).toBe(20_000_000);
-    expect(s.fees).toBe(30_000_000);
-    expect(s.premium).toBe(10_000_000);
-    expect([s.over, s.under]).toEqual([1, 0]);
-    expect(s.unpriced).toBe(2);
-    // And neither stretches the ruler the visible rows are drawn against.
-    expect(gapScale(transfers)).toBe(30_000_000);
-  });
-
-  it("counts the market's later verdict", () => {
-    // €28m today against €10m at the move, still short of the €30m fee.
-    expect(summary.revalued).toBe(1);
-    expect(summary.revaluedUp).toBe(1);
-    expect(summary.worthTheFee).toBe(0);
   });
 });
 
