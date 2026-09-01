@@ -19,7 +19,17 @@ import {
   type ClubWindow,
   type PricedTransfer,
 } from "@/lib/fee-vs-value";
-import { rankClubs, type ModeSpec, type Side, type Tone } from "@/lib/fee-vs-value-rankings";
+import { useQueryParams } from "@/lib/hooks/use-query-params";
+import {
+  PATH,
+  cutTransfers,
+  inLeague,
+  rankClubs,
+  resolveLoans,
+  type ModeSpec,
+  type Side,
+  type Tone,
+} from "@/lib/fee-vs-value-rankings";
 import { TONE_TEXT, ValueToFee } from "./TransferRow";
 import { GapTrack } from "./FeeValueBar";
 
@@ -233,16 +243,33 @@ function ClubTable({
   );
 }
 
-export function ClubTables({ transfers, spec }: { transfers: PricedTransfer[]; spec: ModeSpec }) {
-  // Loans are a scope on the data rather than a different question, so they sit
-  // here beside the tables instead of competing with the mode toggle above.
-  const [withLoans, setWithLoans] = useState(true);
+export function ClubTables({
+  transfers,
+  spec,
+  league,
+}: {
+  transfers: PricedTransfer[];
+  spec: ModeSpec;
+  league: string;
+}) {
+  // Loans are a scope on the data rather than a different question, so the
+  // control sits here beside the tables instead of competing with the mode
+  // toggle above — but the choice itself lives in the URL like every other one
+  // on this page, so a cut can be linked and an accolade badge can point at the
+  // exact table its club won.
+  const { params, replace } = useQueryParams(PATH);
+  const cut = resolveLoans(params.get("loans"));
   // Aggregated here rather than on the server: both cuts are rearrangements of
   // the transfers the page already holds, and shipping them pre-built put every
   // move on the wire four more times.
+  //
+  // Built from every transfer, then narrowed to the chosen league by club.
+  // Narrowing the moves first would restate each club's window as "the part of
+  // it that touched this league" and print it under the same heading.
   const rows = useMemo(
-    () => buildClubWindows(withLoans ? transfers : transfers.filter((t) => !t.isLoan)),
-    [transfers, withLoans],
+    () =>
+      buildClubWindows(cutTransfers(transfers, cut)).filter((c) => inLeague(c.club.league, league)),
+    [transfers, cut, league],
   );
   // One euro axis across both tables, so the bar on a club that spent €292m is
   // visibly longer than the bar on one that spent €40m.
@@ -263,17 +290,17 @@ export function ClubTables({ transfers, spec }: { transfers: PricedTransfer[]; s
         </span>
         <ToggleGroup
           type="single"
-          value={withLoans ? "with" : "without"}
-          onValueChange={(v) => v && setWithLoans(v === "with")}
+          value={cut}
+          onValueChange={(v) => v && replace({ loans: v === "permanent" ? "permanent" : null })}
           variant="outline"
           size="sm"
           className="rounded-lg"
           aria-label="Count loans"
         >
-          <ToggleGroupItem value="with" className="rounded-l-lg">
+          <ToggleGroupItem value="loans" className="rounded-l-lg">
             With loans
           </ToggleGroupItem>
-          <ToggleGroupItem value="without" className="rounded-r-lg">
+          <ToggleGroupItem value="permanent" className="rounded-r-lg">
             Permanent only
           </ToggleGroupItem>
         </ToggleGroup>

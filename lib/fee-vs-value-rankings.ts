@@ -1,5 +1,6 @@
 import { buildClubWindows, rank, type ClubWindow, type PricedTransfer } from "@/lib/fee-vs-value";
 import { formatMarketValue, formatPremium, formatRatio } from "@/lib/format";
+import { TOP_5_LEAGUES } from "@/lib/filter-players";
 
 /**
  * Every ranking the fee-vs-value page offers, and what topping one is called
@@ -219,6 +220,12 @@ export type ViewSpec = {
   | { kind: "clubs"; options: ModeSpec[] }
 );
 
+/** The URL keeps `overpaid` while the tab reads "Overpriced": the slug is the
+ *  public address of a view, and renaming it would break every link already
+ *  shared. The two are separate fields precisely so display copy can move
+ *  without the address moving with it. "Overpriced" is the truer word anyway —
+ *  an overpaid *player* is one on too much money, which is not what any of this
+ *  measures. */
 export type View = "biggest" | "overpaid" | "bargains" | "clubs";
 
 export const VIEWS: Record<View, ViewSpec> = {
@@ -250,7 +257,7 @@ export const VIEWS: Record<View, ViewSpec> = {
     ],
   },
   overpaid: {
-    tab: "Overpaid",
+    tab: "Overpriced",
     kind: "list",
     tone: "over",
     control: "Rank by",
@@ -264,7 +271,7 @@ export const VIEWS: Record<View, ViewSpec> = {
           "How much more than the player is worth the club paid. Big transfers lead this list.",
         list: (r) => r.overpaidAbsolute,
         format: (t) => formatPremium(t.premium),
-        accolade: "Most overpaid signing",
+        accolade: "Most overpriced signing",
       },
       {
         slug: "ratio",
@@ -314,6 +321,82 @@ export const VIEWS: Record<View, ViewSpec> = {
 
 export const VIEW_KEYS = Object.keys(VIEWS) as View[];
 
+// ---------------------------------------------------------------------------
+// The two scopes on the data: which moves count, and whose business to show.
+// Both live in the URL rather than in component state, so a filtered view can
+// be linked and walked with the back button like every other choice here — and
+// so an accolade badge can deep-link to the exact cut it was won in.
+// ---------------------------------------------------------------------------
+
+/** Whether loans count. Absent from the URL means they do, which is the reading
+ *  that answers "what did the squad end up with". */
+export type LoansCut = "loans" | "permanent";
+
+export function resolveLoans(loans: string | null): LoansCut {
+  return loans === "permanent" ? "permanent" : "loans";
+}
+
+export function cutTransfers(transfers: PricedTransfer[], cut: LoansCut): PricedTransfer[] {
+  return cut === "permanent" ? transfers.filter((t) => !t.isLoan) : transfers;
+}
+
+/** How a cut reads in a badge, where there is no toggle to look at. */
+export const CUT_LABEL: Record<LoansCut, string> = {
+  loans: "with loans",
+  permanent: "permanent only",
+};
+
+/** Every league in the window, commonest first, with the leagues that appear
+ *  only as sellers included — they are most of the twenty-five, and leaving
+ *  them out would make the filter a list of the five clubs everyone already
+ *  watches. */
+export function leagueGroups(transfers: PricedTransfer[]) {
+  const counts = new Map<string, number>();
+  for (const t of transfers) {
+    // A club counts once per move, so a deal inside one league doesn't score
+    // twice and outrank a league that did the same amount of business.
+    for (const l of new Set([t.from.league, t.to.league].filter(Boolean))) {
+      counts.set(l, (counts.get(l) ?? 0) + 1);
+    }
+  }
+  const leagues = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  return [
+    {
+      options: [
+        { value: "all", label: "All leagues" },
+        { value: "top5", label: "Top 5 leagues" },
+      ],
+    },
+    { options: leagues.map(([l, n]) => ({ value: l, label: `${l} (${n})` })) },
+  ];
+}
+
+/** Whether one league is in scope. `top5` is the site's own five. */
+export function inLeague(league: string, filter: string): boolean {
+  if (filter === "all" || !filter) return true;
+  if (filter === "top5") return TOP_5_LEAGUES.includes(league);
+  return league === filter;
+}
+
+/**
+ * A transfer is in scope when *either* club is.
+ *
+ * Not the buying club alone, which was the tempting reading — all three player
+ * lists measure what a buyer got for its money, so "who paid" is the natural
+ * subject. But most of the twenty-five leagues here appear only because they
+ * sell into the big five: filter to Liga Portugal on the buyer and it returns
+ * almost nothing, which makes the filter useless exactly where it is most
+ * interesting.
+ *
+ * Club tables do not use this. There the filter is the club's own league, and
+ * narrowing the transfers first would quietly restate every club's window as
+ * "the part of it that involved this league" — a different number under the
+ * same heading.
+ */
+export function transferInLeague(t: PricedTransfer, filter: string): boolean {
+  return inLeague(t.from.league, filter) || inLeague(t.to.league, filter);
+}
+
 /** The URL is the state. Anything unknown, missing or malformed lands on the
  *  defaults rather than on an empty list, and the pair is resolved the same way
  *  on the server as in the browser, so the first paint already has the right
@@ -346,6 +429,9 @@ export interface Accolade {
   /** The exact view this row leads, so the badge lands the reader on the table
    *  it is quoting rather than on the default tab. */
   href: string;
+  /** A qualifier the title needs to be true — currently only which loans cut a
+   *  club won its end in, and only where the two cuts named different clubs. */
+  note?: string;
   tone: Tone;
 }
 
@@ -395,25 +481,43 @@ export function playerAccolades(transfers: PricedTransfer[], playerId: string): 
   return out;
 }
 
-/** Every club-table end this club heads. Both ends of all three modes, so a
- *  club that both shopped best and gained the most value says both — they are
- *  different facts, and the badge row wraps. */
+/**
+ * Every club-table end this club heads, in either cut of the window.
+ *
+ * A table end is really two rankings — loans counted and permanent-only — and
+ * they disagree about the winner often enough to matter: this window has
+ * Newcastle paying the most over the odds with loans in and Tottenham doing it
+ * on permanent deals alone. Badging only one cut hid the other club entirely.
+ *
+ * Badging both naively is worse, though. Four of the six ends have the same
+ * club at the top of both cuts, so Real Madrid would carry two badges reading
+ * "Gained the most value" with different numbers under them. So a club gets one
+ * badge per end, and the cut is named only when it is doing work — when this
+ * club leads one cut and some other club leads the other. Where a club leads
+ * both, there is nothing to distinguish and the qualifier would be noise.
+ */
 export function clubAccolades(
-  rows: ClubWindow[],
+  cuts: Record<LoansCut, ClubWindow[]>,
   clubId: string,
 ): Array<Accolade & { mode: ClubMode }> {
   const out: Array<Accolade & { mode: ClubMode }> = [];
   for (const mode of Object.keys(CLUB_MODES) as ClubMode[]) {
     const spec: ModeSpec = CLUB_MODES[mode];
     for (const endIndex of [0, 1] as const) {
-      const led = leaders(rankClubs(rows, spec, endIndex), spec.figure);
-      if (!led?.top.some((c) => c.club.clubId === clubId)) continue;
+      const led = (cut: LoansCut) => leaders(rankClubs(cuts[cut], spec, endIndex), spec.figure);
+      const won = ([...Object.keys(cuts)] as LoansCut[]).filter((cut) =>
+        led(cut)?.top.some((c) => c.club.clubId === clubId),
+      );
+      if (won.length === 0) continue;
+      // Where it leads both, quote the default cut — the one the link opens on.
+      const cut = won.includes("loans") ? "loans" : "permanent";
       out.push({
         // No "joint" form: the end titles are verb phrases, and "Gained the most
         // value" stays true of both clubs when two tie on it.
         title: spec.ends[endIndex].title,
-        figure: led.figure,
-        href: `${PATH}?view=clubs&by=${spec.slug}`,
+        figure: led(cut)!.figure,
+        note: won.length === 1 ? CUT_LABEL[cut] : undefined,
+        href: `${PATH}?view=clubs&by=${spec.slug}${cut === "permanent" ? "&loans=permanent" : ""}`,
         tone: spec.ends[endIndex].tone,
         mode,
       });
@@ -425,14 +529,19 @@ export function clubAccolades(
 /**
  * A club's window, and every end of it the club leads.
  *
- * Loans counted, which is both the page's own default and the truer answer to
- * "what did the squad gain" — a €50m striker in on loan is in the dressing
- * room. Returns nothing at all for a club with no business among the season's
- * biggest transfers, which is most of them.
+ * The standing figure counts loans, which is both the page's own default and
+ * the truer answer to "what did the squad gain" — a €50m striker in on loan is
+ * in the dressing room. The accolades read both cuts; see `clubAccolades`.
+ *
+ * Returns nothing at all for a club with no business among the season's biggest
+ * transfers, which is most of them.
  */
 export function clubWindowSummary(transfers: PricedTransfer[], clubId: string) {
-  const rows = buildClubWindows(transfers);
-  const club = rows.find((c) => c.club.clubId === clubId);
+  const cuts: Record<LoansCut, ClubWindow[]> = {
+    loans: buildClubWindows(transfers),
+    permanent: buildClubWindows(cutTransfers(transfers, "permanent")),
+  };
+  const club = cuts.loans.find((c) => c.club.clubId === clubId);
   if (!club) return null;
-  return { club, accolades: clubAccolades(rows, clubId) };
+  return { club, accolades: clubAccolades(cuts, clubId) };
 }

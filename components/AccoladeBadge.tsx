@@ -29,6 +29,7 @@ const TONE_BADGE: Record<Tone, string> = {
 export function AccoladeBadge({
   label,
   figure,
+  note,
   href,
   tone,
   season,
@@ -36,6 +37,9 @@ export function AccoladeBadge({
 }: {
   label: string;
   figure: string;
+  /** A qualifier the label needs to be true, dimmed because it is a condition
+   *  on the claim rather than part of it. */
+  note?: string;
   href: string;
   tone: Tone;
   season: number;
@@ -46,6 +50,7 @@ export function AccoladeBadge({
     <SignalBadge className={TONE_BADGE[tone]}>
       <Link href={href} className="hover:underline">
         {label} · <span className="font-value">{figure}</span>
+        {note && <span className="opacity-70"> · {note}</span>}
       </Link>
       <InfoTip className="ml-1">
         <p>

@@ -4,21 +4,17 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VirtualList } from "@/components/VirtualList";
+import { Combobox } from "@/components/Combobox";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
-import {
-  gapScale,
-  rank,
-  summarize,
-  transferKey,
-  withRanks,
-  type PricedTransfer,
-} from "@/lib/fee-vs-value";
+import { gapScale, rank, transferKey, withRanks, type PricedTransfer } from "@/lib/fee-vs-value";
 import {
   PATH,
   VIEWS,
   VIEW_KEYS,
+  leagueGroups,
   resolve,
+  transferInLeague,
   type ListOption,
   type Ranked,
   type View,
@@ -26,7 +22,6 @@ import {
 } from "@/lib/fee-vs-value-rankings";
 import { ClubTables } from "./ClubTables";
 import { TransferRow } from "./TransferRow";
-import { WindowSummary } from "./WindowSummary";
 
 /** Roughly a row at desktop width; the virtualizer measures each one for real
  *  once mounted, so a wrapped row on mobile corrects itself. */
@@ -50,6 +45,10 @@ function TransferList({
   // Competition ranking, so tied deals share a number rather than one of them
   // arbitrarily sitting above the other.
   const list = useMemo(() => withRanks(option.list(ranked), option.format), [option, ranked]);
+
+  if (list.length === 0) {
+    return <p className="mt-4 text-sm text-text-muted">No deals in this league.</p>;
+  }
 
   return (
     <div className="mt-3">
@@ -75,24 +74,29 @@ function TransferList({
   );
 }
 
-export function Leaderboard({
-  transfers,
-  season,
-}: {
-  transfers: PricedTransfer[];
-  season: number;
-}) {
+export function Leaderboard({ transfers }: { transfers: PricedTransfer[] }) {
   const { params, update, replace } = useQueryParams(PATH);
   const resolved = resolve(params.get("view"), params.get("by"));
   const { key: view, spec, option } = resolved;
+  const league = params.get("league") || "all";
+
+  // A transfer is in scope when either of its clubs is — see `transferInLeague`.
+  // The club tables deliberately don't use this narrowed set; they filter the
+  // clubs themselves, so a club's window stays its whole window.
+  const scoped = useMemo(
+    () => (league === "all" ? transfers : transfers.filter((t) => transferInLeague(t, league))),
+    [transfers, league],
+  );
+  const leagues = useMemo(() => leagueGroups(transfers), [transfers]);
 
   // Sorted here rather than on the server: the six orderings are six views of
   // the same objects, and shipping them pre-sorted put every transfer on the
   // wire once per list that mentioned it. Sorting ~200 rows costs nothing.
-  const ranked = useMemo(() => rank(transfers), [transfers]);
-  const summary = useMemo(() => summarize(transfers), [transfers]);
-  // One ruler for every bar on the page, so switching tabs reorders the rows
-  // without redrawing the scale underneath them.
+  const ranked = useMemo(() => rank(scoped), [scoped]);
+  // One ruler for every bar on the page, measured over the *whole* window even
+  // when a league is selected. A filter that quietly redrew the scale under the
+  // rows would make a small league's deals look like a big one's; short bars
+  // across a Liga Portugal view is the true answer.
   const axisMax = useMemo(() => gapScale(transfers), [transfers]);
 
   // Switching view is a real navigation — the tabs are links, so they can be
@@ -108,8 +112,6 @@ export function Leaderboard({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <WindowSummary season={season} summary={summary} />
-
       <section>
         <Tabs value={view} onValueChange={(v) => goToView(v as View)}>
           <TabsList>
@@ -160,9 +162,23 @@ export function Leaderboard({
           </div>
         </div>
 
+        {/* A scope on the data rather than a different question, so it sits
+            under the measure rather than competing with it — and it survives a
+            tab switch, because "show me the Premier League" is a thing you mean
+            about the whole page. */}
+        <div className="mt-3">
+          <Combobox
+            value={league}
+            onChange={(v) => replace({ league: v === "all" ? null : v || null })}
+            groups={leagues}
+            placeholder="All leagues"
+            searchPlaceholder="Search leagues..."
+          />
+        </div>
+
         {resolved.kind === "clubs" ? (
           <div className="mt-4">
-            <ClubTables transfers={transfers} spec={resolved.option} />
+            <ClubTables transfers={transfers} spec={resolved.option} league={league} />
           </div>
         ) : (
           <TransferList

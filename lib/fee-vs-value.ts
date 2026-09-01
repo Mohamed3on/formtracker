@@ -185,8 +185,8 @@ export function analyzeTransfers(
 }
 
 /**
- * A move this page can put a price on — the one pool every ranking, the window
- * headline and the shared bar axis are drawn from.
+ * A move this page can put a price on — the one pool every ranking and the
+ * shared bar axis are drawn from.
  *
  * Three ways a row falls out. A loan is not a signing at all: TM lists no fee
  * for one and ranks it by its own internal transfer value. A market value of
@@ -197,11 +197,9 @@ export function analyzeTransfers(
  *
  * Stated once because it was previously spelled out at each site, and the copies
  * drifted: `rank` learned to exclude unpriced moves and end-of-loan returns
- * while `summarize` went on counting both as signings bought for nothing. No row
- * in the current window is either shape — TM has priced every permanent move of
- * this season — so the divergence never reached the page. It only needed one
- * feed carrying a "?" fee to put a bargain in the headline that appeared on no
- * list beneath it.
+ * while the window headline went on counting both as signings bought for
+ * nothing. That headline is gone now, but the lesson it cost is why this is a
+ * named predicate rather than a condition written out wherever it is needed.
  *
  * Club totals deliberately do not use this. There the question is what a side
  * ended up with and what it cost, which a loan or an unpriced arrival still
@@ -288,92 +286,6 @@ export function withRanks(
  */
 export function transferKey(t: TopTransfer): string {
   return `${t.rank}-${t.playerId}`;
-}
-
-/**
- * The window in one line: what was paid, what it was worth, and how the deals
- * split around their own valuations.
- *
- * Counted over exactly the pool the rankings draw from — `isPriced`, the same
- * predicate `rank` filters on — so the headline and the lists below it can never
- * disagree. Everything is measured against `worth`, the same basis a row shows,
- * which is what keeps the headline sentence internally consistent: the two
- * figures it names really do subtract to the third.
- */
-export interface WindowSummary {
-  /** Permanent signings with a value to price against. */
-  deals: number;
-  fees: number;
-  /** Summed `worth`, so `fees - marketValue === premium` and the headline
-   *  sentence really does subtract in front of the reader. */
-  marketValue: number;
-  premium: number;
-  ratio: number;
-  /** Deals priced above, at, and below what the player is worth. */
-  over: number;
-  level: number;
-  under: number;
-  /** Permanent signings that cost nothing, counted inside the pool above. */
-  frees: number;
-  /** Left out of the pool above, and why: a loan is not a signing, and an
-   *  unpriced row is one TM gave no fee or no market value for. Both are named
-   *  rather than dropped, because a total that quietly excludes 26 moves invites
-   *  the reader to check it and find it wrong. */
-  loans: number;
-  unpriced: number;
-  /** Rows the market has re-rated since the move, and which way it went. */
-  revalued: number;
-  revaluedUp: number;
-  /** Re-rated players now worth at least the fee that was paid for them — the
-   *  market coming round to a price it did not set. */
-  worthTheFee: number;
-}
-
-export function summarize(transfers: PricedTransfer[]): WindowSummary {
-  const s: WindowSummary = {
-    deals: 0,
-    fees: 0,
-    marketValue: 0,
-    premium: 0,
-    ratio: 0,
-    over: 0,
-    level: 0,
-    under: 0,
-    frees: 0,
-    loans: 0,
-    unpriced: 0,
-    revalued: 0,
-    revaluedUp: 0,
-    worthTheFee: 0,
-  };
-
-  for (const t of transfers) {
-    // Exactly the rankings' pool, so the headline and the lists below it can
-    // never disagree. What falls out is accounted for rather than skipped.
-    if (!isPriced(t)) {
-      if (t.isLoan) s.loans += 1;
-      else s.unpriced += 1;
-      continue;
-    }
-    s.deals += 1;
-    s.fees += t.fee;
-    s.marketValue += t.worth;
-    if (t.isFree) s.frees += 1;
-    if (t.premium > 0) s.over += 1;
-    else if (t.premium < 0) s.under += 1;
-    else s.level += 1;
-    if (revalued(t)) {
-      s.revalued += 1;
-      if (t.worth > t.marketValue) s.revaluedUp += 1;
-      if (t.fee > 0 && t.worth >= t.fee) s.worthTheFee += 1;
-    }
-  }
-
-  // Derived from the two totals rather than summed row by row, so the sentence
-  // the page prints — paid X for Y, which is Z over — actually subtracts.
-  s.premium = s.fees - s.marketValue;
-  s.ratio = s.marketValue > 0 ? s.fees / s.marketValue : 0;
-  return s;
 }
 
 /**

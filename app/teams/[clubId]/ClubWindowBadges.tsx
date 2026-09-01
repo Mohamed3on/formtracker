@@ -18,6 +18,9 @@ const SQUAD_VALUE = CLUB_MODES["squad-value"];
  * it. Nothing renders at all for a club with no deals in the top 200, which is
  * a quarter of the big five and every club below them.
  *
+ * Accolades read both cuts of the window and name the cut only where the two
+ * disagree about the winner — see `clubAccolades`.
+ *
  * Same shape as `PlayerTransferBadges`: own fetch, own `<Suspense>`, failure
  * swallowed rather than taken out on the page around it.
  */
@@ -37,11 +40,16 @@ export async function ClubWindowBadges({ clubId }: { clubId: string }) {
           key={a.href}
           label={a.title}
           figure={a.figure}
+          note={a.note}
           href={a.href}
           tone={a.tone}
           season={data.season}
         >
-          <p className="mt-1.5">Loans counted, as on the Clubs tab it opens.</p>
+          <p className="mt-1.5">
+            {a.note
+              ? `Read over ${a.note}. The other cut of the window has a different club at the top of this table.`
+              : "Top of this table whether loans are counted or not."}
+          </p>
         </AccoladeBadge>
       ))}
       {!ledSquadValue && (
