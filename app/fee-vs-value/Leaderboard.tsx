@@ -6,7 +6,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VirtualList } from "@/components/VirtualList";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
-import { formatMarketValue, formatPremium, formatRatio } from "@/lib/format";
 import {
   gapScale,
   rank,
@@ -15,157 +14,19 @@ import {
   withRanks,
   type PricedTransfer,
 } from "@/lib/fee-vs-value";
-import { CLUB_MODES, ClubTables, type ModeSpec } from "./ClubTables";
-import { TransferRow, type Tone } from "./TransferRow";
+import {
+  PATH,
+  VIEWS,
+  VIEW_KEYS,
+  resolve,
+  type ListOption,
+  type Ranked,
+  type View,
+  type ViewSpec,
+} from "@/lib/fee-vs-value-rankings";
+import { ClubTables } from "./ClubTables";
+import { TransferRow } from "./TransferRow";
 import { WindowSummary } from "./WindowSummary";
-
-const PATH = "/fee-vs-value";
-
-type Ranked = ReturnType<typeof rank>;
-type View = "biggest" | "overpaid" | "bargains" | "clubs";
-
-interface Option {
-  /** What this measure is called in the URL. Short and guessable, so a shared
-   *  link says what it opens rather than carrying an array index. */
-  slug: string;
-  toggle: string;
-  title: string;
-  blurb: string;
-}
-
-/** A leaderboard of transfers: which ranked slice to show, and how each row's
- *  headline figure reads. The formatter doubles as the tie test — two rows
- *  showing the same figure share a rank. */
-interface ListOption extends Option {
-  list: (r: Ranked) => PricedTransfer[];
-  format: (t: PricedTransfer) => string;
-}
-
-/** Each view keeps its own pair of measures, so the control beside the heading
- *  always offers the two that make sense for what's on screen. Clubs renders
- *  tables rather than a row list, which is why it's a separate kind rather than
- *  a list view with holes in it. */
-type ViewSpec = {
-  tab: string;
-  /** Caption on the measure control. The control means something different in
-   *  every view, so it says which question it is answering rather than leaving
-   *  the reader to infer it from two bare words. */
-  control: string;
-  defaultBy: string;
-} & (
-  | { kind: "list"; tone: Tone; options: [ListOption, ListOption] }
-  // A ModeSpec already carries everything an Option does, so the club views
-  // list the specs themselves rather than a copy of four of their fields.
-  | { kind: "clubs"; options: ModeSpec[] }
-);
-
-const VIEWS: Record<View, ViewSpec> = {
-  biggest: {
-    tab: "Biggest",
-    kind: "list",
-    tone: "neutral",
-    control: "Rank by",
-    defaultBy: "value",
-    options: [
-      {
-        slug: "fee",
-        toggle: "Fee",
-        title: "Most expensive signings",
-        blurb: "The biggest fees of the season, whatever the player was worth.",
-        list: (r) => r.byFee,
-        format: (t) => formatMarketValue(t.fee),
-      },
-      {
-        slug: "value",
-        toggle: "Value",
-        title: "Most valuable signings",
-        blurb: "The best players to move, by what they are worth, whatever their club paid.",
-        list: (r) => r.byValue,
-        format: (t) => formatMarketValue(t.worth),
-      },
-    ],
-  },
-  overpaid: {
-    tab: "Overpaid",
-    kind: "list",
-    tone: "over",
-    control: "Rank by",
-    defaultBy: "cash",
-    options: [
-      {
-        slug: "cash",
-        toggle: "Cash",
-        title: "Paid the most over the odds",
-        blurb:
-          "How much more than the player is worth the club paid. Big transfers lead this list.",
-        list: (r) => r.overpaidAbsolute,
-        format: (t) => formatPremium(t.premium),
-      },
-      {
-        slug: "ratio",
-        toggle: "Times value",
-        title: "Paid the most times his value",
-        blurb:
-          "The same gap as a multiple. Small transfers lead this list — a €5M player at €15M is 3.00×, where a €100M signing rarely clears 1.50×.",
-        list: (r) => r.overpaidRatio,
-        format: (t) => formatRatio(t.ratio),
-      },
-    ],
-  },
-  bargains: {
-    tab: "Bargains",
-    kind: "list",
-    tone: "under",
-    control: "Rank by",
-    defaultBy: "cash",
-    options: [
-      {
-        slug: "cash",
-        toggle: "Cash",
-        title: "Biggest bargains in cash",
-        blurb: "How much less than the player is worth the club paid.",
-        list: (r) => r.underpaidAbsolute,
-        format: (t) => formatPremium(t.premium),
-      },
-      {
-        slug: "ratio",
-        toggle: "Times value",
-        title: "Biggest bargains, times value",
-        blurb: "The fee as a share of what the player is worth. 0.50× means half price.",
-        list: (r) => r.underpaidRatio,
-        format: (t) => formatRatio(t.ratio),
-      },
-    ],
-  },
-  clubs: {
-    tab: "Clubs",
-    kind: "clubs",
-    control: "Show",
-    defaultBy: "buying",
-    options: Object.values(CLUB_MODES),
-  },
-};
-
-const VIEW_KEYS = Object.keys(VIEWS) as View[];
-
-/** The URL is the state. Anything unknown, missing or malformed lands on the
- *  defaults rather than on an empty list, and the pair is resolved the same way
- *  on the server as in the browser, so the first paint already has the right
- *  tab open. */
-function resolve(view: string | null, by: string | null) {
-  const key = view && view in VIEWS ? (view as View) : "biggest";
-  const spec = VIEWS[key];
-  const pick = <O extends Option>(options: readonly O[]): O =>
-    options.find((o) => o.slug === by) ??
-    options.find((o) => o.slug === spec.defaultBy) ??
-    options[0];
-  // The discriminant is hoisted onto the result. Narrowing on a nested
-  // `spec.kind` leaves the sibling `option` un-narrowed, which is what used to
-  // force a cast at each render site.
-  return spec.kind === "clubs"
-    ? ({ kind: spec.kind, key, spec, option: pick(spec.options) } as const)
-    : ({ kind: spec.kind, key, spec, option: pick(spec.options) } as const);
-}
 
 /** Roughly a row at desktop width; the virtualizer measures each one for real
  *  once mounted, so a wrapped row on mobile corrects itself. */

@@ -36,6 +36,7 @@ import { TeamLogo } from "@/components/TeamLogo";
 import type { MinutesValuePlayer, RecentGameStats } from "@/app/types";
 import { POSITION_NAMES } from "@/lib/player-aggregation";
 import { PlayerInjuryBadge } from "./PlayerInjuryBadge";
+import { PlayerTransferBadges } from "./PlayerTransferBadges";
 import { effectivePosition, getBroadPositionFilter } from "@/lib/positions";
 import { JsonLd } from "@/components/JsonLd";
 import { absoluteUrl } from "@/lib/site-config";
@@ -704,6 +705,12 @@ export default async function PlayerDetailPage({
           )}
           <Suspense>
             <PlayerInjuryBadge playerId={player.playerId} />
+          </Suspense>
+          {/* Any fee-vs-value list this player's move heads. Streamed beside the
+              injury badge for the same reason: neither is worth making the hero
+              wait on a scrape. */}
+          <Suspense>
+            <PlayerTransferBadges playerId={player.playerId} />
           </Suspense>
           {player.contractExpiry && (
             <SignalBadge className="border-border-subtle bg-card-hover text-text-secondary">

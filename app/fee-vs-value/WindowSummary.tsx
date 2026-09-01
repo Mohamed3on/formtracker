@@ -1,12 +1,8 @@
 import { formatMarketValue, formatPremium, formatRatio } from "@/lib/format";
 import { barGeometry, type WindowSummary as Summary } from "@/lib/fee-vs-value";
+import { seasonLabel } from "@/lib/fee-vs-value-rankings";
 import { cn } from "@/lib/utils";
 import { GapTrack, WasWorthMark } from "./FeeValueBar";
-
-/** TM keys a season by its starting year. */
-function seasonLabel(season: number) {
-  return `${season}/${String((season + 1) % 100).padStart(2, "0")}`;
-}
 
 /** One end of the over/at/under split, which doubles as the colour key for
  *  every bar below it — the legend a reader would otherwise have to infer. */
