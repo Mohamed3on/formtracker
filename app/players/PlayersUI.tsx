@@ -14,7 +14,9 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { InfoTip } from "@/app/components/InfoTip";
 import { PositionDisplay, POS_ABBREV } from "@/components/PositionDisplay";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { useQueryParams } from "@/lib/hooks/use-query-params";
+import { cn } from "@/lib/utils";
 import { getLeagueUrl } from "@/lib/leagues";
 import { includeTournamentStats, npga } from "@/lib/stats-toggles";
 import {
@@ -506,9 +508,13 @@ export function PlayersUI({
   injuryMap?: InjuryMap;
 }) {
   const { params, update } = useQueryParams("/players");
-  const [moreOpen, setMoreOpen] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 640,
-  );
+  // Open on desktop until the reader says otherwise. The viewport is read after
+  // hydration, not in the initial state: the server can't see it, and guessing
+  // from `window` there painted a closed panel on the server and an open one on
+  // the client — a hydration mismatch React repaired by regenerating the tree.
+  const isDesktop = useMediaQuery("(min-width: 640px)");
+  const [moreChoice, setMoreChoice] = useState<boolean | null>(null);
+  const moreOpen = moreChoice ?? isDesktop;
   const [isFiltering, setIsFiltering] = useState(false);
 
   const sortBy = parseSortKey(params.get("sort"));
@@ -542,7 +548,7 @@ export function PlayersUI({
   ].filter(Boolean).length;
 
   useEffect(() => {
-    if (advancedFilterCount > 0) setMoreOpen(true);
+    if (advancedFilterCount > 0) setMoreChoice(true);
   }, [advancedFilterCount]);
 
   const fadeUpdate = useCallback(
@@ -846,11 +852,13 @@ export function PlayersUI({
           </div>
 
           {/* Advanced filters — collapsible */}
-          <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
+          <Collapsible open={moreOpen} onOpenChange={setMoreChoice}>
             <CollapsibleTrigger className="flex items-center gap-1.5 text-xs font-medium cursor-pointer transition-colors duration-150 text-text-muted hover:text-text-secondary">
               <svg
-                className="w-3.5 h-3.5 transition-transform duration-200"
-                style={{ transform: moreOpen ? "rotate(90deg)" : "rotate(0deg)" }}
+                className={cn(
+                  "w-3.5 h-3.5 transition-transform duration-200",
+                  moreOpen && "rotate-90",
+                )}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
