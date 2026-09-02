@@ -27,7 +27,7 @@ const PAGE_CACHE_MAP: Record<string, { tags?: string[]; workflow?: boolean }> = 
   "/value-analysis": { workflow: true },
   "/biggest-movers": { workflow: true },
   "/fee-vs-value": { tags: ["top-transfers"] },
-  "/transfer-balance": { workflow: true },
+  "/club-transfers": { tags: ["top-transfers"], workflow: true },
 };
 
 async function refreshPage(pathname: string) {
@@ -108,7 +108,7 @@ const navItems = [
     label: "Transfers",
     children: [
       { href: "/fee-vs-value", label: "Fee vs Value" },
-      { href: "/transfer-balance", label: "Transfer Balance" },
+      { href: "/club-transfers", label: "Clubs" },
     ],
   },
 ] as const;

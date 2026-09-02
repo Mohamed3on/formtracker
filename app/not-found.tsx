@@ -9,7 +9,7 @@ const PAGES = [
   { title: "Over/Under", href: "/value-analysis" },
   { title: "Injury Impact", href: "/injured" },
   { title: "Biggest Movers", href: "/biggest-movers" },
-  { title: "Transfer Balance", href: "/transfer-balance" },
+  { title: "Club Transfers", href: "/club-transfers" },
 ];
 
 export default function NotFound() {

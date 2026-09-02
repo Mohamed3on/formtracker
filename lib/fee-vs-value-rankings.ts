@@ -20,9 +20,9 @@ import { TOP_5_LEAGUES } from "@/lib/filter-players";
  * unpriced moves and the other went on counting them. One definition, read by
  * the page and by the badges alike, cannot drift.
  *
- * Pure: no filesystem, no cheerio, no React. `Leaderboard` and `ClubTables` are
- * client components and the badges are server components, so this has to be
- * safe in both bundles.
+ * Pure: no filesystem, no cheerio, no React. `Leaderboard` and the club ledger
+ * are client components and the badges are server components, so this has to
+ * be safe in both bundles.
  */
 
 /** Over the odds, under it, or exactly on it. Defined here rather than beside
@@ -52,8 +52,10 @@ export function gainTone(value: number): Tone {
   return value > 0 ? "under" : "over";
 }
 
-/** Where every ranking on this page lives. */
+/** Where the player rankings live. */
 export const PATH = "/fee-vs-value";
+/** Where the club rankings live — one table, every club in the window. */
+export const CLUB_PATH = "/club-transfers";
 
 /** TM keys a season by its starting year. */
 export function seasonLabel(season: number): string {
@@ -135,6 +137,32 @@ export type ModeSpec = {
   ends: [EndSpec, EndSpec];
 };
 
+/**
+ * A whole window, netted: value added minus money spent. Algebraically the
+ * two premiums above added together in their good directions — what a club
+ * saved buying under value plus what it made selling over it — so buying well
+ * and selling well count the same, and a club can come out ahead while getting
+ * weaker if the market paid it enough on the way (PSG, 2026/27).
+ */
+export const surplus = (c: ClubWindow) => c.netValue - c.netSpend;
+
+/** The rare double: banked money *and* came out stronger. */
+export const doubled = (c: ClubWindow) => c.netSpend < 0 && c.netValue > 0;
+
+/** `€133.0M of value for €39.5M` · `€12.0M of value while banking €41.9M` ·
+ *  `€25.0M of value lost while spending €97.2M`. The sentence behind an
+ *  overall figure, which is where a club that came out ahead getting weaker
+ *  says so. */
+export function windowSentence(c: ClubWindow): string {
+  const value =
+    c.netValue < 0 ? `${money(-c.netValue)} of value lost` : `${money(c.netValue)} of value`;
+  if (c.netSpend > 0) {
+    return `${value} ${c.netValue < 0 ? "while spending" : "for"} ${money(c.netSpend)}`;
+  }
+  if (c.netSpend < 0) return `${value} while banking ${money(-c.netSpend)}`;
+  return `${value} for nothing net`;
+}
+
 export const CLUB_MODES = {
   buying: {
     slug: "buying",
@@ -198,7 +226,44 @@ export const CLUB_MODES = {
       },
     ],
   },
+  overall: {
+    slug: "overall",
+    toggle: "Overall",
+    title: "Who came out ahead",
+    blurb:
+      "Value added minus money spent — everything a club did in the window, netted. Buying under value, selling over it and the squad's change in worth all count, so a club can come out ahead while getting weaker if it was paid enough on the way.",
+    sort: surplus,
+    figure: (c) => signed(surplus(c)),
+    caption: windowSentence,
+    badge: (c) => (doubled(c) ? "banked & stronger" : null),
+    expand: "both",
+    ends: [
+      { title: "Came out ahead", tone: "under", side: "in", qualifies: (c) => surplus(c) > 0 },
+      { title: "Came out behind", tone: "over", side: "out", qualifies: (c) => surplus(c) < 0 },
+    ],
+  },
 } satisfies Record<string, ModeSpec>;
+
+/** Which end of a mode is the good one. Every mode's two ends are a genuine
+ *  pair, one toned good and one bad, so "best" and "worst" name an end without
+ *  knowing which index it sits at — the buying ranking runs overpay-first, the
+ *  others best-first. */
+export type EndKey = "best" | "worst";
+
+export function endIndexOf(mode: ModeSpec, end: EndKey): 0 | 1 {
+  return mode.ends[0].tone === (end === "best" ? "under" : "over") ? 0 : 1;
+}
+
+export function endKeyOf(mode: ModeSpec, endIndex: 0 | 1): EndKey {
+  return mode.ends[endIndex].tone === "under" ? "best" : "worst";
+}
+
+/** The address of one end of one club ranking, in the cut it was read in. */
+export function clubRankingHref(mode: ModeSpec, endIndex: 0 | 1, cut: LoansCut = "loans"): string {
+  const params = new URLSearchParams({ by: mode.slug, end: endKeyOf(mode, endIndex) });
+  if (cut === "permanent") params.set("loans", "permanent");
+  return `${CLUB_PATH}?${params}`;
+}
 
 /** The three cuts, keyed by the slug that names them in the URL. `slug` was
  *  always the public name; keying on it too means there is one vocabulary for a
@@ -255,22 +320,17 @@ export interface ListOption extends Option {
 }
 
 /** Each view keeps its own pair of measures, so the control beside the heading
- *  always offers the two that make sense for what's on screen. Clubs renders
- *  tables rather than a row list, which is why it's a separate kind rather than
- *  a list view with holes in it. */
-export type ViewSpec = {
+ *  always offers the two that make sense for what's on screen. */
+export interface ViewSpec {
   tab: string;
   /** Caption on the measure control. The control means something different in
    *  every view, so it says which question it is answering rather than leaving
    *  the reader to infer it from two bare words. */
   control: string;
   defaultBy: string;
-} & (
-  | { kind: "list"; tone: Tone; options: [ListOption, ListOption] }
-  // A ModeSpec already carries everything an Option does, so the club views
-  // list the specs themselves rather than a copy of four of their fields.
-  | { kind: "clubs"; options: ModeSpec[] }
-);
+  tone: Tone;
+  options: [ListOption, ListOption];
+}
 
 /** The URL keeps `overpaid` while the tab reads "Overpriced": the slug is the
  *  public address of a view, and renaming it would break every link already
@@ -278,12 +338,11 @@ export type ViewSpec = {
  *  without the address moving with it. "Overpriced" is the truer word anyway —
  *  an overpaid *player* is one on too much money, which is not what any of this
  *  measures. */
-export type View = "biggest" | "overpaid" | "bargains" | "clubs";
+export type View = "biggest" | "overpaid" | "bargains";
 
 export const VIEWS: Record<View, ViewSpec> = {
   biggest: {
     tab: "Biggest",
-    kind: "list",
     tone: "neutral",
     control: "Rank by",
     defaultBy: "value",
@@ -310,7 +369,6 @@ export const VIEWS: Record<View, ViewSpec> = {
   },
   overpaid: {
     tab: "Overpriced",
-    kind: "list",
     tone: "over",
     control: "Rank by",
     defaultBy: "cash",
@@ -338,7 +396,6 @@ export const VIEWS: Record<View, ViewSpec> = {
   },
   bargains: {
     tab: "Bargains",
-    kind: "list",
     tone: "under",
     control: "Rank by",
     defaultBy: "cash",
@@ -361,13 +418,6 @@ export const VIEWS: Record<View, ViewSpec> = {
         format: (t) => formatRatio(t.ratio),
       },
     ],
-  },
-  clubs: {
-    tab: "Clubs",
-    kind: "clubs",
-    control: "Show",
-    defaultBy: "buying",
-    options: Object.values(CLUB_MODES),
   },
 };
 
@@ -456,16 +506,23 @@ export function transferInLeague(t: PricedTransfer, filter: string): boolean {
 export function resolve(view: string | null, by: string | null) {
   const key = view && view in VIEWS ? (view as View) : "biggest";
   const spec = VIEWS[key];
-  const pick = <O extends Option>(options: readonly O[]): O =>
-    options.find((o) => o.slug === by) ??
-    options.find((o) => o.slug === spec.defaultBy) ??
-    options[0];
-  // The discriminant is hoisted onto the result. Narrowing on a nested
-  // `spec.kind` leaves the sibling `option` un-narrowed, which is what used to
-  // force a cast at each render site.
-  return spec.kind === "clubs"
-    ? ({ kind: spec.kind, key, spec, option: pick(spec.options) } as const)
-    : ({ kind: spec.kind, key, spec, option: pick(spec.options) } as const);
+  const option =
+    spec.options.find((o) => o.slug === by) ??
+    spec.options.find((o) => o.slug === spec.defaultBy) ??
+    spec.options[0];
+  return { key, spec, option };
+}
+
+/**
+ * The club page's state, resolved the same way: which ranking, which end of
+ * it, and which cut of the window. Anything unknown lands on the default —
+ * everyone, netted, best first — rather than on an empty table.
+ */
+export function resolveClubs(by: string | null, end: string | null) {
+  const mode: ModeSpec =
+    (by ? (CLUB_MODES as Record<string, ModeSpec>)[by] : undefined) ?? CLUB_MODES.overall;
+  const endKey: EndKey = end === "worst" ? "worst" : "best";
+  return { mode, endKey, endIndex: endIndexOf(mode, endKey) };
 }
 
 // ---------------------------------------------------------------------------
@@ -517,7 +574,6 @@ export function playerAccolades(transfers: PricedTransfer[], playerId: string): 
   const out: Accolade[] = [];
   for (const view of VIEW_KEYS) {
     const spec = VIEWS[view];
-    if (spec.kind !== "list") continue;
     for (const option of spec.options) {
       if (!option.accolade) continue;
       const led = leaders(option.list(ranked), option.format);
@@ -569,7 +625,7 @@ export function clubAccolades(
         title: spec.ends[endIndex].title,
         figure: led(cut)!.figure,
         note: won.length === 1 ? CUT_LABEL[cut] : undefined,
-        href: `${PATH}?view=clubs&by=${spec.slug}${cut === "permanent" ? "&loans=permanent" : ""}`,
+        href: clubRankingHref(spec, endIndex, cut),
         tone: spec.ends[endIndex].tone,
         mode,
       });

@@ -20,7 +20,6 @@ import {
   type View,
   type ViewSpec,
 } from "@/lib/fee-vs-value-rankings";
-import { ClubTables } from "./ClubTables";
 import { TransferRow } from "./TransferRow";
 
 /** Roughly a row at desktop width; the virtualizer measures each one for real
@@ -36,7 +35,7 @@ function TransferList({
   ranked,
   axisMax,
 }: {
-  spec: Extract<ViewSpec, { kind: "list" }>;
+  spec: ViewSpec;
   option: ListOption;
   ranked: Ranked;
   axisMax: number;
@@ -76,13 +75,10 @@ function TransferList({
 
 export function Leaderboard({ transfers }: { transfers: PricedTransfer[] }) {
   const { params, update, replace } = useQueryParams(PATH);
-  const resolved = resolve(params.get("view"), params.get("by"));
-  const { key: view, spec, option } = resolved;
+  const { key: view, spec, option } = resolve(params.get("view"), params.get("by"));
   const league = params.get("league") || "all";
 
   // A transfer is in scope when either of its clubs is — see `transferInLeague`.
-  // The club tables deliberately don't use this narrowed set; they filter the
-  // clubs themselves, so a club's window stays its whole window.
   const scoped = useMemo(
     () => (league === "all" ? transfers : transfers.filter((t) => transferInLeague(t, league))),
     [transfers, league],
@@ -176,18 +172,7 @@ export function Leaderboard({ transfers }: { transfers: PricedTransfer[] }) {
           />
         </div>
 
-        {resolved.kind === "clubs" ? (
-          <div className="mt-4">
-            <ClubTables transfers={transfers} spec={resolved.option} league={league} />
-          </div>
-        ) : (
-          <TransferList
-            spec={resolved.spec}
-            option={resolved.option}
-            ranked={ranked}
-            axisMax={axisMax}
-          />
-        )}
+        <TransferList spec={spec} option={option} ranked={ranked} axisMax={axisMax} />
       </section>
     </div>
   );

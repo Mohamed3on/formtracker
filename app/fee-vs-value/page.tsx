@@ -1,6 +1,8 @@
 import { TOP_TRANSFER_LIMIT } from "@/lib/constants";
+import Link from "next/link";
 import { getFeeVsValueData } from "@/lib/top-transfers";
 import { createPageMetadata } from "@/lib/metadata";
+import { CLUB_PATH } from "@/lib/fee-vs-value-rankings";
 import { Leaderboard } from "./Leaderboard";
 
 export const metadata = createPageMetadata({
@@ -53,31 +55,26 @@ export default async function FeeVsValuePage() {
           together, and its bar collapses to a single grey mark.
         </p>
         <p className="mt-2 text-sm text-text-muted">
-          Every row is one of the <span className="font-value">{data.transfers.length}</span>{" "}
-          biggest transfers this season. A free transfer is still a signing, so it counts in the
-          cash lists — picking up a <span className="font-value">€45M</span> defender for nothing is
-          the best bargain there is. It is left out of the times value lists, where every free comes
-          to <span className="font-value">0.00×</span> and they would fill the top in a dead heat. A
-          loan is not a signing at all, so it stays out of both — it only shows up under{" "}
-          <strong>Clubs</strong>, and only with that switch on.
+          Every row is one of the <span className="font-value">{TOP_TRANSFER_LIMIT}</span> biggest
+          transfers this season. A free transfer is still a signing, so it counts in the cash lists
+          — picking up a <span className="font-value">€45M</span> defender for nothing is the best
+          bargain there is. It is left out of the times value lists, where every free comes to{" "}
+          <span className="font-value">0.00×</span> and they would fill the top in a dead heat. A
+          loan is not a signing at all, so it stays out of both.
         </p>
         <p className="mt-2 text-sm text-text-muted">
           The league filter takes a deal if <em>either</em> club is in that league, because most of
           the divisions here appear only as sellers — filtering on the buyer alone would empty them.
           So picking Liga Portugal keeps a Sporting player&apos;s move to the Premier League, and
-          picking the Premier League keeps it too. Under <strong>Clubs</strong> it means the club
-          itself, and each club keeps its whole window rather than the part of it that touched the
-          league you picked.
+          picking the Premier League keeps it too.
         </p>
         <p className="mt-2 text-sm text-text-muted">
-          Every row names the club a player left as well as the one he joined, and the leagues
-          behind them when he is changing division. That lets <strong>Clubs</strong> read the same
-          window from either end. <strong>Buying</strong> is fees paid against what the players were
-          worth; <strong>Selling</strong> is fees banked against what the players leaving were
-          worth, where being above value is the good outcome rather than the bad one.{" "}
-          <strong>Squad value</strong> sets the two against each other — value in minus value out —
-          so it names who came out of the window stronger rather than who simply churned the most.
-          Open any club to see the deals behind its total.
+          The same deals read from the clubs&apos; end — who bought well, who sold well, and who
+          came out of the window ahead — are on{" "}
+          <Link href={CLUB_PATH} className="text-accent-blue hover:underline">
+            Club Transfers
+          </Link>
+          .
         </p>
       </section>
     </div>

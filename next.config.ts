@@ -21,6 +21,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // Transfer Balance became the money half of Club Transfers.
+      { source: "/transfer-balance", destination: "/club-transfers", permanent: true },
+      // The club tables moved off fee-vs-value; `by` and `loans` carry over as
+      // they are, since the new page keeps the same names for both.
+      {
+        source: "/fee-vs-value",
+        has: [{ type: "query", key: "view", value: "clubs" }],
+        destination: "/club-transfers",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

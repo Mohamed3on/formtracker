@@ -1,6 +1,11 @@
 import { AccoladeBadge } from "@/components/AccoladeBadge";
 import { TOP_TRANSFER_LIMIT } from "@/lib/constants";
-import { CLUB_MODES, PATH, clubWindowSummary, gainTone } from "@/lib/fee-vs-value-rankings";
+import {
+  CLUB_MODES,
+  clubRankingHref,
+  clubWindowSummary,
+  gainTone,
+} from "@/lib/fee-vs-value-rankings";
 import { formatPremium } from "@/lib/format";
 import { getFeeVsValueData } from "@/lib/top-transfers";
 
@@ -57,7 +62,7 @@ export async function ClubWindowBadges({ clubId }: { clubId: string }) {
         <AccoladeBadge
           label="Squad value this window"
           figure={formatPremium(club.netValue)}
-          href={`${PATH}?view=clubs&by=${SQUAD_VALUE.slug}`}
+          href={clubRankingHref(SQUAD_VALUE, 0)}
           // The page's colour key, not the arithmetic sign: gaining value is the
           // good outcome, and good is the same green a bargain gets.
           tone={gainTone(club.netValue)}
