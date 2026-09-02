@@ -2,7 +2,8 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { getCurrentMarketValues } from "./current-values";
 import { analyzeTransfers, type FeeVsValueData } from "./fee-vs-value";
-import { fetchTopTransfers, TOP_TRANSFER_LIMIT } from "./fetch-top-transfers";
+import { TOP_TRANSFER_LIMIT } from "./constants";
+import { fetchTopTransfers } from "./fetch-top-transfers";
 
 /** The scrape, and only the scrape.
  *

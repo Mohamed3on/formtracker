@@ -399,7 +399,7 @@ export const CUT_LABEL: Record<LoansCut, string> = {
 };
 
 /** Every league in the window, commonest first, with the leagues that appear
- *  only as sellers included — they are most of the twenty-five, and leaving
+ *  only as sellers included — they are most of the twenty-six, and leaving
  *  them out would make the filter a list of the five clubs everyone already
  *  watches. */
 export function leagueGroups(transfers: PricedTransfer[]) {
@@ -435,7 +435,7 @@ export function inLeague(league: string, filter: string): boolean {
  *
  * Not the buying club alone, which was the tempting reading — all three player
  * lists measure what a buyer got for its money, so "who paid" is the natural
- * subject. But most of the twenty-five leagues here appear only because they
+ * subject. But most of the twenty-six leagues here appear only because they
  * sell into the big five: filter to Liga Portugal on the buyer and it returns
  * almost nothing, which makes the filter useless exactly where it is most
  * interesting.

@@ -1,4 +1,4 @@
-import { TOP_TRANSFER_LIMIT } from "@/lib/fetch-top-transfers";
+import { TOP_TRANSFER_LIMIT } from "@/lib/constants";
 import { getFeeVsValueData } from "@/lib/top-transfers";
 import { createPageMetadata } from "@/lib/metadata";
 import { Leaderboard } from "./Leaderboard";

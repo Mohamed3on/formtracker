@@ -1,5 +1,5 @@
 import { AccoladeBadge } from "@/components/AccoladeBadge";
-import { TOP_TRANSFER_LIMIT } from "@/lib/fetch-top-transfers";
+import { TOP_TRANSFER_LIMIT } from "@/lib/constants";
 import { CLUB_MODES, PATH, clubWindowSummary, gainTone } from "@/lib/fee-vs-value-rankings";
 import { formatPremium } from "@/lib/format";
 import { getFeeVsValueData } from "@/lib/top-transfers";
@@ -16,8 +16,8 @@ const SQUAD_VALUE = CLUB_MODES["squad-value"];
  *
  * A club leading the squad-value table would then print its net value twice, so
  * that accolade absorbs the standing figure instead of sitting beside a copy of
- * it. Nothing renders at all for a club with no deals in the top 250, which is
- * a quarter of the big five and every club below them.
+ * it. Nothing renders at all for a club with no deals in the top 250 — a
+ * handful of the big five, and most clubs below them.
  *
  * Accolades read both cuts of the window and name the cut only where the two
  * disagree about the winner — see `clubAccolades`.

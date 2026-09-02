@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { SignalBadge } from "@/components/SignalBadge";
 import { InfoTip } from "@/app/components/InfoTip";
+import { TOP_TRANSFER_LIMIT } from "@/lib/constants";
 import { seasonLabel, type Tone } from "@/lib/fee-vs-value-rankings";
 
 /** The page's own colour key, borrowed intact: green is the good outcome and
@@ -17,7 +18,7 @@ const TONE_BADGE: Record<Tone, string> = {
  *
  * The badge has to survive away from the page that frames it, which is what the
  * tip is for: a hero badge reading "Most expensive signing" says nothing about
- * *when*, and a figure drawn from the 200 biggest transfers is not the same
+ * *when*, and a figure drawn from the biggest transfers of a season is not the same
  * claim as one drawn from every deal a club did. Both are stated once here
  * rather than in each caller, so the two pages cannot end up describing the
  * same number differently.
@@ -54,9 +55,9 @@ export function AccoladeBadge({
       </Link>
       <InfoTip className="ml-1">
         <p>
-          Measured across the <span className="font-value">200</span> biggest transfers of the{" "}
-          <span className="font-value">{seasonLabel(season)}</span> season, each fee held against
-          what Transfermarkt says the player is worth.
+          Measured across the <span className="font-value">{TOP_TRANSFER_LIMIT}</span> biggest
+          transfers of the <span className="font-value">{seasonLabel(season)}</span> season, each
+          fee held against what Transfermarkt says the player is worth.
         </p>
         {children}
       </InfoTip>

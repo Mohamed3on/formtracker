@@ -1,6 +1,6 @@
 import { parsePlayerTable } from "@/lib/transfermarkt";
 import type { TopTransfer } from "@/app/types";
-import { BASE_URL } from "./constants";
+import { BASE_URL, TOP_TRANSFER_LIMIT } from "./constants";
 import { fetchPage } from "./fetch";
 import { parseMarketValue } from "./parse-market-value";
 import { tmCurrentSeasonId } from "./player-aggregation";
@@ -23,7 +23,6 @@ import { tmCurrentSeasonId } from "./player-aggregation";
  * answer 503 to the odd page under that load; fetchPage retries with backoff.
  */
 const PAGE_SIZE = 25;
-export const TOP_TRANSFER_LIMIT = 250;
 
 /** Column layout of the `plus/1` view. The player mini-table is column 1; the
  *  rest are read positionally off the row accessor. */

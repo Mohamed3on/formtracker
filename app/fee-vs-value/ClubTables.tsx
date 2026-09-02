@@ -81,9 +81,9 @@ function ClubRow({
         {c.club.logoUrl && <ClubLogo src={c.club.logoUrl} />}
         <span className="min-w-0 flex-1">
           {/* The division, in the same micro-type the transfer rows use for a
-              league. Text rather than a crest: twenty of the twenty-five
-              leagues in a window have no logo of ours, and half the clubs on
-              these tables play outside the big five — a badge only the usual
+              league. Text rather than a crest: most of the twenty-six
+              leagues in a window have no logo of ours, and two in five of the
+              clubs play outside the big five — a badge only the usual
               suspects get would say "these ones matter" and nothing else. It
               wraps rather than squeezes, so a long name keeps its room. */}
           <span className="flex flex-wrap items-baseline gap-x-1.5">
