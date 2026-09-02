@@ -9,6 +9,7 @@ import { getPlayerDetailHref } from "@/lib/format";
 import type { MinutesValuePlayer } from "@/app/types";
 import { npga } from "@/lib/stats-toggles";
 import { getShortPosition } from "@/lib/positions";
+import { EmptyNote } from "@/components/EmptyNote";
 
 type SortKey = "value" | "mins" | "games" | "ga" | "pen";
 
@@ -152,11 +153,7 @@ export function SquadTab({
   }, [squad, sortBy, sortAsc, limit]);
 
   if (squad.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
-        {emptyLabel}
-      </div>
-    );
+    return <EmptyNote>{emptyLabel}</EmptyNote>;
   }
 
   return (

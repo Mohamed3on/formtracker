@@ -25,6 +25,7 @@ import { getInjuredPlayers } from "@/lib/injured";
 import { formatMarketValue } from "@/lib/format";
 import { JsonLd } from "@/components/JsonLd";
 import { absoluteUrl } from "@/lib/site-config";
+import { EmptyNote } from "@/components/EmptyNote";
 
 // Request-rendered like every other Transfermarkt-backed page: prerendering
 // this at build meant live team-form/form-analysis fetches whose retry ladders
@@ -91,11 +92,7 @@ function SectionHeader({
 }
 
 function EmptySection({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
-      {children}
-    </div>
-  );
+  return <EmptyNote>{children}</EmptyNote>;
 }
 
 export default async function LeaguePage({ params }: { params: Promise<{ slug: string }> }) {

@@ -8,14 +8,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 import { SectionPanel } from "@/components/SectionPanel";
 import { ClubLogo } from "@/components/ClubLogo";
-import { PlayerAvatar } from "@/components/PlayerAvatar";
-import { formatPremium, formatRatio, getPlayerDetailHref, getTeamDetailHref } from "@/lib/format";
+import { formatRatio, getTeamDetailHref } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   barGeometry,
   buildClubWindows,
   transferKey,
-  type ClubSide,
   type ClubWindow,
   type PricedTransfer,
 } from "@/lib/fee-vs-value";
@@ -25,12 +23,12 @@ import {
   cutTransfers,
   inLeague,
   rankClubs,
+  TONE_TEXT,
   resolveLoans,
+  sideLabel,
   type ModeSpec,
-  type Side,
-  type Tone,
 } from "@/lib/fee-vs-value-rankings";
-import { TONE_TEXT, ValueToFee } from "./TransferRow";
+import { ClubMoveRow } from "./TransferRow";
 import { GapTrack } from "./FeeValueBar";
 
 /** Clubs per table. Twenty reaches well past the handful of usual suspects at
@@ -38,66 +36,6 @@ import { GapTrack } from "./FeeValueBar";
  *  story — 118 clubs did business in this window, and the twentieth-placed one
  *  is still moving tens of millions of value either way. */
 const TOP = 20;
-
-/** Paying above a player's value is the bad outcome on the way in and the good
- *  one on the way out. Landing exactly on it is neither, so it stays uncoloured
- *  rather than borrowing the bargain green. */
-function moveTone(t: PricedTransfer, side: Side): Tone {
-  if (t.premium === 0) return "neutral";
-  const aboveValue = t.premium > 0;
-  return (side === "in" ? aboveValue : !aboveValue) ? "over" : "under";
-}
-
-/** One move inside an expanded club: who, what he was worth, what he cost. */
-function MoveRow({ t, side }: { t: PricedTransfer; side: Side }) {
-  const other = side === "in" ? t.from : t.to;
-  return (
-    <li className="flex items-center gap-2 py-1.5">
-      <PlayerAvatar imageUrl={t.imageUrl} name={t.name} className="size-6 rounded" />
-      <span className="min-w-0 flex-1">
-        <Link
-          href={getPlayerDetailHref(t.playerId)}
-          className="block truncate text-xs font-bold text-text-primary hover:underline"
-        >
-          {t.name}
-        </Link>
-        {other.name && (
-          <span className="block truncate text-xs text-text-muted">
-            {side === "in" ? "from" : "to"} {other.name}
-          </span>
-        )}
-        {/* The price rides under the name on phones, where there is no room for
-            it beside one. */}
-        <span className="mt-0.5 block sm:hidden">
-          <ValueToFee transfer={t} />
-        </span>
-      </span>
-      {t.isLoan && (
-        <span className="shrink-0 text-[10px] uppercase tracking-wider text-text-muted">loan</span>
-      )}
-      <span className="hidden shrink-0 sm:block">
-        <ValueToFee transfer={t} />
-      </span>
-      <span
-        className={cn(
-          "w-20 shrink-0 text-right font-value text-xs",
-          // On the way out, banking above value is the good outcome.
-          TONE_TEXT[moveTone(t, side)],
-        )}
-      >
-        {formatPremium(t.premium)}
-      </span>
-    </li>
-  );
-}
-
-function sideLabel(s: ClubSide, side: Side) {
-  const extras = [
-    s.loans > 0 && `${s.loans} ${s.loans === 1 ? "loan" : "loans"}`,
-    s.frees > 0 && `${s.frees} free`,
-  ].filter(Boolean);
-  return `${s.players} ${side}${extras.length ? ` · ${extras.join(" · ")}` : ""}`;
-}
 
 function ClubRow({
   c,
@@ -193,7 +131,7 @@ function ClubRow({
             )}
             <ul className="divide-y divide-border-subtle px-2.5">
               {c[key].transfers.map((t) => (
-                <MoveRow key={transferKey(t)} t={t} side={key} />
+                <ClubMoveRow key={transferKey(t)} t={t} side={key} />
               ))}
             </ul>
           </div>

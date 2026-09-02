@@ -40,6 +40,7 @@ export default function TeamDetailLoading() {
           <div className="flex gap-1">
             <Skeleton className="h-9 w-20 rounded-lg" />
             <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-9 w-24 rounded-lg" />
             <Skeleton className="h-9 w-28 rounded-lg" />
             <Skeleton className="h-9 w-24 rounded-lg" />
           </div>
