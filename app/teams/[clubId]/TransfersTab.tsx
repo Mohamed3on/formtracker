@@ -287,9 +287,12 @@ function WindowSkeleton() {
     <SectionPanel title="Fee against value">
       <div className="space-y-3">
         <Skeleton className="h-3.5 w-64" />
+        {/* A middling window's worth of moves. The panels grow with the deals
+            behind them, so nothing fixed can be right for every club — this
+            leans towards holding the section below still. */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Skeleton className="h-52 rounded-xl" />
-          <Skeleton className="h-52 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
         </div>
       </div>
     </SectionPanel>
@@ -300,24 +303,27 @@ function WindowSkeleton() {
  * A club's transfer business, from both of the site's angles at once.
  *
  * The two say different things and are deliberately kept apart rather than
- * netted into one figure. **Spending and sales** is the money: every deal
- * Transfermarkt lists, in cash, over one to four seasons — how much a club is
- * actually operating. **Fee against value** is the judgement: only the season's
- * biggest transfers, but each one held against what the player is worth, which
- * is the difference between spending a lot and spending well.
+ * netted into one figure. **Fee against value** is the judgement, and leads:
+ * only the season's biggest transfers, but each one held against what the
+ * player is worth, which is the difference between spending a lot and spending
+ * well — and the deals themselves, by name. **Spending and sales** is the money
+ * under it: every deal Transfermarkt lists, in cash, over one to four seasons.
  *
  * Their headline figures therefore disagree on purpose, and each reads with its
  * own sign convention — a balance is positive when a club banked more than it
  * spent, a premium is positive when it paid over the odds. Both captions spell
  * out the two numbers behind them so the sign never has to carry the meaning.
+ *
+ * The lead section is the streamed one, so its skeleton holds the top of the tab
+ * while the scrape lands rather than letting the section below it jump.
  */
 export function TransfersTab({ clubId, name }: { clubId: string; name: string }) {
   return (
     <div className="space-y-8">
-      <SpendingSection clubId={clubId} />
       <Suspense fallback={<WindowSkeleton />}>
         <WindowSection clubId={clubId} name={name} />
       </Suspense>
+      <SpendingSection clubId={clubId} />
     </div>
   );
 }
