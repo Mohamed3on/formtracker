@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatMarketValue, getTeamDetailHref } from "@/lib/format";
+import { formatMillions, getTeamDetailHref } from "@/lib/format";
 import { crestUrl } from "@/lib/transfermarkt";
 import type {
   TransferBalanceClub,
@@ -46,9 +46,6 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "departures", label: "Departures", numeric: true },
   { key: "balance", label: "Net", numeric: true },
 ];
-
-/** Data is in millions; the shared formatter takes raw euros. */
-const fee = (millions: number) => formatMarketValue(millions * 1_000_000);
 
 /** Down on transfers is red, up is green. NB --accent-hot is GREEN in this design
  *  system (#00ff87) — --accent-cold is the red. */
@@ -151,7 +148,7 @@ export function TransferBalanceUI({ data }: { data: TransferBalanceResult }) {
                   </Link>
                 </div>
                 <p className={`font-value text-lg ${signed ? netTone(leader.value) : ""}`}>
-                  {fee(leader.value)}
+                  {formatMillions(leader.value)}
                 </p>
               </CardContent>
             </Card>
@@ -217,7 +214,7 @@ export function TransferBalanceUI({ data }: { data: TransferBalanceResult }) {
                   <div className="shrink-0 text-right">
                     <p className="text-xs tracking-wide text-text-muted uppercase">Net</p>
                     <p className={`font-value text-sm ${netTone(club.balance)}`}>
-                      {fee(club.balance)}
+                      {formatMillions(club.balance)}
                     </p>
                   </div>
                 </div>
@@ -225,14 +222,14 @@ export function TransferBalanceUI({ data }: { data: TransferBalanceResult }) {
                   <div>
                     <dt className="text-text-muted">Gross spend</dt>
                     <dd className="font-value">
-                      {fee(club.expenditure)}{" "}
+                      {formatMillions(club.expenditure)}{" "}
                       <span className="text-text-muted">({club.arrivals} in)</span>
                     </dd>
                   </div>
                   <div className="text-right">
                     <dt className="text-text-muted">Sales</dt>
                     <dd className="font-value">
-                      {fee(club.income)}{" "}
+                      {formatMillions(club.income)}{" "}
                       <span className="text-text-muted">({club.departures} out)</span>
                     </dd>
                   </div>
@@ -272,12 +269,16 @@ export function TransferBalanceUI({ data }: { data: TransferBalanceResult }) {
                   <TableCell>
                     <ClubCell club={club} multi={multi} />
                   </TableCell>
-                  <TableCell className="font-value text-right">{fee(club.expenditure)}</TableCell>
+                  <TableCell className="font-value text-right">
+                    {formatMillions(club.expenditure)}
+                  </TableCell>
                   <TableCell className="font-value text-right">{club.arrivals}</TableCell>
-                  <TableCell className="font-value text-right">{fee(club.income)}</TableCell>
+                  <TableCell className="font-value text-right">
+                    {formatMillions(club.income)}
+                  </TableCell>
                   <TableCell className="font-value text-right">{club.departures}</TableCell>
                   <TableCell className={`font-value text-right ${netTone(club.balance)}`}>
-                    {fee(club.balance)}
+                    {formatMillions(club.balance)}
                   </TableCell>
                 </TableRow>
               );

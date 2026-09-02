@@ -19,6 +19,17 @@ export function formatPremium(premium: number): string {
   return `${premium > 0 ? "+" : ""}${formatMarketValue(premium)}`;
 }
 
+/** Transfermarkt's transfer-balance tables are denominated in millions; every
+ *  money formatter here takes raw euros. */
+export function formatMillions(millions: number): string {
+  return formatMarketValue(millions * 1_000_000);
+}
+
+/** The same, signed, so a club that banked more than it spent reads `+€144.3M`. */
+export function formatSignedMillions(millions: number): string {
+  return formatPremium(millions * 1_000_000);
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function formatReturnInfo(dateStr: string): { label: string; imminent: boolean } | null {

@@ -4,12 +4,17 @@ import { PositionDisplay } from "@/components/PositionDisplay";
 import { NationalityFlag } from "@/components/NationalityFlag";
 import { ClubLogo } from "@/components/ClubLogo";
 import { RankBadge } from "@/components/RankBadge";
-import { formatMarketValue, getPlayerDetailHref, getTeamDetailHref } from "@/lib/format";
+import {
+  formatMarketValue,
+  formatPremium,
+  getPlayerDetailHref,
+  getTeamDetailHref,
+} from "@/lib/format";
 import { isSameLeague } from "@/lib/leagues";
 import { cn } from "@/lib/utils";
 import type { TopTransfer, TransferClub } from "@/app/types";
 import { revalued, type PricedTransfer } from "@/lib/fee-vs-value";
-import type { Tone } from "@/lib/fee-vs-value-rankings";
+import { premiumTone, type Side, type Tone } from "@/lib/fee-vs-value-rankings";
 import { FeeValueBar, WasWorthMark } from "./FeeValueBar";
 
 /** One end of a move. Links through to the squad when TM gave us a club id. */
@@ -165,5 +170,53 @@ export function ValueToFee({ transfer }: { transfer: PricedTransfer }) {
       <span className="mx-1 text-text-muted">→</span>
       {transfer.fee > 0 ? formatMarketValue(transfer.fee) : transfer.feeText}
     </span>
+  );
+}
+
+/**
+ * One move inside a club's window: who, what he was worth, what he cost.
+ *
+ * The compact form of `TransferRow` — a line of a club's business rather than a
+ * card of its own. Shared by the club tables on this page and the transfers
+ * section of a club's own page, which list the same moves.
+ */
+export function ClubMoveRow({ t, side }: { t: PricedTransfer; side: Side }) {
+  const other = side === "in" ? t.from : t.to;
+  return (
+    <li className="flex items-center gap-2 py-1.5">
+      <PlayerAvatar imageUrl={t.imageUrl} name={t.name} className="size-6 rounded" />
+      <span className="min-w-0 flex-1">
+        <Link
+          href={getPlayerDetailHref(t.playerId)}
+          className="block truncate text-xs font-bold text-text-primary hover:underline"
+        >
+          {t.name}
+        </Link>
+        {other.name && (
+          <span className="block truncate text-xs text-text-muted">
+            {side === "in" ? "from" : "to"} {other.name}
+          </span>
+        )}
+        {/* The price rides under the name on phones, where there is no room for
+            it beside one. */}
+        <span className="mt-0.5 block sm:hidden">
+          <ValueToFee transfer={t} />
+        </span>
+      </span>
+      {t.isLoan && (
+        <span className="shrink-0 text-[10px] uppercase tracking-wider text-text-muted">loan</span>
+      )}
+      <span className="hidden shrink-0 sm:block">
+        <ValueToFee transfer={t} />
+      </span>
+      <span
+        className={cn(
+          "w-20 shrink-0 text-right font-value text-xs",
+          TONE_TEXT[premiumTone(t.premium, side)],
+        )}
+      >
+        {formatPremium(t.premium)}
+      </span>
+    </li>
   );
 }

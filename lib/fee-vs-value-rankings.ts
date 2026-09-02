@@ -1,4 +1,10 @@
-import { buildClubWindows, rank, type ClubWindow, type PricedTransfer } from "@/lib/fee-vs-value";
+import {
+  buildClubWindows,
+  rank,
+  type ClubSide,
+  type ClubWindow,
+  type PricedTransfer,
+} from "@/lib/fee-vs-value";
 import { formatMarketValue, formatPremium, formatRatio } from "@/lib/format";
 import { TOP_5_LEAGUES } from "@/lib/filter-players";
 
@@ -40,6 +46,30 @@ const signed = formatPremium;
 
 /** Which side of a window a club row reads from. */
 export type Side = "in" | "out";
+
+/**
+ * Whether a premium is the good outcome or the bad one, which depends entirely
+ * on which way the player was going: paying above a player's value is money
+ * wasted, banking above it is money made. Landing exactly on it is neither, so
+ * it stays uncoloured rather than borrowing the bargain green.
+ *
+ * One move and a whole side of a window are both a single premium, so both read
+ * their colour from here.
+ */
+export function premiumTone(premium: number, side: Side): Tone {
+  if (premium === 0) return "neutral";
+  return (side === "in" ? premium > 0 : premium < 0) ? "over" : "under";
+}
+
+/** `7 in · 2 loans · 1 free` — what a side amounts to in players, before any
+ *  money is mentioned. */
+export function sideLabel(s: ClubSide, side: Side): string {
+  const extras = [
+    s.loans > 0 && `${s.loans} ${s.loans === 1 ? "loan" : "loans"}`,
+    s.frees > 0 && `${s.frees} free`,
+  ].filter(Boolean);
+  return `${s.players} ${side}${extras.length ? ` · ${extras.join(" · ")}` : ""}`;
+}
 
 /** One end of a mode's single ranking — its top, then its bottom. Only what
  *  actually differs between the two lives here; the measure itself is shared,

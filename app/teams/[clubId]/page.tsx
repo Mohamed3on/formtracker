@@ -27,6 +27,7 @@ import { HeroMetric } from "@/components/HeroMetric";
 import { SectionPanel } from "@/components/SectionPanel";
 import { ClubWindowBadges } from "./ClubWindowBadges";
 import { SquadTab } from "./SquadTab";
+import { TransfersTab } from "./TransfersTab";
 import { ManagerClient } from "./TeamDeferredData";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import type { InjuredPlayer } from "@/app/types";
@@ -440,6 +441,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
         sections={[
           { value: "form", label: "Recent Form" },
           { value: "squad", label: "Squad" },
+          { value: "transfers", label: "Transfers" },
           { value: "value", label: "Value Analysis" },
           { value: "injuries", label: "Injuries" },
         ]}
@@ -597,7 +599,10 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
         {/* Tab 2: Squad */}
         <SquadTab squad={slimForClient(squad)} />
 
-        {/* Tab 3: Value Analysis */}
+        {/* Tab 3: Transfers */}
+        <TransfersTab clubId={clubId} name={name} />
+
+        {/* Tab 4: Value Analysis */}
         <div className="space-y-8">
           <SectionPanel
             title={`Bargains at ${name} (${overperformers.length})`}
@@ -648,7 +653,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
           </SectionPanel>
         </div>
 
-        {/* Tab 4: Injuries */}
+        {/* Tab 5: Injuries */}
         <div>
           {clubInjuries.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
