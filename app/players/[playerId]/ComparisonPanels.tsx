@@ -10,6 +10,7 @@ import { useQueryParams } from "@/lib/hooks/use-query-params";
 import { ComparisonItem } from "@/components/ComparisonItem";
 import { FilterButton } from "@/components/FilterButton";
 import { SectionPanel } from "@/components/SectionPanel";
+import { EmptyNote } from "@/components/EmptyNote";
 
 type CardProps = {
   title: string;
@@ -34,9 +35,7 @@ function Card({ title, emptyLabel, players, positive, benchmarkUrl }: CardProps)
     >
       <div className="space-y-3">
         {players.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
-            {emptyLabel}
-          </div>
+          <EmptyNote>{emptyLabel}</EmptyNote>
         ) : (
           players.map((player) => (
             <ComparisonItem key={player.playerId} player={player} positive={positive} />

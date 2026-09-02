@@ -34,6 +34,7 @@ import type { InjuredPlayer } from "@/app/types";
 import { JsonLd } from "@/components/JsonLd";
 import { getLeagueUrl } from "@/lib/leagues";
 import { absoluteUrl } from "@/lib/site-config";
+import { EmptyNote } from "@/components/EmptyNote";
 
 function InjuredPlayerRow({ player }: { player: InjuredPlayer }) {
   const returnInfo = formatReturnInfo(player.returnDate);
@@ -449,9 +450,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
         {/* Tab 1: Recent Form */}
         <div>
           {recentForm.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
-              No recent form data available for this team.
-            </div>
+            <EmptyNote>No recent form data available for this team.</EmptyNote>
           ) : (
             <div className="space-y-6">
               {/* Form table across windows */}
@@ -616,9 +615,9 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
             }
           >
             {overperformers.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
+              <EmptyNote>
                 No club players currently outperform 3+ pricier comparable peers.
-              </div>
+              </EmptyNote>
             ) : (
               <div className="space-y-3">
                 {overperformers.map((p) => (
@@ -640,9 +639,9 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
             }
           >
             {underperformers.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
+              <EmptyNote>
                 No club players are currently outperformed by 3+ cheaper comparable peers.
-              </div>
+              </EmptyNote>
             ) : (
               <div className="space-y-3">
                 {underperformers.map((p) => (
@@ -656,9 +655,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ clu
         {/* Tab 5: Injuries */}
         <div>
           {clubInjuries.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
-              No injured players currently tracked for this team.
-            </div>
+            <EmptyNote>No injured players currently tracked for this team.</EmptyNote>
           ) : (
             <div className="space-y-3">
               {clubInjuries.map((p) => (

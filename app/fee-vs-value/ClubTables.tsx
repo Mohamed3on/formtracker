@@ -23,11 +23,12 @@ import {
   cutTransfers,
   inLeague,
   rankClubs,
+  TONE_TEXT,
   resolveLoans,
   sideLabel,
   type ModeSpec,
 } from "@/lib/fee-vs-value-rankings";
-import { ClubMoveRow, TONE_TEXT } from "./TransferRow";
+import { ClubMoveRow } from "./TransferRow";
 import { GapTrack } from "./FeeValueBar";
 
 /** Clubs per table. Twenty reaches well past the handful of usual suspects at

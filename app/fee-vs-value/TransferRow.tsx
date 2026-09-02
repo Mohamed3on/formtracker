@@ -14,7 +14,7 @@ import { isSameLeague } from "@/lib/leagues";
 import { cn } from "@/lib/utils";
 import type { TopTransfer, TransferClub } from "@/app/types";
 import { revalued, type PricedTransfer } from "@/lib/fee-vs-value";
-import { premiumTone, type Side, type Tone } from "@/lib/fee-vs-value-rankings";
+import { TONE_TEXT, premiumTone, type Side, type Tone } from "@/lib/fee-vs-value-rankings";
 import { FeeValueBar, WasWorthMark } from "./FeeValueBar";
 
 /** One end of a move. Links through to the squad when TM gave us a club id. */
@@ -79,12 +79,6 @@ interface TransferRowProps {
   axisMax?: number;
   tone: Tone;
 }
-
-export const TONE_TEXT: Record<Tone, string> = {
-  over: "text-accent-cold",
-  under: "text-accent-hot",
-  neutral: "text-text-primary",
-};
 
 const TONE_RANK: Record<Tone, string> = {
   over: "bg-accent-cold text-background",

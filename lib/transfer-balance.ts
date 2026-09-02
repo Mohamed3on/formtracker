@@ -38,17 +38,35 @@ export const BALANCE_METRIC: Record<TransferBalanceMetric, string> = {
  */
 const RANKED_DEPTH = 25;
 
-/** Which figure a measure ranks on, and who is entitled to be ranked on it at
- *  all. Balance is read from both ends: a club that banked money is placed
- *  among the profit-makers and one that spent it among the spenders, because
- *  "3rd biggest net spender" is false of a club that came out ahead however the
- *  sort happens to order it. */
-const MEASURES: Record<TransferBalanceMetric, (c: TransferBalanceClub) => number | null> = {
-  expenditure: (c) => (c.expenditure > 0 ? c.expenditure : null),
-  income: (c) => (c.income > 0 ? c.income : null),
-  netProfit: (c) => (c.balance > 0 ? c.balance : null),
-  netSpender: (c) => (c.balance < 0 ? -c.balance : null),
-};
+/**
+ * Which figure a measure ranks on, who is entitled to be ranked on it at all,
+ * and the order the places read in.
+ *
+ * An array, not a record keyed by metric: the order is a decision — spending,
+ * then sales, then the net — and a record would leave it to however the object
+ * literal happened to be written, which nothing states and nothing protects.
+ *
+ * `null` means "not eligible", which is what makes balance readable from both
+ * ends: a club that banked money is placed among the profit-makers and one that
+ * spent it among the spenders, because "3rd biggest net spender" is false of a
+ * club that came out ahead however the sort happens to order it. No club is
+ * eligible for both, so their relative order here never actually shows.
+ */
+const MEASURES: {
+  metric: TransferBalanceMetric;
+  of: (c: TransferBalanceClub) => number | null;
+}[] = [
+  { metric: "expenditure", of: (c) => (c.expenditure > 0 ? c.expenditure : null) },
+  { metric: "income", of: (c) => (c.income > 0 ? c.income : null) },
+  { metric: "netSpender", of: (c) => (c.balance < 0 ? -c.balance : null) },
+  { metric: "netProfit", of: (c) => (c.balance > 0 ? c.balance : null) },
+];
+
+/** A place this club is entitled to claim on one measure. */
+export interface ClubPlace {
+  metric: TransferBalanceMetric;
+  place: number;
+}
 
 /** One club's row in one window, with the places it can claim. */
 export interface ClubBalanceWindow {
@@ -56,7 +74,7 @@ export interface ClubBalanceWindow {
   /** `26/27`, or `24/25 – 26/27` for a multi-season window. */
   label: string;
   club: TransferBalanceClub;
-  ranks: Partial<Record<TransferBalanceMetric, number>>;
+  places: ClubPlace[];
 }
 
 /**
@@ -73,17 +91,13 @@ export async function getClubTransferBalance(clubId: string): Promise<ClubBalanc
     const club = clubs.find((c) => c.id === clubId);
     if (!club) return [];
 
-    const ranks: ClubBalanceWindow["ranks"] = {};
-    for (const [metric, measure] of Object.entries(MEASURES) as [
-      TransferBalanceMetric,
-      (typeof MEASURES)[TransferBalanceMetric],
-    ][]) {
-      const mine = measure(club);
-      if (mine === null) continue;
-      const place = clubs.filter((c) => (measure(c) ?? -Infinity) > mine).length + 1;
-      if (place <= RANKED_DEPTH) ranks[metric] = place;
-    }
+    const places = MEASURES.flatMap(({ metric, of }) => {
+      const mine = of(club);
+      if (mine === null) return [];
+      const place = clubs.filter((c) => (of(c) ?? -Infinity) > mine).length + 1;
+      return place <= RANKED_DEPTH ? [{ metric, place }] : [];
+    });
 
-    return [{ seasons, label, club, ranks }];
+    return [{ seasons, label, club, places }];
   });
 }

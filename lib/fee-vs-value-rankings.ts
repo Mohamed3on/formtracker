@@ -29,6 +29,29 @@ import { TOP_5_LEAGUES } from "@/lib/filter-players";
  *  the row that paints it because the specs below are typed on it. */
 export type Tone = "over" | "under" | "neutral";
 
+/** What a tone paints as text. Beside the type it keys on rather than in
+ *  whichever component happened to need it first — three route files across two
+ *  routes read it now. */
+export const TONE_TEXT: Record<Tone, string> = {
+  over: "text-accent-cold",
+  under: "text-accent-hot",
+  neutral: "text-text-primary",
+};
+
+/**
+ * A signed figure's colour, where up is the good direction: squad value gained,
+ * money banked, a window that came out ahead. Zero is neither, so it stays
+ * uncoloured rather than borrowing the good hue.
+ *
+ * The site's one rule for this. It was previously written out at each site that
+ * needed it — twice on a club's transfers, once on its hero badge — and three
+ * copies of a two-branch ternary is how a colour key drifts.
+ */
+export function gainTone(value: number): Tone {
+  if (value === 0) return "neutral";
+  return value > 0 ? "under" : "over";
+}
+
 /** Where every ranking on this page lives. */
 export const PATH = "/fee-vs-value";
 
@@ -48,17 +71,16 @@ const signed = formatPremium;
 export type Side = "in" | "out";
 
 /**
- * Whether a premium is the good outcome or the bad one, which depends entirely
- * on which way the player was going: paying above a player's value is money
- * wasted, banking above it is money made. Landing exactly on it is neither, so
- * it stays uncoloured rather than borrowing the bargain green.
+ * The same rule for a premium, which changes direction with the side of the
+ * deal it sits on: paying above a player's value is money wasted, banking above
+ * it is money made. So the good direction is down on the way in and up on the
+ * way out, which is one negation rather than a second colour rule.
  *
  * One move and a whole side of a window are both a single premium, so both read
  * their colour from here.
  */
 export function premiumTone(premium: number, side: Side): Tone {
-  if (premium === 0) return "neutral";
-  return (side === "in" ? premium > 0 : premium < 0) ? "over" : "under";
+  return gainTone(side === "in" ? -premium : premium);
 }
 
 /** `7 in · 2 loans · 1 free` — what a side amounts to in players, before any

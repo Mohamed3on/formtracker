@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
+import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyNote } from "@/components/EmptyNote";
 import { SectionPanel } from "@/components/SectionPanel";
 import { GapTrack } from "@/app/fee-vs-value/FeeValueBar";
-import { ClubMoveRow, TONE_TEXT } from "@/app/fee-vs-value/TransferRow";
-import { barGeometry, transferKey, type ClubSide } from "@/lib/fee-vs-value";
+import { ClubMoveRow } from "@/app/fee-vs-value/TransferRow";
+import { barGeometry, transferKey, type ClubSide, type ClubWindow } from "@/lib/fee-vs-value";
 import {
   PATH,
+  TONE_TEXT,
   clubWindowSummary,
+  gainTone,
   premiumTone,
   seasonLabel,
   sideLabel,
@@ -28,18 +31,9 @@ import {
   type ClubBalanceWindow,
 } from "@/lib/transfer-balance";
 import { cn } from "@/lib/utils";
-import type { TransferBalanceMetric } from "@/app/types";
 
+const WINDOW_TITLE = "Fee against value";
 const THROUGH_LINK = "text-xs text-text-secondary transition-colors hover:text-text-primary";
-
-/** Nothing to show, in the same dashed language the tabs beside this one use. */
-function Note({ children }: { children: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-border-subtle bg-elevated px-4 py-6 text-sm text-text-secondary">
-      {children}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // The money: every deal Transfermarkt lists, over one to four seasons.
@@ -51,14 +45,9 @@ function BalanceRow({
   label,
   seasons,
   club,
-  ranks,
+  places,
   axisMax,
 }: ClubBalanceWindow & { axisMax: number }) {
-  const places = Object.entries(ranks) as [TransferBalanceMetric, number][];
-  // The page's own colour key, not the arithmetic sign: money leaving is the red
-  // direction, exactly as it is on the transfer-balance table itself.
-  const tone = club.balance === 0 ? "neutral" : club.balance < 0 ? "over" : "under";
-
   return (
     <li className="rounded-lg border border-border-subtle bg-card p-2.5">
       <div className="flex items-start gap-3">
@@ -69,7 +58,7 @@ function BalanceRow({
             <span className="text-[10px] uppercase tracking-wide text-text-muted">
               {seasons === 1 ? "this season" : `${seasons} seasons`}
             </span>
-            {places.map(([metric, place]) => (
+            {places.map(({ metric, place }) => (
               <Badge
                 key={metric}
                 variant="outline"
@@ -106,7 +95,10 @@ function BalanceRow({
           />
         </div>
         <div className="shrink-0 text-right">
-          <span className={cn("block font-value text-sm", TONE_TEXT[tone])}>
+          {/* The site's colour key, not the arithmetic sign: banking more than
+              you spent is the good direction, exactly as on the transfer-balance
+              table itself. */}
+          <span className={cn("block font-value text-sm", TONE_TEXT[gainTone(club.balance)])}>
             {formatSignedMillions(club.balance)}
           </span>
           <span className="block text-[10px] uppercase tracking-wide text-text-muted">balance</span>
@@ -204,57 +196,20 @@ function SidePanel({
   );
 }
 
-/**
- * Every move of this club's that made the season's biggest transfers, priced
- * against what the players are worth.
- *
- * Its own fetch behind its own `<Suspense>`, like `ClubWindowBadges`: the tab
- * should not wait on a transfer scrape, and a Transfermarkt outage must not take
- * the club page down over one section of one tab.
- */
-async function WindowSection({ clubId, name }: { clubId: string; name: string }) {
-  const data = await getFeeVsValueData().catch(() => null);
-  if (!data) {
-    return (
-      <SectionPanel title="Fee against value">
-        <Note>Transfer prices are unavailable right now.</Note>
-      </SectionPanel>
-    );
-  }
-
-  const aside = (
-    <Link href={`${PATH}?view=clubs`} className={THROUGH_LINK}>
-      Fee vs value &rarr;
-    </Link>
-  );
-  const season = seasonLabel(data.season);
-  const summary = clubWindowSummary(data.transfers, clubId);
-
-  if (!summary) {
-    return (
-      <SectionPanel title="Fee against value" aside={aside}>
-        <Note>
-          No {name} move is among the <span className="font-value">{data.transfers.length}</span>{" "}
-          biggest transfers of <span className="font-value">{season}</span>.
-        </Note>
-      </SectionPanel>
-    );
-  }
-
-  const { club } = summary;
+/** The window itself: what the two sides came to, then the deals behind them.
+ *  Split from the fetch above it so the section's three outcomes — no data, no
+ *  deals, a window — read as three bodies in one panel rather than three
+ *  near-identical panels. */
+function ClubWindow({ club, count, season }: { club: ClubWindow; count: number; season: string }) {
   const sides = (["in", "out"] as const).filter((s) => club[s].players > 0);
+  // One euro axis across both panels, so buying and selling compare.
   const axisMax = Math.max(club.in.marketValue, club.in.fees, club.out.marketValue, club.out.fees);
 
   return (
-    <SectionPanel title="Fee against value" aside={aside}>
+    <>
       <p className="text-xs text-text-secondary">
         Squad value{" "}
-        <span
-          className={cn(
-            "font-value",
-            TONE_TEXT[club.netValue === 0 ? "neutral" : club.netValue > 0 ? "under" : "over"],
-          )}
-        >
+        <span className={cn("font-value", TONE_TEXT[gainTone(club.netValue)])}>
           {formatPremium(club.netValue)}
         </span>
         <span className="text-text-muted">
@@ -273,18 +228,60 @@ async function WindowSection({ clubId, name }: { clubId: string; name: string })
       </div>
 
       <p className="mt-2.5 text-xs text-text-muted">
-        Only the moves that made the <span className="font-value">{data.transfers.length}</span>{" "}
-        biggest transfers of <span className="font-value">{season}</span>, each fee held against
-        what the player is worth. Green is the good outcome from either end — under value on the way
-        in, over it on the way out.
+        Only the moves that made the <span className="font-value">{count}</span> biggest transfers
+        of <span className="font-value">{season}</span>, each fee held against what the player is
+        worth. Green is the good outcome from either end — under value on the way in, over it on the
+        way out.
       </p>
+    </>
+  );
+}
+
+/**
+ * Every move of this club's that made the season's biggest transfers, priced
+ * against what the players are worth.
+ *
+ * Its own fetch behind its own `<Suspense>`, like `ClubWindowBadges`: the tab
+ * should not wait on a transfer scrape, and a Transfermarkt outage must not take
+ * the club page down over one section of one tab — hence the `catch`, and hence
+ * a body that has to read as well with nothing in it as with a window.
+ */
+async function WindowSection({ clubId, name }: { clubId: string; name: string }) {
+  const data = await getFeeVsValueData().catch(() => null);
+  const summary = data && clubWindowSummary(data.transfers, clubId);
+
+  return (
+    <SectionPanel
+      title={WINDOW_TITLE}
+      aside={
+        data && (
+          <Link href={`${PATH}?view=clubs`} className={THROUGH_LINK}>
+            Fee vs value &rarr;
+          </Link>
+        )
+      }
+    >
+      {!data ? (
+        <EmptyNote>Transfer prices are unavailable right now.</EmptyNote>
+      ) : !summary ? (
+        <EmptyNote>
+          No {name} move is among the <span className="font-value">{data.transfers.length}</span>{" "}
+          biggest transfers of <span className="font-value">{seasonLabel(data.season)}</span>.
+        </EmptyNote>
+      ) : (
+        <ClubWindow
+          club={summary.club}
+          count={data.transfers.length}
+          season={seasonLabel(data.season)}
+        />
+      )}
     </SectionPanel>
   );
 }
 
 function WindowSkeleton() {
   return (
-    <SectionPanel title="Fee against value">
+    <SectionPanel title={WINDOW_TITLE}>
       <div className="space-y-3">
         <Skeleton className="h-3.5 w-64" />
         {/* A middling window's worth of moves. The panels grow with the deals
