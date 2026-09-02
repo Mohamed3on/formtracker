@@ -103,7 +103,7 @@
 /* Single source of truth for page container */
 .page-container {
   width: 100%;
-  max-width: 72rem; /* 6xl */
+  max-width: 88rem;
   margin-inline: auto;
   padding-inline: 0.75rem; /* px-3 */
 }
@@ -111,6 +111,14 @@
 @media (min-width: 640px) {
   .page-container {
     padding-inline: 1rem; /* sm:px-4 */
+  }
+}
+
+/* A laptop between the old cap and the new one now runs the container edge to
+   edge, so it gets a real gutter rather than a phone's. */
+@media (min-width: 1024px) {
+  .page-container {
+    padding-inline: 1.5rem; /* lg:px-6 */
   }
 }
 
