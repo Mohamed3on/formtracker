@@ -15,14 +15,15 @@ import { tmCurrentSeasonId } from "./player-aggregation";
  *
  * TM paginates this at 25 rows/page. Unlike the einnahmenausgaben endpoint (see
  * scripts/scrape-transfer-balance.ts), this one serves concurrent requests
- * happily, so every page goes at once through fetchPage's pool. Measured on the
- * 8 pages of a top-200 fetch: 2.1s all-at-once against 2.2s for a single page —
- * the whole thing costs what one request costs. (At concurrency 4 it was 4.1s,
- * at 2 it was 7.8s, so the pool's default of 10 is doing the work.) TM does
+ * happily, so every page goes at once through fetchPage's pool. Measured over
+ * the 8 pages a top-200 fetch took: 2.1s all-at-once against 2.2s for a single
+ * page — the whole thing costs what one request costs. (At concurrency 4 it was
+ * 4.1s, at 2 it was 7.8s, so the pool's default of 10 is doing the work.) The 10
+ * pages this now takes go into the same pool, so the extra rows are free. TM does
  * answer 503 to the odd page under that load; fetchPage retries with backoff.
  */
 const PAGE_SIZE = 25;
-export const TOP_TRANSFER_LIMIT = 200;
+export const TOP_TRANSFER_LIMIT = 250;
 
 /** Column layout of the `plus/1` view. The player mini-table is column 1; the
  *  rest are read positionally off the row accessor. */
@@ -97,7 +98,7 @@ export async function fetchTopTransfers(
   // Every page has to land. A partial set is not a shorter list — a failed page
   // in the middle punches a 25-row hole through the rankings, the club totals
   // and the season aggregate alike, and unstable_cache would then serve that
-  // hole for a day while the page still called itself the season's biggest 200.
+  // hole for a day while the page still called itself the season's biggest deals.
   // Failing here keeps the last good cache entry instead.
   const transfers: TopTransfer[] = [];
   for (const [i, result] of results.entries()) {

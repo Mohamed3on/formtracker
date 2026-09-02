@@ -1,11 +1,11 @@
+import { TOP_TRANSFER_LIMIT } from "@/lib/fetch-top-transfers";
 import { getFeeVsValueData } from "@/lib/top-transfers";
 import { createPageMetadata } from "@/lib/metadata";
 import { Leaderboard } from "./Leaderboard";
 
 export const metadata = createPageMetadata({
   title: "Fee vs Value",
-  description:
-    "Which clubs paid over the odds and which got a bargain in the season's 200 biggest transfers. Every fee held up against the player's Transfermarkt market value, in cash and times value.",
+  description: `Which clubs paid over the odds and which got a bargain in the season's ${TOP_TRANSFER_LIMIT} biggest transfers. Every fee held up against the player's Transfermarkt market value, in cash and times value.`,
   path: "/fee-vs-value",
   keywords: [
     "most overpriced transfer",

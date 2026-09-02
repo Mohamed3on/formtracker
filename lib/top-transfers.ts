@@ -2,13 +2,17 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { getCurrentMarketValues } from "./current-values";
 import { analyzeTransfers, type FeeVsValueData } from "./fee-vs-value";
-import { fetchTopTransfers } from "./fetch-top-transfers";
+import { fetchTopTransfers, TOP_TRANSFER_LIMIT } from "./fetch-top-transfers";
 
 /** The scrape, and only the scrape.
  *
  *  Transfers move once a day at most outside a deadline, and the whole fetch is
- *  8 pages, so a day's cache costs one scrape and keeps the page instant. Tagged
- *  so the header's refresh button can bust it (see app/api/revalidate).
+ *  10 pages, so a day's cache costs one scrape and keeps the page instant.
+ *  Tagged so the header's refresh button can bust it (see app/api/revalidate).
+ *
+ *  The row limit is part of the key because it is the one thing about the scrape
+ *  a deploy can change: without it, raising the limit lands on an entry still
+ *  holding the old count and the page quotes the previous number for a day.
  *
  *  What is cached is the raw table, which moves only when the scraper does —
  *  not the analysis on top of it. unstable_cache entries outlive deployments, so
@@ -18,14 +22,18 @@ import { fetchTopTransfers } from "./fetch-top-transfers";
  *  value left every type satisfied and the page served the previous formula's
  *  numbers for a day. Keeping the derivation outside means a deploy cannot ship
  *  beside a stale computation, because there is no cached computation. */
-const fetchCached = unstable_cache(fetchTopTransfers, ["top-transfers"], {
-  revalidate: 86400,
-  tags: ["top-transfers"],
-});
+const fetchCached = unstable_cache(
+  fetchTopTransfers,
+  ["top-transfers", String(TOP_TRANSFER_LIMIT)],
+  {
+    revalidate: 86400,
+    tags: ["top-transfers"],
+  },
+);
 
 /** Priced against today's market values, fresh on every request.
  *
- *  `analyzeTransfers` is a map over 200 rows against a process-memoised lookup,
+ *  `analyzeTransfers` is a map over 250 rows against a process-memoised lookup,
  *  so running it per request costs nothing measurable and buys back the whole
  *  cache-invalidation problem. It also drops `getDataVersion` from the picture:
  *  the committed dataset is no longer read from inside a cached region, so there

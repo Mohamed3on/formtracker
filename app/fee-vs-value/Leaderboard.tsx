@@ -29,7 +29,7 @@ const ROW_ESTIMATE = 116;
 const ROW_GAP = 8;
 
 /** Every row, not a top-N: the interesting deals are as often 40th as 4th.
- *  Window-virtualized so 200 rows cost what a screenful costs. */
+ *  Window-virtualized so 250 rows cost what a screenful costs. */
 function TransferList({
   spec,
   option,
@@ -91,7 +91,7 @@ export function Leaderboard({ transfers }: { transfers: PricedTransfer[] }) {
 
   // Sorted here rather than on the server: the six orderings are six views of
   // the same objects, and shipping them pre-sorted put every transfer on the
-  // wire once per list that mentioned it. Sorting ~200 rows costs nothing.
+  // wire once per list that mentioned it. Sorting ~250 rows costs nothing.
   const ranked = useMemo(() => rank(scoped), [scoped]);
   // One ruler for every bar on the page, measured over the *whole* window even
   // when a league is selected. A filter that quietly redrew the scale under the

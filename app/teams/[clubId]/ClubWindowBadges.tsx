@@ -1,4 +1,5 @@
 import { AccoladeBadge } from "@/components/AccoladeBadge";
+import { TOP_TRANSFER_LIMIT } from "@/lib/fetch-top-transfers";
 import { CLUB_MODES, PATH, clubWindowSummary, gainTone } from "@/lib/fee-vs-value-rankings";
 import { formatPremium } from "@/lib/format";
 import { getFeeVsValueData } from "@/lib/top-transfers";
@@ -15,7 +16,7 @@ const SQUAD_VALUE = CLUB_MODES["squad-value"];
  *
  * A club leading the squad-value table would then print its net value twice, so
  * that accolade absorbs the standing figure instead of sitting beside a copy of
- * it. Nothing renders at all for a club with no deals in the top 200, which is
+ * it. Nothing renders at all for a club with no deals in the top 250, which is
  * a quarter of the big five and every club below them.
  *
  * Accolades read both cuts of the window and name the cut only where the two
@@ -64,7 +65,7 @@ export async function ClubWindowBadges({ clubId }: { clubId: string }) {
         >
           <p className="mt-1.5">
             What arrived minus what left, by market value rather than by fee, loans counted. Deals
-            below the top 200 aren&apos;t in it.
+            below the top {TOP_TRANSFER_LIMIT} aren&apos;t in it.
           </p>
         </AccoladeBadge>
       )}
