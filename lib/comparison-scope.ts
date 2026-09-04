@@ -1,6 +1,7 @@
-export type ComparisonScope = "all" | "league" | "sameOrStronger" | "top5";
+export type ComparisonScope = "all" | "league" | "noLeagueEdge" | "top5";
 
-// Default scope is "same or stronger league" — absence of params means that, and the rest are opted into explicitly.
+// Default scope drops peers with a league edge (see `noLeagueEdge`) — absence of params means
+// that, and the rest are opted into explicitly.
 export function paramsToScope(params: {
   sameLeague?: string | null;
   allLeagues?: string | null;
@@ -9,7 +10,7 @@ export function paramsToScope(params: {
   if (params.sameLeague === "1") return "league";
   if (params.allLeagues === "1") return "all";
   if (params.top5 === "1") return "top5";
-  return "sameOrStronger";
+  return "noLeagueEdge";
 }
 
 export function scopeToParams(scope: ComparisonScope): {

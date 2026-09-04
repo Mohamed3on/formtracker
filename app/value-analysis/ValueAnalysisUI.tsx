@@ -20,7 +20,7 @@ import {
   filterPlayersByLeagueAndClub,
   TOP_5_LEAGUES,
   buildLeagueValues,
-  isSameOrStrongerLeague,
+  noLeagueEdge,
   displayAvailable,
   filterMinutesBenchmark,
   missedPct,
@@ -70,8 +70,8 @@ type DiscoveryCandidate = PlayerStats & { comparisonCount: number };
 
 const EMPTY_MV: MinutesValuePlayer[] = [];
 
-// Ascending-bars glyph shared by the two "Same or stronger league" filters (league strength).
-const strongerLeagueIcon = (
+// Ascending-bars glyph shared by the two "No league edge" filters (league strength).
+const leagueStrengthIcon = (
   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path
       strokeLinecap="round"
@@ -491,7 +491,7 @@ interface DiscoveryFilters {
   league: string;
   club: string;
   nationality: string;
-  sameOrStronger: boolean;
+  noLeagueEdge: boolean;
 }
 
 type DiscoveryPrefix = "u" | "o";
@@ -510,7 +510,7 @@ function discoveryControls(
       league: params.get(`${prefix}League`) || "all",
       club: params.get(`${prefix}Club`) || "",
       nationality: params.get(`${prefix}Nat`) || "all",
-      sameOrStronger: params.get(`${prefix}Stronger`) === "1",
+      noLeagueEdge: params.get(`${prefix}Stronger`) === "1",
     } satisfies DiscoveryFilters,
     onFilterChange: (f: Partial<DiscoveryFilters>) =>
       update({
@@ -521,8 +521,8 @@ function discoveryControls(
         ...(f.nationality !== undefined && {
           [`${prefix}Nat`]: f.nationality === "all" ? null : f.nationality,
         }),
-        ...(f.sameOrStronger !== undefined && {
-          [`${prefix}Stronger`]: f.sameOrStronger ? "1" : null,
+        ...(f.noLeagueEdge !== undefined && {
+          [`${prefix}Stronger`]: f.noLeagueEdge ? "1" : null,
         }),
       }),
   };
@@ -553,7 +553,7 @@ function DiscoverySection({
     league: leagueFilter,
     club: clubFilter,
     nationality: nationalityFilter,
-    sameOrStronger,
+    noLeagueEdge: noLeagueEdgeOnly,
   } = filters;
   const isOverpriced = variant === "overpriced";
   const accentColor = isOverpriced ? "var(--accent-cold-soft)" : "var(--accent-green)";
@@ -575,24 +575,27 @@ function DiscoverySection({
     return null;
   }, [allPlayers, isTop5, isSingleLeague, leagueFilter]);
 
-  // Same-or-stronger peers for a league, cached so sort/club/nationality changes don't rebuild pools.
+  // No-league-edge peers for a league — the counted peers are pricier in Bargains and cheaper in
+  // Overpriced, so the pool flips with the section. Cached so sort/club/nationality changes don't
+  // rebuild pools.
   const poolForLeague = useMemo(() => {
     const cache = new Map<string, PlayerStats[]>();
+    const peer = isOverpriced ? "cheaper" : "pricier";
     return (league: string) => {
       let pool = cache.get(league);
       if (!pool) {
-        pool = allPlayers.filter(isSameOrStrongerLeague(leagueValues, league));
+        pool = allPlayers.filter(noLeagueEdge(leagueValues, league, peer));
         cache.set(league, pool);
       }
       return pool;
     };
-  }, [allPlayers, leagueValues]);
+  }, [allPlayers, leagueValues, isOverpriced]);
 
   const filteredCandidates = useMemo(() => {
     let filtered = filterPlayersByLeagueAndClub(candidates, leagueFilter, clubFilter);
     if (nationalityFilter !== "all")
       filtered = filtered.filter((p) => p.nationality === nationalityFilter);
-    if (sameOrStronger) {
+    if (noLeagueEdgeOnly) {
       filtered = filtered
         .map((player) => ({
           ...player,
@@ -616,7 +619,7 @@ function DiscoverySection({
   }, [
     candidates,
     scopedPool,
-    sameOrStronger,
+    noLeagueEdgeOnly,
     poolForLeague,
     leagueFilter,
     clubFilter,
@@ -694,14 +697,14 @@ function DiscoverySection({
           <LeagueCombobox
             players={candidates}
             value={leagueFilter}
-            onChange={(v) => onFilterChange({ league: v || "all", sameOrStronger: false })}
+            onChange={(v) => onFilterChange({ league: v || "all", noLeagueEdge: false })}
           />
           <FilterButton
-            active={sameOrStronger}
-            onClick={() => onFilterChange({ sameOrStronger: !sameOrStronger, league: "all" })}
+            active={noLeagueEdgeOnly}
+            onClick={() => onFilterChange({ noLeagueEdge: !noLeagueEdgeOnly, league: "all" })}
           >
-            {strongerLeagueIcon}
-            Same or stronger league
+            {leagueStrengthIcon}
+            No league edge
           </FilterButton>
           <Combobox
             value={clubFilter || "all"}
@@ -1048,11 +1051,14 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
 
   const targetLeague = gaData?.targetPlayer?.league;
   const leagueValues = useMemo(() => buildLeagueValues(allPlayers), [allPlayers]);
+  // Underdelivering lists pricier peers and Better Value cheaper ones, so the no-league-edge scope
+  // hands each tab its own predicate; the other scopes are the same set either way.
   const benchScopePredicate = useMemo(() => {
-    if (benchSameLeagueOnly && targetLeague) return (p: PlayerStats) => p.league === targetLeague;
+    if (benchSameLeagueOnly && targetLeague)
+      return () => (p: PlayerStats) => p.league === targetLeague;
     if (benchStrongerOnly && targetLeague)
-      return isSameOrStrongerLeague(leagueValues, targetLeague);
-    if (benchTop5Only) return (p: PlayerStats) => TOP_5_LEAGUES.includes(p.league);
+      return (peer: "pricier" | "cheaper") => noLeagueEdge(leagueValues, targetLeague, peer);
+    if (benchTop5Only) return () => (p: PlayerStats) => TOP_5_LEAGUES.includes(p.league);
     return null;
   }, [benchSameLeagueOnly, targetLeague, benchStrongerOnly, benchTop5Only, leagueValues]);
 
@@ -1060,7 +1066,7 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
     () =>
       gaData?.underperformers
         ? benchScopePredicate
-          ? gaData.underperformers.filter(benchScopePredicate)
+          ? gaData.underperformers.filter(benchScopePredicate("pricier"))
           : gaData.underperformers
         : [],
     [gaData?.underperformers, benchScopePredicate],
@@ -1069,7 +1075,7 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
     () =>
       gaData?.outperformers
         ? benchScopePredicate
-          ? gaData.outperformers.filter(benchScopePredicate)
+          ? gaData.outperformers.filter(benchScopePredicate("cheaper"))
           : gaData.outperformers
         : [],
     [gaData?.outperformers, benchScopePredicate],
@@ -1081,8 +1087,10 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
       return `Analyzed ${count.toLocaleString()} players in ${targetLeague}`;
     }
     if (benchStrongerOnly && targetLeague) {
-      const count = allPlayers.filter(isSameOrStrongerLeague(leagueValues, targetLeague)).length;
-      return `Analyzed ${count.toLocaleString()} players in ${targetLeague} or stronger leagues`;
+      const peer = gaTab === "underdelivering" ? "pricier" : "cheaper";
+      const count = allPlayers.filter(noLeagueEdge(leagueValues, targetLeague, peer)).length;
+      const half = peer === "pricier" ? "weaker" : "stronger";
+      return `Analyzed ${count.toLocaleString()} players in ${targetLeague} or ${half} leagues`;
     }
     if (benchTop5Only) {
       const count = allPlayers.filter((p) => TOP_5_LEAGUES.includes(p.league)).length;
@@ -1093,6 +1101,7 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
     benchSameLeagueOnly,
     benchStrongerOnly,
     benchTop5Only,
+    gaTab,
     targetLeague,
     allPlayers,
     leagueValues,
@@ -1269,8 +1278,8 @@ export function ValueAnalysisUI({ initialData, injuryMap, discovery }: ValueAnal
                     })
                   }
                 >
-                  {strongerLeagueIcon}
-                  Same or stronger league
+                  {leagueStrengthIcon}
+                  No league edge
                 </FilterButton>
                 <FilterButton
                   active={benchSameLeagueOnly}

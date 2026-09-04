@@ -681,7 +681,7 @@ export default async function PlayerDetailPage({
             signalSummaries={{
               all: comparisons.all.signalSummary,
               league: comparisons.league.signalSummary,
-              sameOrStronger: comparisons.sameOrStronger.signalSummary,
+              noLeagueEdge: comparisons.noLeagueEdge.signalSummary,
               top5: comparisons.top5.signalSummary,
             }}
             leagueLabel={player.league}

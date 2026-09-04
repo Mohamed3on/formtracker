@@ -15,7 +15,7 @@ import {
   filterMinutesBenchmark,
   getFormStats,
   gamesScheduled,
-  isSameOrStrongerLeague,
+  noLeagueEdge,
   missedPct,
   TOP_5_LEAGUES,
   type MinutesValueFilter,
@@ -366,13 +366,16 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
     discoveryThreshold: MIN_COMPARISON_COUNT,
   };
 
-  const buildScope = (pool: PlayerStats[]): ScopedComparison => {
-    const cheaper = countComparisons(comparisonTarget, pool, false);
-    const pricier = countComparisons(comparisonTarget, pool, true);
-    const inPool = new Set(pool.map((p) => p.playerId));
+  // Each side gets its own pool: the no-league-edge scope keeps different leagues depending on
+  // whether the peer is pricier or cheaper, so the two lists can't share one filter.
+  const buildScope = (pricierPool: PlayerStats[], cheaperPool = pricierPool): ScopedComparison => {
+    const cheaper = countComparisons(comparisonTarget, cheaperPool, false);
+    const pricier = countComparisons(comparisonTarget, pricierPool, true);
+    const inCheaperPool = new Set(cheaperPool.map((p) => p.playerId));
+    const inPricierPool = new Set(pricierPool.map((p) => p.playerId));
     return {
-      outperformers: outperformers.filter((p) => inPool.has(p.playerId)).slice(0, 6),
-      underperformers: underperformers.filter((p) => inPool.has(p.playerId)).slice(0, 6),
+      outperformers: outperformers.filter((p) => inCheaperPool.has(p.playerId)).slice(0, 6),
+      underperformers: underperformers.filter((p) => inPricierPool.has(p.playerId)).slice(0, 6),
       signalSummary: {
         ...baseSignal,
         cheaperPlayersBeatingTarget: cheaper,
@@ -391,8 +394,9 @@ async function computePlayerDetailData(playerId: string): Promise<PlayerDetailDa
   const comparisons: Record<ComparisonScope, ScopedComparison> = {
     all: buildScope(comparisonPlayers),
     league: buildScope(comparisonPlayers.filter((p) => p.league === comparisonTarget.league)),
-    sameOrStronger: buildScope(
-      comparisonPlayers.filter(isSameOrStrongerLeague(leagueValues, comparisonTarget.league)),
+    noLeagueEdge: buildScope(
+      comparisonPlayers.filter(noLeagueEdge(leagueValues, comparisonTarget.league, "pricier")),
+      comparisonPlayers.filter(noLeagueEdge(leagueValues, comparisonTarget.league, "cheaper")),
     ),
     top5: buildScope(comparisonPlayers.filter((p) => TOP_5_LEAGUES.includes(p.league))),
   };

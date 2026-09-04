@@ -20,24 +20,29 @@ export function HeroSignalBadges({
     top5: params.get("top5"),
   });
   const summary = signalSummaries[scope];
-  const scopeSuffix = {
-    all: "",
-    sameOrStronger: " in same or stronger leagues",
-    league: ` in ${leagueLabel}`,
-    top5: " in the top 5 leagues",
-  }[scope];
+  // Costing more is already the whole qualification for a beaten peer, so the pricier side stays
+  // unqualified under the default scope; the cheaper side names the league bar it cleared.
+  const scopeSuffix = (peer: "pricier" | "cheaper") =>
+    ({
+      all: "",
+      noLeagueEdge: peer === "pricier" ? "" : " in same or stronger leagues",
+      league: ` in ${leagueLabel}`,
+      top5: " in the top 5 leagues",
+    })[scope];
 
   return (
     <>
       {summary.discoveryStatus === "bargain" && summary.cheaperPlayersBeatingTarget === 0 && (
         <SignalBadge className="border-accent-hot-border bg-accent-hot-glow text-accent-hot">
           <Sparkles className="mr-1 h-3.5 w-3.5" />
-          Outperforming {summary.pricierPlayersBeatenByTarget} pricier peers{scopeSuffix}
+          Outperforming {summary.pricierPlayersBeatenByTarget} pricier peers
+          {scopeSuffix("pricier")}
         </SignalBadge>
       )}
       {summary.discoveryStatus === "overpriced" && summary.pricierPlayersBeatenByTarget === 0 && (
         <SignalBadge className="border-accent-cold-border bg-accent-cold-glow text-accent-cold-soft">
-          {summary.cheaperPlayersBeatingTarget} cheaper peers{scopeSuffix} with more output
+          {summary.cheaperPlayersBeatingTarget} cheaper peers{scopeSuffix("cheaper")} with more
+          output
         </SignalBadge>
       )}
     </>

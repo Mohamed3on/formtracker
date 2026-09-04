@@ -61,13 +61,24 @@ export function filterPlayersByLeagueAndClub<T extends { league: string; club: s
   });
 }
 
-/** Predicate: a player's league is the target's league or a stronger one (ranked by total market value). */
-export function isSameOrStrongerLeague(
+/** Predicate: peers whose league gives them no alibi, mirrored by which side of the price the peer
+ *  sits on. Output is compared raw, so a tougher league suppresses it: a pricier peer we claim to be
+ *  beating must not have played the harder league, and a cheaper peer beating us must not have
+ *  played the easier one. League strength is total market value (see `buildLeagueValues`). */
+export function noLeagueEdge(
   leagueValues: Map<string, number>,
   targetLeague: string,
+  peer: "pricier" | "cheaper",
 ): (p: { league: string }) => boolean {
-  const threshold = leagueValues.get(targetLeague) ?? 0;
-  return (p) => (leagueValues.get(p.league) ?? 0) >= threshold;
+  const threshold = leagueValues.get(targetLeague);
+  // Free agents and players in untracked leagues carry no league at all. With nothing to rank,
+  // the target keeps every peer, and such a peer clears no bar in either direction.
+  if (threshold === undefined) return () => true;
+  return (p) => {
+    const value = leagueValues.get(p.league);
+    if (value === undefined) return false;
+    return peer === "pricier" ? value <= threshold : value >= threshold;
+  };
 }
 
 export function getFormMinutes(
