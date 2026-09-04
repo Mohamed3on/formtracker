@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { ClubLogo } from "@/components/ClubLogo";
 import { ClubMoveRow } from "@/app/fee-vs-value/TransferRow";
-import { transferKey, type ClubWindow } from "@/lib/fee-vs-value";
+import { pricedFees, transferKey, type ClubWindow } from "@/lib/fee-vs-value";
 import {
   CLUB_MODES,
   TONE_TEXT,
@@ -92,8 +92,18 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { key: "buying", label: "Bought", sum: "fee − worth", mode: CLUB_MODES.buying },
-  { key: "selling", label: "Sold", sum: "fee − worth", mode: CLUB_MODES.selling },
+  {
+    key: "buying",
+    label: "Bought",
+    sum: "fee − worth",
+    mode: CLUB_MODES.buying,
+  },
+  {
+    key: "selling",
+    label: "Sold",
+    sum: "fee − worth",
+    mode: CLUB_MODES.selling,
+  },
   {
     key: "squad-value",
     label: "Squad value",
@@ -101,7 +111,12 @@ const COLUMNS: Column[] = [
     mode: CLUB_MODES["squad-value"],
   },
   { key: "net", label: "Net", sum: "banked − spent" },
-  { key: "overall", label: "Overall", sum: "value added − money spent", mode: CLUB_MODES.overall },
+  {
+    key: "overall",
+    label: "Overall",
+    sum: "value added − money spent",
+    mode: CLUB_MODES.overall,
+  },
 ];
 
 function activeKey(sort: LedgerSort): ColumnKey {
@@ -113,17 +128,23 @@ function endOf(sort: LedgerSort): EndKey {
 }
 
 /** One side's premium with the two figures it came from under it. The sign is
- *  the site's — fee minus worth — and the colour says which way is good. */
+ *  the site's — fee minus worth — and the colour says which way is good.
+ *
+ *  A side with nothing priced on it — every move a loan, or a move TM published
+ *  no fee for — has no premium to state, only a squad change, which the column
+ *  beside this one already carries. */
 function SideCell({ c, side }: { c: ClubWindow; side: "in" | "out" }) {
   const s = c[side];
-  if (s.players === 0) return <span className="text-text-muted">—</span>;
+  if (s.pricedValue === 0) {
+    return <span className="text-text-muted">{s.players === 0 ? "—" : "no priced deals"}</span>;
+  }
   return (
     <>
       <span className={cn("block font-value", TONE_TEXT[premiumTone(s.premium, side)])}>
         {signed(s.premium)}
       </span>
       <span className="block font-value text-[10px] text-text-muted md:whitespace-nowrap">
-        {money(s.marketValue)} of players for {money(s.fees)}
+        {money(s.pricedValue)} of players for {money(pricedFees(s))}
       </span>
     </>
   );

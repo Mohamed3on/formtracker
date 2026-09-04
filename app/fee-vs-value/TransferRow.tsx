@@ -13,7 +13,7 @@ import {
 import { isSameLeague } from "@/lib/leagues";
 import { cn } from "@/lib/utils";
 import type { TopTransfer, TransferClub } from "@/app/types";
-import { revalued, type PricedTransfer } from "@/lib/fee-vs-value";
+import { isPriced, revalued, type PricedTransfer } from "@/lib/fee-vs-value";
 import { TONE_TEXT, premiumTone, type Side, type Tone } from "@/lib/fee-vs-value-rankings";
 import { FeeValueBar, WasWorthMark } from "./FeeValueBar";
 
@@ -203,13 +203,16 @@ export function ClubMoveRow({ t, side }: { t: PricedTransfer; side: Side }) {
       <span className="hidden shrink-0 sm:block">
         <ValueToFee transfer={t} />
       </span>
+      {/* A loan, or a move TM priced at "?", has a fee of 0 only because there
+          was nothing to parse — printing its premium charges the player's whole
+          value against a number nobody published. */}
       <span
         className={cn(
           "w-20 shrink-0 text-right font-value text-xs",
-          TONE_TEXT[premiumTone(t.premium, side)],
+          isPriced(t) ? TONE_TEXT[premiumTone(t.premium, side)] : "text-text-muted",
         )}
       >
-        {formatPremium(t.premium)}
+        {isPriced(t) ? formatPremium(t.premium) : "—"}
       </span>
     </li>
   );

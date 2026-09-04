@@ -59,11 +59,20 @@ export interface ClubSide {
   loans: number;
   /** Permanent moves that cost nothing. */
   frees: number;
-  /** Paid, on the way in; received, on the way out. */
+  /** Cash: paid on the way in, received on the way out. Every fee TM published,
+   *  a loan fee included — a club that pays €4m to borrow a player has spent
+   *  €4m. What it never includes is a fee TM didn't publish, which parses to 0
+   *  and so adds nothing on its own. */
   fees: number;
-  /** Summed `worth`, not summed `marketValue`, so `fees - marketValue` is this
-   *  side's `premium` and the caption a club row shows adds up. */
+  /** Summed `worth` of every move, loans and unpriced ones included: the whole
+   *  squad that came in or went out, which is what `netValue` measures. */
   marketValue: number;
+  /** Summed `worth` of the moves a fee can actually be held against — see
+   *  `isPriced`. It is `premium`'s own denominator, so `pricedFees(side)` and
+   *  this are the pair a club row's caption prints and the arithmetic adds up.
+   *  Loaning a €50m player out is not selling him for nothing, so his value
+   *  belongs in `marketValue` and nowhere near the premium. */
+  pricedValue: number;
   premium: number;
   ratio: number;
   /** The moves themselves, dearest first, so a row can expand into the business
@@ -102,7 +111,12 @@ export interface FeeVsValueData {
  *  them at nothing, which is what makes `??` the right fallback here. */
 function price(t: TopTransfer, currentValue?: number): PricedTransfer {
   const worth = currentValue ?? t.marketValue;
-  return { ...t, worth, premium: t.fee - worth, ratio: worth > 0 ? t.fee / worth : 0 };
+  return {
+    ...t,
+    worth,
+    premium: t.fee - worth,
+    ratio: worth > 0 ? t.fee / worth : 0,
+  };
 }
 
 const emptySide = (): ClubSide => ({
@@ -111,23 +125,43 @@ const emptySide = (): ClubSide => ({
   frees: 0,
   fees: 0,
   marketValue: 0,
+  pricedValue: 0,
   premium: 0,
   ratio: 0,
   transfers: [],
 });
 
+/**
+ * Every move counts towards the squad and towards the cash; only a move with a
+ * price on it counts towards the comparison between them.
+ *
+ * `parseMarketValue` turns "loan transfer" and TM's "?" alike into a fee of 0,
+ * which is harmless in a cash sum and ruinous in a premium: charging every row
+ * fee minus worth reported the player's whole value as money lost on a number
+ * TM never published, so a club that loaned four players out read as having
+ * sold €130m of them for nothing.
+ */
 function addTo(side: ClubSide, t: PricedTransfer) {
   side.transfers.push(t);
   side.players += 1;
   if (t.isLoan) side.loans += 1;
   else if (t.isFree) side.frees += 1;
-  side.fees += t.fee;
   side.marketValue += t.worth;
-  side.premium += t.premium;
+  side.fees += t.fee;
+  if (isPriced(t)) {
+    side.pricedValue += t.worth;
+    side.premium += t.premium;
+  }
 }
 
+/** What the priced moves actually cost — the fee half of the pair `premium`
+ *  came from, which `fees` is not: `fees` also carries loan fees and any move
+ *  with no value to compare against. Derived rather than stored, because
+ *  `premium` already is `pricedFees - pricedValue`. */
+export const pricedFees = (s: ClubSide) => s.pricedValue + s.premium;
+
 function seal(side: ClubSide) {
-  side.ratio = side.marketValue > 0 ? side.fees / side.marketValue : 0;
+  side.ratio = side.pricedValue > 0 ? pricedFees(side) / side.pricedValue : 0;
   // Best player first, not dearest deal first. An expanded club reads as
   // "what did they get", and each row shows worth → fee, so ordering on worth
   // runs down the left-hand column instead of the right — a €45m player bought
@@ -138,21 +172,26 @@ function seal(side: ClubSide) {
 
 /** Every club that touched the window, aggregated on both sides at once.
  *
- *  Unlike the player rankings this counts loans, frees and the odd row TM lists
- *  no market value for. There the question is "was this deal priced well", which
- *  a move with no fee or no value cannot answer; here it is "what did the club
- *  end up with, and what did it cost" — and a €50m striker arriving on loan for
- *  nothing is the single best answer a window can give.
+ *  Every move counts towards what a squad gained or lost, loans and frees and
+ *  the odd row TM lists no market value for included — a €50m striker arriving
+ *  on loan is in the dressing room, which is the single best answer a window
+ *  can give. Only the priced ones count towards what it cost; see `addTo`.
  *
- *  Narrowing the pool is the caller's job: the loans-off cut is one `.filter`
- *  at the call site, which is what a predicate parameter here amounted to. */
+ *  That split is why there is no loans-off cut of this: the two questions a cut
+ *  used to separate are answered by different fields of the same window. */
 export function buildClubWindows(transfers: PricedTransfer[]): ClubWindow[] {
   const map = new Map<string, ClubWindow>();
   const at = (club: TransferClub) => {
     const key = club.clubId || club.name;
     let entry = map.get(key);
     if (!entry) {
-      entry = { club, in: emptySide(), out: emptySide(), netValue: 0, netSpend: 0 };
+      entry = {
+        club,
+        in: emptySide(),
+        out: emptySide(),
+        netValue: 0,
+        netSpend: 0,
+      };
       map.set(key, entry);
     }
     return entry;
@@ -181,7 +220,10 @@ export function analyzeTransfers(
   transfers: TopTransfer[],
   currentValues: ReadonlyMap<string, number> = new Map(),
 ): FeeVsValueData {
-  return { season, transfers: transfers.map((t) => price(t, currentValues.get(t.playerId))) };
+  return {
+    season,
+    transfers: transfers.map((t) => price(t, currentValues.get(t.playerId))),
+  };
 }
 
 /**
@@ -201,9 +243,9 @@ export function analyzeTransfers(
  * nothing. That headline is gone now, but the lesson it cost is why this is a
  * named predicate rather than a condition written out wherever it is needed.
  *
- * Club totals deliberately do not use this. There the question is what a side
- * ended up with and what it cost, which a loan or an unpriced arrival still
- * answers — see `buildClubWindows`.
+ * The club totals use it for their money half only: a loan still tells you what
+ * a squad gained or lost, so it counts towards `marketValue` while staying out
+ * of `fees` and `premium` — see `addTo`.
  */
 export function isPriced(t: PricedTransfer): boolean {
   return !t.isLoan && t.worth > 0 && (t.fee > 0 || t.isFree);

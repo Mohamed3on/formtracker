@@ -4,6 +4,7 @@ import {
   barGeometry,
   buildClubWindows,
   gapScale,
+  pricedFees,
   rank,
   revalued,
   transferKey,
@@ -44,7 +45,12 @@ const names = (list: PricedTransfer[]) => list.map((t) => t.name);
 describe("analyzeTransfers", () => {
   const data = analyzeTransfers(2026, [
     tx({ name: "Overpay", marketValue: 10_000_000, fee: 30_000_000 }),
-    tx({ name: "Bargain", marketValue: 40_000_000, fee: 20_000_000, to: club("Thrifty") }),
+    tx({
+      name: "Bargain",
+      marketValue: 40_000_000,
+      fee: 20_000_000,
+      to: club("Thrifty"),
+    }),
     tx({
       name: "Freebie",
       marketValue: 45_000_000,
@@ -81,15 +87,24 @@ describe("analyzeTransfers", () => {
     expect(freebie.ratio).toBe(0);
   });
 
-  const withLoans = buildClubWindows(data.transfers);
-  const permanentOnly = buildClubWindows(data.transfers.filter((t) => !t.isLoan));
-  const window = (name: string, cut = withLoans) => cut.find((c) => c.club.name === name)!;
+  const windows = buildClubWindows(data.transfers);
+  const window = (name: string) => windows.find((c) => c.club.name === name)!;
 
   it("orders a club's moves by the player, not by the fee", () => {
     // A dearer player on a smaller fee outranks a cheaper one on a bigger fee.
     const { transfers } = analyzeTransfers(2026, [
-      tx({ name: "Pricier", marketValue: 32_000_000, fee: 36_000_000, to: club("Roma") }),
-      tx({ name: "Better", marketValue: 45_000_000, fee: 25_000_000, to: club("Roma") }),
+      tx({
+        name: "Pricier",
+        marketValue: 32_000_000,
+        fee: 36_000_000,
+        to: club("Roma"),
+      }),
+      tx({
+        name: "Better",
+        marketValue: 45_000_000,
+        fee: 25_000_000,
+        to: club("Roma"),
+      }),
     ]);
     const roma = buildClubWindows(transfers).find((c) => c.club.name === "Roma")!;
     expect(names(roma.in.transfers)).toEqual(["Better", "Pricier"]);
@@ -97,28 +112,27 @@ describe("analyzeTransfers", () => {
 
   it("counts loans and frees towards their club, unlike the player rankings", () => {
     expect(
-      withLoans
+      windows
         .filter((c) => c.in.players > 0)
         .map((c) => [c.club.name, c.in.players, c.in.loans, c.in.frees, c.in.premium]),
     ).toEqual([
       ["Buyer", 1, 0, 0, 20_000_000],
       ["Thrifty", 1, 0, 0, -20_000_000],
-      // Freebie and Loanee arrived for nothing and still show up as a club's business.
-      ["Gifted", 2, 1, 1, -95_000_000],
+      // Freebie and Loanee both arrived for nothing and both count as business,
+      // but only the free is a price: -45m is Freebie alone.
+      ["Gifted", 2, 1, 1, -45_000_000],
     ]);
   });
 
-  it("offers a loan-free cut of the same table", () => {
-    expect(
-      permanentOnly
-        .filter((c) => c.in.players > 0)
-        .map((c) => [c.club.name, c.in.players, c.in.loans, c.in.premium]),
-    ).toEqual([
-      ["Buyer", 1, 0, 20_000_000],
-      ["Thrifty", 1, 0, -20_000_000],
-      // Only Freebie survives, so Gifted drops from -95m to -45m.
-      ["Gifted", 1, 0, -45_000_000],
-    ]);
+  it("keeps a loan in the squad it joined and out of the money it didn't cost", () => {
+    // TM published no fee for Loanee, so his 50m is what Gifted gained and
+    // nothing at all is what Gifted paid. Charging fee minus worth would have
+    // read as buying a 50m player and losing 50m on him at once.
+    const gifted = window("Gifted").in;
+    expect(gifted.marketValue).toBe(95_000_000);
+    expect(gifted.pricedValue).toBe(45_000_000);
+    expect(gifted.premium).toBe(-45_000_000);
+    expect(pricedFees(gifted)).toBe(0);
   });
 
   it("aggregates the selling side off the same rows", () => {
@@ -128,8 +142,11 @@ describe("analyzeTransfers", () => {
     expect(seller.out.players).toBe(4);
     expect(seller.out.marketValue).toBe(145_000_000);
     expect(seller.out.fees).toBe(50_000_000);
-    // Negative on the way out means sold below what the players were worth.
-    expect(seller.out.premium).toBe(-95_000_000);
+    // Loanee is out of the comparison, so the premium is over the other three:
+    // 95m of players banked 50m. Negative on the way out means sold below what
+    // they were worth — and loaning a 50m player out is not selling him.
+    expect(seller.out.pricedValue).toBe(95_000_000);
+    expect(seller.out.premium).toBe(-45_000_000);
     expect(seller.in.players).toBe(0);
   });
 
@@ -162,7 +179,13 @@ describe("rank", () => {
       feeText: "free transfer",
       isFree: true,
     }),
-    tx({ name: "Loanee", marketValue: 50_000_000, fee: 0, feeText: "loan", isLoan: true }),
+    tx({
+      name: "Loanee",
+      marketValue: 50_000_000,
+      fee: 0,
+      feeText: "loan",
+      isLoan: true,
+    }),
   ]);
   const r = rank(data.transfers);
 
@@ -192,7 +215,13 @@ describe("rank", () => {
   it("drops a transfer with no market value rather than dividing by zero", () => {
     const unvalued = analyzeTransfers(2026, [
       tx({ name: "Unvalued", marketValue: 0, fee: 5_000_000 }),
-      tx({ name: "UnvaluedFree", marketValue: 0, fee: 0, feeText: "free transfer", isFree: true }),
+      tx({
+        name: "UnvaluedFree",
+        marketValue: 0,
+        fee: 0,
+        feeText: "free transfer",
+        isFree: true,
+      }),
     ]);
     for (const list of Object.values(rank(unvalued.transfers))) expect(list).toEqual([]);
   });
@@ -201,7 +230,12 @@ describe("rank", () => {
     // The zero-value guard exists for ratio division, which club totals never do:
     // a club still paid the fee and still ended up with the player.
     const unvalued = analyzeTransfers(2026, [
-      tx({ name: "Unvalued", marketValue: 0, fee: 5_000_000, to: club("Buyer") }),
+      tx({
+        name: "Unvalued",
+        marketValue: 0,
+        fee: 5_000_000,
+        to: club("Buyer"),
+      }),
     ]);
     expect(
       buildClubWindows(unvalued.transfers).find((c) => c.club.name === "Buyer")!.in,
@@ -315,8 +349,18 @@ describe("transferKey", () => {
   it("separates two moves by the same player in one window", () => {
     // Openda went Leipzig → Juventus → Lyon; the player id alone collides.
     const [first, second] = analyzeTransfers(2026, [
-      tx({ name: "Openda", rank: 12, from: club("Leipzig"), to: club("Juventus") }),
-      tx({ name: "Openda", rank: 44, from: club("Juventus"), to: club("Lyon") }),
+      tx({
+        name: "Openda",
+        rank: 12,
+        from: club("Leipzig"),
+        to: club("Juventus"),
+      }),
+      tx({
+        name: "Openda",
+        rank: 44,
+        from: club("Juventus"),
+        to: club("Lyon"),
+      }),
     ]).transfers;
     expect(first.playerId).toBe(second.playerId);
     expect(transferKey(first)).not.toBe(transferKey(second));

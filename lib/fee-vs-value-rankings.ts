@@ -1,5 +1,6 @@
 import {
   buildClubWindows,
+  pricedFees,
   rank,
   type ClubSide,
   type ClubWindow,
@@ -170,10 +171,10 @@ export const CLUB_MODES = {
     toggle: "Buying",
     title: "Who bought well",
     blurb:
-      "Fees paid against what the players were worth. A club that paid under value shopped well.",
+      "Fees paid against what the players were worth. A club that paid under value shopped well. Loans are left out — TM prices few of them, and a loan fee is not what a player cost.",
     sort: (c) => c.in.premium,
     figure: (c) => signed(c.in.premium),
-    caption: (c) => `${money(c.in.marketValue)} of players for ${money(c.in.fees)}`,
+    caption: (c) => `${money(c.in.pricedValue)} of players for ${money(pricedFees(c.in))}`,
     ends: [
       { title: "Paid over the odds", tone: "over", side: "in" },
       { title: "Shopped best", tone: "under", side: "in" },
@@ -185,10 +186,10 @@ export const CLUB_MODES = {
     toggle: "Selling",
     title: "Who sold well",
     blurb:
-      "The same sum from the other end: fees banked against what the players leaving were worth.",
+      "The same sum from the other end: fees banked against what the players leaving were worth. Loans are left out — a player out on loan was not sold.",
     sort: (c) => c.out.premium,
     figure: (c) => signed(c.out.premium),
-    caption: (c) => `${money(c.out.marketValue)} of players for ${money(c.out.fees)}`,
+    caption: (c) => `${money(c.out.pricedValue)} of players for ${money(pricedFees(c.out))}`,
     ends: [
       // Banking more than a player was worth is the good outcome here, so the
       // colours run opposite to the buying tables.
@@ -201,7 +202,7 @@ export const CLUB_MODES = {
     toggle: "Squad value",
     title: "Who gained and who lost",
     blurb:
-      "Value in minus value out, whatever it cost. The badge is the money that swing took, in fees paid minus fees banked.",
+      "Value in minus value out, whatever it cost — loans counted, because a player on loan is in the dressing room either way. The badge is the money that swing took, in fees paid minus fees banked.",
     // Ranked on net, not on gross: a club that brings in €292m and lets €268m
     // go has not gained €292m of anything. Gross sits in the caption, and the
     // two ends are genuine opposites — no club can top both.
@@ -238,8 +239,18 @@ export const CLUB_MODES = {
     badge: (c) => (doubled(c) ? "banked & stronger" : null),
     expand: "both",
     ends: [
-      { title: "Came out ahead", tone: "under", side: "in", qualifies: (c) => surplus(c) > 0 },
-      { title: "Came out behind", tone: "over", side: "out", qualifies: (c) => surplus(c) < 0 },
+      {
+        title: "Came out ahead",
+        tone: "under",
+        side: "in",
+        qualifies: (c) => surplus(c) > 0,
+      },
+      {
+        title: "Came out behind",
+        tone: "over",
+        side: "out",
+        qualifies: (c) => surplus(c) < 0,
+      },
     ],
   },
 } satisfies Record<string, ModeSpec>;
@@ -258,10 +269,12 @@ export function endKeyOf(mode: ModeSpec, endIndex: 0 | 1): EndKey {
   return mode.ends[endIndex].tone === "under" ? "best" : "worst";
 }
 
-/** The address of one end of one club ranking, in the cut it was read in. */
-export function clubRankingHref(mode: ModeSpec, endIndex: 0 | 1, cut: LoansCut = "loans"): string {
-  const params = new URLSearchParams({ by: mode.slug, end: endKeyOf(mode, endIndex) });
-  if (cut === "permanent") params.set("loans", "permanent");
+/** The address of one end of one club ranking. */
+export function clubRankingHref(mode: ModeSpec, endIndex: 0 | 1): string {
+  const params = new URLSearchParams({
+    by: mode.slug,
+    end: endKeyOf(mode, endIndex),
+  });
   return `${CLUB_PATH}?${params}`;
 }
 
@@ -424,29 +437,16 @@ export const VIEWS: Record<View, ViewSpec> = {
 export const VIEW_KEYS = Object.keys(VIEWS) as View[];
 
 // ---------------------------------------------------------------------------
-// The two scopes on the data: which moves count, and whose business to show.
-// Both live in the URL rather than in component state, so a filtered view can
-// be linked and walked with the back button like every other choice here — and
-// so an accolade badge can deep-link to the exact cut it was won in.
+// Whose business to show. It lives in the URL rather than in component state,
+// so a filtered view can be linked and walked with the back button like every
+// other choice here.
+//
+// There is no loans cut beside it any more. It existed because the club totals
+// scored a loan as a sale at whatever fee TM had failed to publish, so the only
+// way to read the money honestly was to drop loans and lose the squad change
+// with them. `buildClubWindows` now splits the two — loans count towards value,
+// never towards fees — which answers both questions at once.
 // ---------------------------------------------------------------------------
-
-/** Whether loans count. Absent from the URL means they do, which is the reading
- *  that answers "what did the squad end up with". */
-export type LoansCut = "loans" | "permanent";
-
-export function resolveLoans(loans: string | null): LoansCut {
-  return loans === "permanent" ? "permanent" : "loans";
-}
-
-export function cutTransfers(transfers: PricedTransfer[], cut: LoansCut): PricedTransfer[] {
-  return cut === "permanent" ? transfers.filter((t) => !t.isLoan) : transfers;
-}
-
-/** How a cut reads in a badge, where there is no toggle to look at. */
-export const CUT_LABEL: Record<LoansCut, string> = {
-  loans: "with loans",
-  permanent: "permanent only",
-};
 
 /** Every league in the window, commonest first, with the leagues that appear
  *  only as sellers included — they are most of the twenty-six, and leaving
@@ -538,9 +538,6 @@ export interface Accolade {
   /** The exact view this row leads, so the badge lands the reader on the table
    *  it is quoting rather than on the default tab. */
   href: string;
-  /** A qualifier the title needs to be true — currently only which loans cut a
-   *  club won its end in, and only where the two cuts named different clubs. */
-  note?: string;
   tone: Tone;
 }
 
@@ -590,42 +587,31 @@ export function playerAccolades(transfers: PricedTransfer[], playerId: string): 
 }
 
 /**
- * Every club-table end this club heads, in either cut of the window.
+ * Every club-table end this club heads.
  *
- * A table end is really two rankings — loans counted and permanent-only — and
- * they disagree about the winner often enough to matter: this window has
- * Newcastle paying the most over the odds with loans in and Tottenham doing it
- * on permanent deals alone. Badging only one cut hid the other club entirely.
- *
- * Badging both naively is worse, though. Four of the six ends have the same
- * club at the top of both cuts, so Real Madrid would carry two badges reading
- * "Gained the most value" with different numbers under them. So a club gets one
- * badge per end, and the cut is named only when it is doing work — when this
- * club leads one cut and some other club leads the other. Where a club leads
- * both, there is nothing to distinguish and the qualifier would be noise.
+ * One ranking per end, because there is one honest reading of a window now.
+ * This used to badge two — loans counted and permanent-only — and name the cut
+ * wherever they disagreed about the winner, which they did often, because the
+ * loans-in cut charged every loan out as a sale for nothing. With loans kept to
+ * the value half the two cuts collapse into one table and the qualifier has
+ * nothing left to say.
  */
 export function clubAccolades(
-  cuts: Record<LoansCut, ClubWindow[]>,
+  rows: ClubWindow[],
   clubId: string,
 ): Array<Accolade & { mode: ClubMode }> {
   const out: Array<Accolade & { mode: ClubMode }> = [];
   for (const mode of Object.keys(CLUB_MODES) as ClubMode[]) {
     const spec: ModeSpec = CLUB_MODES[mode];
     for (const endIndex of [0, 1] as const) {
-      const led = (cut: LoansCut) => leaders(rankClubs(cuts[cut], spec, endIndex), spec.figure);
-      const won = ([...Object.keys(cuts)] as LoansCut[]).filter((cut) =>
-        led(cut)?.top.some((c) => c.club.clubId === clubId),
-      );
-      if (won.length === 0) continue;
-      // Where it leads both, quote the default cut — the one the link opens on.
-      const cut = won.includes("loans") ? "loans" : "permanent";
+      const led = leaders(rankClubs(rows, spec, endIndex), spec.figure);
+      if (!led?.top.some((c) => c.club.clubId === clubId)) continue;
       out.push({
         // No "joint" form: the end titles are verb phrases, and "Gained the most
         // value" stays true of both clubs when two tie on it.
         title: spec.ends[endIndex].title,
-        figure: led(cut)!.figure,
-        note: won.length === 1 ? CUT_LABEL[cut] : undefined,
-        href: clubRankingHref(spec, endIndex, cut),
+        figure: led.figure,
+        href: clubRankingHref(spec, endIndex),
         tone: spec.ends[endIndex].tone,
         mode,
       });
@@ -637,19 +623,16 @@ export function clubAccolades(
 /**
  * A club's window, and every end of it the club leads.
  *
- * The standing figure counts loans, which is both the page's own default and
- * the truer answer to "what did the squad gain" — a €50m striker in on loan is
- * in the dressing room. The accolades read both cuts; see `clubAccolades`.
+ * The standing figure counts loans — a €50m striker in on loan is in the
+ * dressing room, and that is what "what did the squad gain" asks. The fee-side
+ * accolades beside it do not; the split lives in `buildClubWindows`.
  *
  * Returns nothing at all for a club with no business among the season's biggest
  * transfers, which is most of them.
  */
 export function clubWindowSummary(transfers: PricedTransfer[], clubId: string) {
-  const cuts: Record<LoansCut, ClubWindow[]> = {
-    loans: buildClubWindows(transfers),
-    permanent: buildClubWindows(cutTransfers(transfers, "permanent")),
-  };
-  const club = cuts.loans.find((c) => c.club.clubId === clubId);
+  const rows = buildClubWindows(transfers);
+  const club = rows.find((c) => c.club.clubId === clubId);
   if (!club) return null;
-  return { club, accolades: clubAccolades(cuts, clubId) };
+  return { club, accolades: clubAccolades(rows, clubId) };
 }
