@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { SectionPanel } from "@/components/SectionPanel";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -78,6 +78,14 @@ export function ClubTransfersUI({
   const show = (m: ModeSpec, i: 0 | 1) => replace({ by: m.slug, end: endKeyOf(m, i) });
   const showEnd = (end: EndKey) => replace({ end });
 
+  // A card's label opens its ranking, which is further down the page than the
+  // click — go there too, or the click reads as having done nothing.
+  const ledgerRef = useRef<HTMLElement>(null);
+  const openLedger = (m: ModeSpec, i: 0 | 1) => {
+    show(m, i);
+    ledgerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="space-y-8 sm:space-y-10">
       <Overview
@@ -87,10 +95,10 @@ export function ClubTransfersUI({
         windows={balance.windows}
         seasons={seasons}
         onSeasons={setSeasons}
-        onPick={show}
+        onPick={openLedger}
       />
 
-      <section className="space-y-4">
+      <section ref={ledgerRef} className="scroll-mt-28 space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
           <div className="min-w-0">
             <h2 className="text-base font-pixel font-bold text-text-primary sm:text-lg">
